@@ -1,178 +1,188 @@
 <style>
-    /* Estilos extra para el historial */
-    .historial-item { font-size: 0.85rem; border-bottom: 1px solid #eee; padding: 10px 0; }
-    .historial-item:hover { background-color: #f8f9fa; }
-    .badge-venta { background-color: #e7f3ff; color: #007bff; }
-    .badge-ingreso { background-color: #e6ffed; color: #28a745; }
-    .sticky-actions { position: sticky; top: 0; background: white; z-index: 10; padding: 10px; border-bottom: 2px solid #0d6efd; }
+    :root {
+        --prados-green: #1a5c37;
+        --prados-yellow: #f9bc15;
+        --prados-blue: #2b78d2;
+    }
+
+    /* Estilo Historial basado en tu imagen */
+    .historial-header {
+        border-bottom: 2px solid var(--prados-blue);
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+
+    .btn-borrar-lote {
+        background-color: #efefef;
+        border: 1px solid #767676;
+        border-radius: 2px;
+        padding: 2px 10px;
+        font-size: 14px;
+        transition: 0.2s;
+    }
+
+    .btn-borrar-lote:hover:not(:disabled) {
+        background-color: #e5e5e5;
+        border-color: #4f4f4f;
+    }
+
+    .historial-item {
+        border-bottom: 1px solid #eee;
+        padding: 12px;
+        transition: background 0.2s;
+        display: flex;
+        align-items: center;
+    }
+
+    .historial-item:hover {
+        background-color: #fcfcfc;
+    }
+
+    .selector-fecha {
+        border: 1px solid #767676;
+        padding: 2px 5px;
+        margin: 10px 0;
+    }
+
+    .badge-tipo {
+        font-size: 0.7rem;
+        padding: 3px 8px;
+        border-radius: 10px;
+        text-transform: uppercase;
+        font-weight: bold;
+    }
 </style>
 
 <div id="historial" class="content-section hidden">
-    <div class="card shadow-sm">
-        <div class="card-header bg-white sticky-actions d-flex justify-content-between align-items-center">
-            <h5 class="mb-0 fw-bold">Historial de Movimientos</h5>
-            <div id="batchActions" class="hidden">
-                <button class="btn btn-danger btn-sm" onclick="borrarSeleccionados()">
-                    <i class="fas fa-trash me-1"></i> Borrar Seleccionados
-                </button>
-            </div>
+    <div class="card p-4 shadow-sm">
+        <div class="historial-header">
+            <h4 class="fw-bold m-0">Historial de Movimientos</h4>
         </div>
-        
-        <div class="p-3">
-            <div class="row g-2 mb-3">
-                <div class="col-8">
-                    <input type="month" id="filtroMes" class="form-control" onchange="cargarHistorial()">
-                </div>
-                <div class="col-4">
-                    <button class="btn btn-outline-secondary w-100" onclick="toggleSeleccionTodo()">
-                        <i class="fas fa-check-double"></i> Todo
-                    </button>
-                </div>
-            </div>
 
-            <div id="listaHistorial" class="container-fluid">
-                <div class="text-center text-muted p-5">Cargando movimientos...</div>
-            </div>
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <button id="btnBorrarSeleccion" class="btn-borrar-lote" onclick="borrarSeleccionados()" disabled>
+                Borrar Seleccionados
+            </button>
+            <input type="month" id="filtroMes" class="selector-fecha" onchange="cargarHistorial()">
+            <button class="btn-borrar-lote" onclick="toggleSeleccionTodo()">Todo</button>
+        </div>
+
+        <div id="listaHistorial" class="mt-2">
+            <p class="text-muted">Cargando movimientos...</p>
         </div>
     </div>
 </div>
 
 <script>
-    // ... (Variables globales y Auth se mantienen) ...
+    // --- LÓGICA DE GESTIÓN DE HISTORIAL ---
 
     async function cargarHistorial() {
         const lista = document.getElementById('listaHistorial');
-        const mes = document.getElementById('filtroMes').value; // Formato YYYY-MM
-        
-        if(!mes) return;
+        const mesStr = document.getElementById('filtroMes').value;
+        if (!mesStr) return;
 
-        // Limpiar lista
-        lista.innerHTML = "";
-        
-        // Consultar movimientos del mes seleccionado
-        // Nota: Para filtrar por mes exacto en Firebase se requiere un rango de fechas
-        const inicio = new Date(mes + "-01T00:00:00");
-        const fin = new Date(mes + "-31T23:59:59");
+        const [anio, mes] = mesStr.split('-').map(Number);
+        const inicio = new Date(anio, mes - 1, 1);
+        const fin = new Date(anio, mes, 0, 23, 59, 59);
 
         db.collection("stock")
             .where("fecha", ">=", inicio)
             .where("fecha", "<=", fin)
             .orderBy("fecha", "desc")
             .onSnapshot(snapshot => {
-                if(snapshot.empty) {
-                    lista.innerHTML = '<div class="text-center p-4">No hay movimientos en este período</div>';
+                if (snapshot.empty) {
+                    lista.innerHTML = '<p class="text-center p-4">No hay registros para este período.</p>';
                     return;
                 }
 
                 let html = "";
                 snapshot.forEach(doc => {
                     const d = doc.data();
-                    const fechaStr = d.fecha ? d.fecha.toDate().toLocaleString() : 'Reciente';
-                    const tipoClase = d.cantidad < 0 ? 'badge-venta' : 'badge-ingreso';
-                    const tipoTexto = d.cantidad < 0 ? 'SALIDA' : 'ENTRADA';
+                    const fecha = d.fecha ? d.fecha.toDate().toLocaleDateString() : '---';
+                    const esVenta = d.cantidad < 0;
                     
                     html += `
-                        <div class="historial-item row align-items-center" id="item-${doc.id}">
-                            <div class="col-1 text-center">
-                                <input type="checkbox" class="form-check-input chk-historial" value="${doc.id}" onchange="checkBatchActions()">
+                        <div class="historial-item" id="row-${doc.id}">
+                            <div class="me-3">
+                                <input type="checkbox" class="chk-item" value="${doc.id}" 
+                                       data-cantidad="${d.cantidad}" data-articulo="${d.articulo}" 
+                                       onchange="actualizarEstadoBoton()">
                             </div>
-                            <div class="col-8">
-                                <span class="badge ${tipoClase} mb-1">${tipoTexto}</span>
-                                <div class="fw-bold">${d.articulo}</div>
-                                <div class="small text-muted">${fechaStr} | ${d.cliente || d.proveedor || 'Fábrica'}</div>
-                                ${d.patente ? `<div class="small text-primary fw-bold">Patente: ${d.patente}</div>` : ''}
-                            </div>
-                            <div class="col-3 text-end text-nowrap">
-                                <span class="fw-bold ${d.cantidad < 0 ? 'text-danger' : 'text-success'}">
-                                    ${d.cantidad.toLocaleString()} u.
-                                </span>
-                                <button class="btn btn-link btn-sm text-danger" onclick="borrarMovimiento('${doc.id}', ${d.cantidad}, '${d.articulo}')">
-                                    <i class="fas fa-times-circle"></i>
-                                </button>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">${d.articulo}</span>
+                                    <span class="${esVenta ? 'text-danger' : 'text-success'} fw-bold">
+                                        ${d.cantidad.toLocaleString()} u.
+                                    </span>
+                                </div>
+                                <div class="small text-muted">
+                                    ${fecha} | ${d.cliente || d.proveedor || 'Mov. Interno'}
+                                    ${d.patente ? ` | <b class="text-primary">Patente: ${d.patente}</b>` : ''}
+                                </div>
                             </div>
                         </div>
                     `;
                 });
                 lista.innerHTML = html;
+                actualizarEstadoBoton();
             });
     }
 
-    // --- LÓGICA DE BORRADO ---
-
-    function checkBatchActions() {
-        const seleccionados = document.querySelectorAll('.chk-historial:checked').length;
-        const panel = document.getElementById('batchActions');
-        if(seleccionados > 0) panel.classList.remove('hidden');
-        else panel.classList.add('hidden');
+    function actualizarEstadoBoton() {
+        const seleccionados = document.querySelectorAll('.chk-item:checked').length;
+        document.getElementById('btnBorrarSeleccion').disabled = seleccionados === 0;
     }
 
     function toggleSeleccionTodo() {
-        const checkboxes = document.querySelectorAll('.chk-historial');
-        const todosMarcados = Array.from(checkboxes).every(c => c.checked);
-        checkboxes.forEach(c => c.checked = !todosMarcados);
-        checkBatchActions();
-    }
-
-    async function borrarMovimiento(id, cantidad, articulo) {
-        if(!confirm(`¿Borrar registro de ${articulo}?`)) return;
-
-        const reversarStock = confirm("¿Desea restaurar el stock? \n(Si es una venta, el stock aumentará. Si es un ingreso, disminuirá)");
-
-        try {
-            const batch = db.batch();
-            
-            // 1. Borrar el registro del historial
-            batch.delete(db.collection("stock").doc(id));
-
-            // 2. Si el usuario quiere reversar el stock, creamos un movimiento compensatorio
-            if(reversarStock) {
-                batch.set(db.collection("stock").doc(), {
-                    articulo: articulo,
-                    cantidad: -cantidad, // Valor inverso
-                    tipo: "reversion_ajuste",
-                    fecha: firebase.firestore.FieldValue.serverTimestamp(),
-                    notas: "Reversión automática por borrado de historial"
-                });
-            }
-
-            await batch.commit();
-            alert("Registro eliminado correctamente");
-        } catch (e) {
-            console.error(e);
-            alert("Error al borrar");
-        }
+        const checkboxes = document.querySelectorAll('.chk-item');
+        const algunSinMarcar = Array.from(checkboxes).some(c => !c.checked);
+        checkboxes.forEach(c => c.checked = algunSinMarcar);
+        actualizarEstadoBoton();
     }
 
     async function borrarSeleccionados() {
-        const ids = Array.from(document.querySelectorAll('.chk-historial:checked')).map(c => c.value);
-        if(ids.length === 0) return;
+        const checks = document.querySelectorAll('.chk-item:checked');
+        if (checks.length === 0) return;
 
-        if(!confirm(`¿Estás seguro de borrar estos ${ids.length} elementos seleccionados?`)) return;
+        const confirmar = confirm(`¿Está seguro de borrar los ${checks.length} elementos seleccionados?`);
+        if (!confirmar) return;
+
+        const reversar = confirm("¿Desea restaurar el stock automáticamente para estos registros?");
         
-        const reversarStock = confirm("¿Desea restaurar el stock para TODOS los elementos seleccionados?");
+        const batch = db.batch();
+
+        checks.forEach(chk => {
+            const id = chk.value;
+            const cantidad = parseFloat(chk.dataset.cantidad);
+            const articulo = chk.dataset.articulo;
+
+            // 1. Borrar registro
+            batch.delete(db.collection("stock").doc(id));
+
+            // 2. Reversión opcional
+            if (reversar) {
+                batch.set(db.collection("stock").doc(), {
+                    articulo: articulo,
+                    cantidad: -cantidad, // Valor opuesto para anular
+                    tipo: "ajuste_reversion",
+                    fecha: firebase.firestore.FieldValue.serverTimestamp(),
+                    notas: "Reversión por borrado masivo"
+                });
+            }
+        });
 
         try {
-            const batch = db.batch();
-            
-            for (let id of ids) {
-                // Para reversar en lote necesitamos los datos de cada uno antes de borrar
-                // Por simplicidad en esta versión web, borramos los registros directamente
-                // Si necesitas reversar stock en lote, primero habría que hacer un fetch de esos IDs
-                batch.delete(db.collection("stock").doc(id));
-            }
-
             await batch.commit();
-            alert(`${ids.length} registros eliminados.`);
-            checkBatchActions();
-        } catch (e) {
-            alert("Error en el borrado por lote");
+            alert("Operación completada con éxito.");
+        } catch (error) {
+            console.error(error);
+            alert("Error al procesar el borrado masivo.");
         }
     }
 
-    // Al iniciar, poner el mes actual en el filtro
-    window.onload = () => {
-        const ahora = new Date();
-        const mesActual = ahora.toISOString().substring(0, 7);
-        document.getElementById('filtroMes').value = mesActual;
-    };
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', () => {
+        const hoy = new Date();
+        document.getElementById('filtroMes').value = hoy.toISOString().substring(0, 7);
+    });
 </script>
