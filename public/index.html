@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Prados del Sol - Artículos Dinámicos</title>
+    <title>Stock Prados del Sol - Control de Salidas</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -21,7 +21,7 @@
         .card { border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-radius: 12px; }
         .table thead { background-color: #34495e; color: white; }
         .prov-tag { font-size: 0.75rem; background: #e9ecef; border-radius: 4px; padding: 2px 6px; margin-right: 4px; display: inline-block; color: #495057; border: 1px solid #dee2e6; }
-        .list-group-item { border-left: none; border-right: none; }
+        .text-venta { color: #e74c3c; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -41,15 +41,17 @@
             <h5 class="text-center mb-4 border-bottom pb-3">SISTEMA STOCK</h5>
             <nav>
                 <a class="nav-link active" id="btn-stock" onclick="showTab('stock')"><i class="fas fa-boxes me-2"></i> Inventario</a>
+                <a class="nav-link" id="btn-ventas" onclick="showTab('ventas')"><i class="fas fa-truck-loading me-2"></i> Salidas/Ventas</a>
                 <a class="nav-link" id="btn-config" onclick="showTab('config')"><i class="fas fa-cogs me-2"></i> Configuración</a>
                 <a class="nav-link mt-5 text-danger" onclick="logout()"><i class="fas fa-power-off me-2"></i> Salir</a>
             </nav>
         </div>
 
         <div class="col-md-10 p-4">
+            
             <div id="stock" class="content-section">
                 <div class="d-flex justify-content-between mb-4">
-                    <h3>Inventario Consolidado</h3>
+                    <h3>Stock Real Disponible</h3>
                     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalIngreso">
                         <i class="fas fa-plus me-1"></i> Registrar Ingreso
                     </button>
@@ -59,9 +61,9 @@
                         <thead>
                             <tr>
                                 <th>Artículo</th>
-                                <th class="text-center">Stock Total</th>
-                                <th>Detalle por Proveedor</th>
-                                <th class="text-end">Limpiar</th>
+                                <th class="text-center">Stock Actual</th>
+                                <th>Composición (Ingresos - Ventas)</th>
+                                <th class="text-end">Opciones</th>
                             </tr>
                         </thead>
                         <tbody id="tablaStockConsolidado"></tbody>
@@ -69,56 +71,101 @@
                 </div>
             </div>
 
-            <div id="config" class="content-section hidden">
-                <h3 class="mb-4">Panel de Configuración</h3>
-                <div class="row g-3">
-                    
-                    <div class="col-md-3">
-                        <div class="card p-3 border-start border-info border-4 h-100">
-                            <h5><i class="fas fa-tag me-2"></i>1. Artículos</h5>
-                            <div class="input-group mb-2">
-                                <input type="text" id="confNuevoArt" class="form-control form-control-sm" placeholder="Nombre artículo...">
-                                <button class="btn btn-info btn-sm text-white" onclick="guardarArticuloCloud()">+</button>
+            <div id="ventas" class="content-section hidden">
+                <div class="row">
+                    <div class="col-md-5">
+                        <div class="card p-4 border-top border-danger border-4">
+                            <h4><i class="fas fa-cart-arrow-down me-2 text-danger"></i>Cargar Venta</h4>
+                            <p class="text-muted small">El sistema calculará automáticamente las botellas/unidades a descontar según el empaque configurado.</p>
+                            <hr>
+                            
+                            <label class="fw-bold">1. Seleccionar Artículo</label>
+                            <select id="vtaArticulo" class="form-select mb-3" onchange="calcularVenta()"></select>
+
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <label class="fw-bold">Cantidad</label>
+                                    <input type="number" id="vtaCantidad" class="form-control" value="0" oninput="calcularVenta()">
+                                </div>
+                                <div class="col-6">
+                                    <label class="fw-bold">Formato</label>
+                                    <select id="vtaTipoCarga" class="form-select" onchange="calcularVenta()">
+                                        <option value="u">Unidades sueltas</option>
+                                        <option value="c">Cajas completas</option>
+                                        <option value="p">Pallets cerrados</option>
+                                    </select>
+                                </div>
                             </div>
-                            <div id="listaArticulosMaster" class="list-group overflow-auto" style="max-height: 300px;"></div>
+
+                            <div class="bg-light p-3 rounded text-center border mb-3">
+                                <div class="small text-uppercase text-muted">Total a descontar del Stock:</div>
+                                <span id="vtaTotalFinal" class="fs-1 fw-bold text-danger">0</span> <span class="text-danger fw-bold">UNIDADES</span>
+                                <div id="vtaInfoEmpaque" class="small text-primary mt-1"></div>
+                            </div>
+
+                            <button class="btn btn-danger w-100 py-3 fw-bold" onclick="registrarVenta()">
+                                CONFIRMAR SALIDA DE MERCADERÍA
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-7">
+                        <div class="card p-3">
+                            <h5>Historial de Salidas Recientes</h5>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Artículo</th>
+                                            <th>Unidades</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="listaUltimasVentas"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="config" class="content-section hidden">
+                <h3 class="mb-4">Configuración de Parámetros</h3>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="card p-3 border-start border-info border-4">
+                            <h5>1. Artículos</h5>
+                            <div class="input-group mb-2">
+                                <input type="text" id="confNuevoArt" class="form-control" placeholder="Ej: Aceite 1.5L">
+                                <button class="btn btn-info text-white" onclick="guardarArticuloCloud()">+</button>
+                            </div>
+                            <div id="listaArticulosMaster" class="list-group overflow-auto" style="max-height: 250px;"></div>
                         </div>
                     </div>
 
                     <div class="col-md-3">
-                        <div class="card p-3 border-start border-success border-4 h-100">
-                            <h5><i class="fas fa-truck me-2"></i>2. Proveedores</h5>
-                            <input type="text" id="confNombreProv" class="form-control form-control-sm mb-2" placeholder="Nombre Proveedor">
-                            <label class="small fw-bold">Asignar Productos:</label>
-                            <select id="confProductosProv" class="form-select form-select-sm mb-2" multiple style="height: 120px;"></select>
-                            <button class="btn btn-success btn-sm w-100 mb-3" onclick="guardarProveedorCloud()">Agregar Prov.</button>
-                            <div id="listaProveedores" class="list-group overflow-auto" style="max-height: 120px;"></div>
+                        <div class="card p-3 border-start border-success border-4">
+                            <h5>2. Proveedores</h5>
+                            <input type="text" id="confNombreProv" class="form-control mb-2" placeholder="Nombre Prov.">
+                            <select id="confProductosProv" class="form-select mb-2" multiple style="height: 100px;"></select>
+                            <button class="btn btn-success w-100" onclick="guardarProveedorCloud()">Agregar</button>
+                            <div id="listaProveedores" class="list-group mt-2 overflow-auto" style="max-height: 120px;"></div>
                         </div>
                     </div>
 
                     <div class="col-md-6">
-                        <div class="card p-3 border-start border-primary border-4 h-100">
-                            <h5><i class="fas fa-balance-scale me-2"></i>3. Empaque por Proveedor</h5>
+                        <div class="card p-3 border-start border-primary border-4">
+                            <h5>3. Matriz de Empaque (Unidades por caja/pallet)</h5>
                             <div class="row g-2 mb-3">
-                                <div class="col-6">
-                                    <label class="small fw-bold">Proveedor</label>
-                                    <select id="confSelProv" class="form-select form-select-sm" onchange="filtrarArticulosConfig()"></select>
-                                </div>
-                                <div class="col-6">
-                                    <label class="small fw-bold">Artículo</label>
-                                    <select id="confSelArt" class="form-select form-select-sm"></select>
-                                </div>
-                                <div class="col-6">
-                                    <label class="small fw-bold">u. x Caja</label>
-                                    <input type="number" id="confUxC" class="form-control form-control-sm" value="1">
-                                </div>
-                                <div class="col-6">
-                                    <label class="small fw-bold">Cajas x Pallet</label>
-                                    <input type="number" id="confCxP" class="form-control form-control-sm" value="1">
-                                </div>
+                                <div class="col-6"><select id="confSelProv" class="form-select" onchange="filtrarArticulosConfig()"></select></div>
+                                <div class="col-6"><select id="confSelArt" class="form-select"></select></div>
+                                <div class="col-6"><input type="number" id="confUxC" class="form-control" placeholder="Unidades por caja"></div>
+                                <div class="col-6"><input type="number" id="confCxP" class="form-control" placeholder="Cajas por pallet"></div>
                             </div>
-                            <button class="btn btn-primary btn-sm w-100" onclick="guardarAcuerdoEmpaque()">Vincular y Guardar</button>
+                            <button class="btn btn-primary w-100" onclick="guardarAcuerdoEmpaque()">Guardar Relación</button>
                             <hr>
-                            <div id="listaAcuerdos" class="row overflow-auto" style="max-height: 180px;"></div>
+                            <div id="listaAcuerdos" class="row overflow-auto" style="max-height: 150px;"></div>
                         </div>
                     </div>
                 </div>
@@ -130,44 +177,22 @@
 <div class="modal fade" id="modalIngreso" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">Entrada de Stock</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
+            <div class="modal-header bg-primary text-white"><h5>Entrada de Mercadería</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
             <div class="modal-body">
-                <label class="fw-bold">Proveedor</label>
-                <select id="selProveedor" class="form-select mb-3" onchange="actualizarFiltroArticulos();"></select>
-
-                <label class="fw-bold">Artículo</label>
-                <select id="selArticulo" class="form-select mb-3" onchange="calcularIngreso();"></select>
-
+                <label class="fw-bold">Proveedor</label><select id="selProveedor" class="form-select mb-3" onchange="actualizarFiltroArticulos();"></select>
+                <label class="fw-bold">Artículo</label><select id="selArticulo" class="form-select mb-3" onchange="calcularIngreso();"></select>
                 <div class="row mb-3">
-                    <div class="col-6">
-                        <label class="fw-bold">Cantidad</label>
-                        <input type="number" id="inpCantidad" class="form-control" value="0" oninput="calcularIngreso()">
-                    </div>
-                    <div class="col-6">
-                        <label class="fw-bold">Formato</label>
-                        <select id="selTipoCarga" class="form-select" onchange="calcularIngreso()">
-                            <option value="u">Unidades</option>
-                            <option value="c">Cajas</option>
-                            <option value="p">Pallets</option>
-                        </select>
-                    </div>
+                    <div class="col-6"><label class="fw-bold">Cantidad</label><input type="number" id="inpCantidad" class="form-control" value="0" oninput="calcularIngreso()"></div>
+                    <div class="col-6"><label class="fw-bold">Formato</label><select id="selTipoCarga" class="form-select" onchange="calcularIngreso()"><option value="u">Unidades</option><option value="c">Cajas</option><option value="p">Pallets</option></select></div>
                 </div>
-                <div class="bg-light p-3 rounded text-center border">
-                    <span id="txtTotalFinal" class="fs-2 fw-bold text-primary">0</span> <span class="text-primary fw-bold">unidades</span>
-                </div>
+                <div class="bg-light p-3 rounded text-center border text-primary"><span id="txtTotalFinal" class="fs-2 fw-bold">0</span> <b>unidades</b></div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-success w-100 btn-lg" onclick="guardarIngresoCloud()">CONFIRMAR INGRESO</button>
-            </div>
+            <div class="modal-footer"><button class="btn btn-success w-100" onclick="guardarIngresoCloud()">CONFIRMAR INGRESO</button></div>
         </div>
     </div>
 </div>
 
 <script>
-    // --- CONFIG FIREBASE ---
     const firebaseConfig = {
       apiKey: "AIzaSyCjYp0idCxs32QAofYLVEGcwvmd3HXy-3Y",
       authDomain: "prados-del-sol.firebaseapp.com",
@@ -185,7 +210,6 @@
     let provsLocal = [];
     let acuerdosLocal = [];
 
-    // --- AUTH ---
     function login() { auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPass').value); }
     function logout() { auth.signOut(); }
 
@@ -201,17 +225,15 @@
     });
 
     function inicializarListeners() {
-        // 1. Artículos
         db.collection("articulos").orderBy("nombre").onSnapshot(snap => {
             articulosLocal = snap.docs.map(d => ({id: d.id, ...d.data()}));
             renderizarArticulosMaster();
-            const selects = ['confProductosProv'];
+            const selects = ['confProductosProv', 'vtaArticulo'];
             selects.forEach(id => {
-                document.getElementById(id).innerHTML = articulosLocal.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
+                document.getElementById(id).innerHTML = (id==='vtaArticulo' ? '<option value="">-- Seleccionar --</option>':'') + articulosLocal.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
             });
         });
 
-        // 2. Proveedores
         db.collection("proveedores").orderBy("nombre").onSnapshot(snap => {
             provsLocal = snap.docs.map(d => ({id: d.id, ...d.data()}));
             renderizarListaProvs();
@@ -220,34 +242,73 @@
             document.getElementById('selProveedor').innerHTML = html;
         });
 
-        // 3. Acuerdos
         db.collection("acuerdos_empaque").onSnapshot(snap => {
             acuerdosLocal = snap.docs.map(d => ({id: d.id, ...d.data()}));
             renderizarAcuerdos();
         });
 
-        // 4. Stock Consolidado
         db.collection("stock").onSnapshot(snap => {
             const movs = snap.docs.map(d => ({id: d.id, ...d.data()}));
             renderizarConsolidado(movs);
+            renderizarUltimasVentas(movs);
         });
     }
 
-    // --- GESTIÓN DE ARTÍCULOS ---
-    function guardarArticuloCloud() {
-        const nombre = document.getElementById('confNuevoArt').value.trim();
-        if(!nombre) return;
-        db.collection("articulos").add({ nombre }).then(() => {
-            document.getElementById('confNuevoArt').value = '';
+    // --- LÓGICA DE VENTA CON DESCUENTO DE UNIDADES ---
+    function calcularVenta() {
+        const art = document.getElementById('vtaArticulo').value;
+        const cant = parseFloat(document.getElementById('vtaCantidad').value) || 0;
+        const tipo = document.getElementById('vtaTipoCarga').value;
+
+        // Buscamos el acuerdo de empaque para ese artículo (usamos el primero que aparezca)
+        const acuerdo = acuerdosLocal.find(a => a.articulo === art) || {uxc:1, cxp:1};
+        
+        let totalUnidades = 0;
+        let info = "";
+
+        if(tipo === 'u') {
+            totalUnidades = cant;
+            info = "Venta por unidad suelta";
+        } else if (tipo === 'c') {
+            totalUnidades = cant * acuerdo.uxc;
+            info = `Cada caja tiene ${acuerdo.uxc} unidades`;
+        } else if (tipo === 'p') {
+            totalUnidades = cant * (acuerdo.uxc * acuerdo.cxp);
+            info = `Cada pallet tiene ${acuerdo.cxp} cajas de ${acuerdo.uxc} un.`;
+        }
+
+        document.getElementById('vtaTotalFinal').innerText = Math.round(totalUnidades).toLocaleString();
+        document.getElementById('vtaInfoEmpaque').innerText = info;
+    }
+
+    function registrarVenta() {
+        const art = document.getElementById('vtaArticulo').value;
+        const total = parseInt(document.getElementById('vtaTotalFinal').innerText.replace(/\./g, ''));
+        
+        if(!art || total <= 0) return alert("Cargue un artículo y cantidad válida");
+
+        db.collection("stock").add({
+            articulo: art,
+            proveedor: "VENTA",
+            cantidad: -total, // El valor negativo resta del stock consolidado
+            fecha: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+            document.getElementById('vtaCantidad').value = 0;
+            document.getElementById('vtaTotalFinal').innerText = "0";
+            alert("Salida registrada. El stock se ha actualizado.");
         });
     }
 
-    function renderizarArticulosMaster() {
-        document.getElementById('listaArticulosMaster').innerHTML = articulosLocal.map(a => `
-            <div class="list-group-item d-flex justify-content-between p-1 small">
-                <span>${a.nombre}</span>
-                <button class="btn btn-sm text-danger border-0" onclick="db.collection('articulos').doc('${a.id}').delete()">×</button>
-            </div>`).join('');
+    function renderizarUltimasVentas(movs) {
+        const ventas = movs.filter(m => m.cantidad < 0).sort((a,b) => b.fecha - a.fecha).slice(0, 15);
+        document.getElementById('listaUltimasVentas').innerHTML = ventas.map(v => `
+            <tr>
+                <td><small>${v.fecha ? v.fecha.toDate().toLocaleTimeString() : ''}</small></td>
+                <td><b>${v.articulo}</b></td>
+                <td class="text-danger fw-bold">${v.cantidad}</td>
+                <td class="text-end"><button class="btn btn-sm text-muted" onclick="db.collection('stock').doc('${v.id}').delete()">×</button></td>
+            </tr>
+        `).join('');
     }
 
     // --- CONSOLIDACIÓN ---
@@ -257,7 +318,9 @@
             if (!consolidado[m.articulo]) consolidado[m.articulo] = { total: 0, proveedores: {}, ids: [] };
             consolidado[m.articulo].total += m.cantidad;
             consolidado[m.articulo].ids.push(m.id);
-            consolidado[m.articulo].proveedores[m.proveedor] = (consolidado[m.articulo].proveedores[m.proveedor] || 0) + m.cantidad;
+            if(m.proveedor !== "VENTA") {
+                consolidado[m.articulo].proveedores[m.proveedor] = (consolidado[m.articulo].proveedores[m.proveedor] || 0) + m.cantidad;
+            }
         });
 
         let html = "";
@@ -271,21 +334,25 @@
 
             html += `<tr>
                 <td class="fw-bold">${art}</td>
-                <td class="text-center fw-bold text-primary">${data.total.toLocaleString()}</td>
-                <td>${desc || '<small class="text-muted">Sin ingresos</small>'}</td>
+                <td class="text-center fs-5 fw-bold ${data.total < 0 ? 'text-danger' : 'text-primary'}">${data.total.toLocaleString()}</td>
+                <td>${desc || '<small class="text-muted italic">Sin ingresos registrados</small>'}</td>
                 <td class="text-end"><button class="btn btn-sm btn-outline-danger" onclick="borrarStockArticulo('${art}', ${JSON.stringify(data.ids)})"><i class="fas fa-undo"></i></button></td>
             </tr>`;
         });
         document.getElementById('tablaStockConsolidado').innerHTML = html;
     }
 
-    async function borrarStockArticulo(nombre, ids) {
-        if(confirm(`¿Resetear stock de ${nombre}?`)) {
-            for (const id of ids) await db.collection("stock").doc(id).delete();
-        }
+    // --- FUNCIONES SOPORTE ---
+    function guardarArticuloCloud() {
+        const nombre = document.getElementById('confNuevoArt').value.trim();
+        if(!nombre) return;
+        db.collection("articulos").add({ nombre }).then(() => { document.getElementById('confNuevoArt').value = ''; });
     }
 
-    // --- FUNCIONES SOPORTE ---
+    function renderizarArticulosMaster() {
+        document.getElementById('listaArticulosMaster').innerHTML = articulosLocal.map(a => `<div class="list-group-item d-flex justify-content-between p-1 small"><span>${a.nombre}</span><button class="btn btn-sm text-danger border-0" onclick="db.collection('articulos').doc('${a.id}').delete()">×</button></div>`).join('');
+    }
+
     function actualizarFiltroArticulos() {
         const prov = provsLocal.find(p => p.nombre === document.getElementById('selProveedor').value);
         document.getElementById('selArticulo').innerHTML = prov ? prov.productos.map(a => `<option value="${a}">${a}</option>`).join('') : '';
@@ -311,7 +378,7 @@
         const art = document.getElementById('selArticulo').value;
         const prov = document.getElementById('selProveedor').value;
         const total = parseInt(document.getElementById('txtTotalFinal').innerText.replace(/\./g, ''));
-        if(!art || !prov || total <= 0) return alert("Datos incompletos");
+        if(!art || !prov || total <= 0) return alert("Carga incompleta");
         db.collection("stock").add({ articulo: art, proveedor: prov, cantidad: total, fecha: firebase.firestore.FieldValue.serverTimestamp() })
             .then(() => { bootstrap.Modal.getInstance(document.getElementById('modalIngreso')).hide(); document.getElementById('inpCantidad').value = 0; });
     }
@@ -332,18 +399,18 @@
         db.collection("acuerdos_empaque").doc(`${prov}_${art}`.replace(/\s+/g, '')).set({ proveedor: prov, articulo: art, uxc, cxp });
     }
 
+    async function borrarStockArticulo(nombre, ids) {
+        if(confirm(`¿Deseas resetear el historial de ${nombre}?`)) {
+            for (const id of ids) await db.collection("stock").doc(id).delete();
+        }
+    }
+
     function renderizarListaProvs() {
         document.getElementById('listaProveedores').innerHTML = provsLocal.map(p => `<div class="list-group-item d-flex justify-content-between p-1 small"><span>${p.nombre}</span><button class="btn btn-sm text-danger border-0" onclick="db.collection('proveedores').doc('${p.id}').delete()">×</button></div>`).join('');
     }
 
     function renderizarAcuerdos() {
-        document.getElementById('listaAcuerdos').innerHTML = acuerdosLocal.map(a => `
-            <div class="col-12 mb-1">
-                <div class="p-2 bg-light border rounded d-flex justify-content-between align-items-center">
-                    <div style="font-size:0.7rem"><b>${a.proveedor}</b><br>${a.articulo} (${a.uxc}u/cj · ${a.cxp}cj/p)</div>
-                    <button class="btn btn-sm text-danger border-0" onclick="db.collection('acuerdos_empaque').doc('${a.id}').delete()">×</button>
-                </div>
-            </div>`).join('');
+        document.getElementById('listaAcuerdos').innerHTML = acuerdosLocal.map(a => `<div class="col-12 mb-1"><div class="p-2 bg-light border rounded d-flex justify-content-between align-items-center" style="font-size:0.75rem"><div><b>${a.proveedor}</b>: ${a.articulo} (${a.uxc}u/cj · ${a.cxp}cj/p)</div><button class="btn btn-sm text-danger border-0" onclick="db.collection('acuerdos_empaque').doc('${a.id}').delete()">×</button></div></div>`).join('');
     }
 
     function showTab(id) {
