@@ -3,15 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Prados del Sol - Gestión v13</title>
+    <title>Prados del Sol - Gestión Móvil v12</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -19,28 +16,52 @@
     <style>
         body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; overflow-x: hidden; }
         
-        /* --- ESTILO PORTADA --- */
+        /* --- ESTILO PORTADA ACORDADA --- */
         #loginScreen {
             background: url('https://r.jina.ai/i/05e24f469399436181b51e44f8f9467d') no-repeat center center fixed;
-            background-size: cover; height: 100vh; display: flex; align-items: center; justify-content: center;
+            background-size: cover;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .login-card {
-            background: rgba(255, 255, 255, 0.95); border-radius: 25px; padding: 40px 30px;
-            width: 100%; max-width: 380px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: center;
-        }
-        .login-card .logo-container i { color: #f9bc15; font-size: 3rem; }
-        .login-card h2 { color: #0b4a8d; font-weight: 800; margin-top: 10px; }
-        .btn-ingresar { background-color: #2b78d2; color: white; border-radius: 12px; height: 50px; font-weight: bold; width: 100%; border: none; margin-top: 10px; }
 
-        /* --- SISTEMA --- */
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 25px;
+            padding: 40px 30px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .login-card .logo-container i { color: #f9bc15; font-size: 3rem; }
+        .login-card h2 { color: #0b4a8d; font-weight: 800; margin-top: 10px; letter-spacing: 1px; }
+
+        .btn-ingresar {
+            background-color: #2b78d2;
+            color: white;
+            border-radius: 12px;
+            height: 50px;
+            font-weight: bold;
+            width: 100%;
+            border: none;
+            margin-top: 10px;
+        }
+
+        /* --- ESTILO SISTEMA (Basado en tu v10) --- */
         .sidebar { background-color: #212529; color: white; padding: 15px; z-index: 1000; }
-        @media (min-width: 768px) { .sidebar { min-height: 100vh; position: sticky; top: 0; } }
+        @media (min-width: 768px) {
+            .sidebar { min-height: 100vh; position: sticky; top: 0; }
+        }
         @media (max-width: 767px) {
             .sidebar { position: relative; min-height: auto; padding: 10px; }
-            .nav-custom { display: flex; overflow-x: auto; white-space: nowrap; gap: 5px; }
+            .nav-custom { display: flex; overflow-x: auto; white-space: nowrap; gap: 5px; padding-bottom: 5px; }
             .nav-link { font-size: 0.85rem; padding: 8px 12px !important; flex: 0 0 auto; border: 1px solid #444; }
         }
-        .nav-link { color: #adb5bd; cursor: pointer; padding: 12px; border-radius: 8px; transition: 0.3s; text-decoration: none; }
+
+        .nav-link { color: #adb5bd; cursor: pointer; padding: 12px; border-radius: 8px; transition: 0.3s; }
         .nav-link:hover, .nav-link.active { color: white; background-color: #0d6efd; }
         .hidden { display: none !important; }
         .card { border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-radius: 12px; margin-bottom: 15px; }
@@ -52,7 +73,10 @@
 
 <div id="loginScreen">
     <div class="login-card mx-3">
-        <div class="logo-container mb-4"><i class="fas fa-sun"></i><h2>PRADOS DEL SOL</h2></div>
+        <div class="logo-container mb-4">
+            <i class="fas fa-sun"></i>
+            <h2>PRADOS DEL SOL</h2>
+        </div>
         <input type="email" id="loginEmail" class="form-control mb-3" placeholder="Correo">
         <input type="password" id="loginPass" class="form-control mb-3" placeholder="Contraseña">
         <button onclick="login()" class="btn-ingresar shadow-sm">INGRESAR</button>
@@ -65,7 +89,7 @@
             <h5 class="text-center mb-4 border-bottom pb-2 text-info">SISTEMA PRADOS</h5>
             <nav class="nav-custom">
                 <a class="nav-link active" onclick="showTab('stock')"><i class="fas fa-boxes me-1"></i> Stock</a>
-                <a class="nav-link" onclick="showTab('ventas')"><i class="fas fa-file-invoice me-1"></i> Ventas</a>
+                <a class="nav-link" onclick="showTab('ventas')"><i class="fas fa-truck me-1"></i> Ventas</a>
                 <a class="nav-link" onclick="showTab('historial')"><i class="fas fa-history me-1"></i> Historial</a>
                 <a class="nav-link" onclick="showTab('clientes')"><i class="fas fa-users me-1"></i> Clientes</a>
                 <a class="nav-link" onclick="showTab('config')"><i class="fas fa-cog me-1"></i> Config</a>
@@ -78,24 +102,24 @@
                 <div class="row">
                     <div class="col-lg-8">
                         <div class="card p-3 border-top border-success border-4 shadow-sm">
-                            <h5 class="mb-3 text-success fw-bold">Carga Stock</h5>
+                            <h5 class="mb-3 text-success fw-bold">Carga por Proveedor</h5>
                             <div class="row g-2">
                                 <div class="col-6 col-md-4"><label class="small fw-bold">Proveedor</label><select id="selProveedor" class="form-select" onchange="filtrarArticulosAcuerdo()"></select></div>
                                 <div class="col-6 col-md-4"><label class="small fw-bold">Artículo</label><select id="selArticulo" class="form-select" onchange="calcularCarga()"></select></div>
                                 <div class="col-6 col-md-2"><label class="small fw-bold">Tipo</label>
                                     <select id="selTipoCarga" class="form-select" onchange="calcularCarga()"><option value="p">Pallets</option><option value="c">Cajas</option><option value="u">Unidades</option></select>
                                 </div>
-                                <div class="col-6 col-md-2"><label class="small fw-bold">Cant.</label><input type="number" id="inpCantidad" class="form-control" oninput="calcularCarga()"></div>
+                                <div class="col-6 col-md-2"><label class="small fw-bold">Cantidad</label><input type="number" id="inpCantidad" class="form-control" oninput="calcularCarga()"></div>
                             </div>
                             <div class="mt-3 d-flex justify-content-between align-items-center bg-light p-2 rounded">
                                 <span class="small fw-bold">Total: <span id="txtTotalFinal" class="text-success fs-5">0</span> u.</span>
-                                <button class="btn btn-success btn-sm" onclick="guardarIngreso()">SUMAR</button>
+                                <button class="btn btn-success btn-sm" onclick="guardarIngreso()">CONFIRMAR</button>
                             </div>
                         </div>
                     </div>
                     <div class="col-lg-4">
                         <div class="card p-3 border-top border-warning border-4 shadow-sm">
-                            <h5 class="text-warning fw-bold">Uso Fábrica</h5>
+                            <h5 class="text-warning fw-bold">Uso de Fábrica</h5>
                             <select id="consumoArticulo" class="form-select mb-2"></select>
                             <div class="input-group">
                                 <input type="number" id="consumoCantidad" class="form-control" placeholder="Cant.">
@@ -104,7 +128,12 @@
                         </div>
                     </div>
                 </div>
+
                 <div class="card p-2 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center p-2">
+                        <h6 class="mb-0 fw-bold">Inventario Actual</h6>
+                        <button class="btn btn-sm btn-outline-success" onclick="exportarExcel()"><i class="fas fa-file-excel"></i></button>
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-sm align-middle mb-0">
                             <thead class="table-dark"><tr><th>Artículo</th><th class="text-center">Stock</th><th class="text-center">Mín.</th><th class="text-end"></th></tr></thead>
@@ -116,7 +145,7 @@
 
             <div id="ventas" class="content-section hidden">
                 <div class="card p-3 border-top border-primary border-4 shadow-sm">
-                    <h5 class="text-primary fw-bold mb-3">Nuevo Despacho & Remito</h5>
+                    <h5 class="text-primary fw-bold mb-3">Nueva Venta / Despacho</h5>
                     <div class="row g-2">
                         <div class="col-12 col-md-6"><label class="small fw-bold">Cliente</label><select id="vtaCliente" class="form-select"></select></div>
                         <div class="col-12 col-md-6"><label class="small fw-bold">Producto</label><select id="vtaArticulo" class="form-select" onchange="actualizarPrevisualizacion()"></select></div>
@@ -124,24 +153,75 @@
                         <div class="col-4"><label class="small">CxP</label><input type="number" id="vtaCxP" class="form-control" value="75" oninput="actualizarPrevisualizacion()"></div>
                         <div class="col-4"><label class="small">UxC</label><input type="number" id="vtaUxC" class="form-control" value="12" oninput="actualizarPrevisualizacion()"></div>
                     </div>
-                    <div class="mt-3 p-3 bg-light rounded d-flex justify-content-around text-center border">
-                        <div><small class="d-block text-muted">UNIDADES</small><span class="fw-bold text-danger fs-5" id="resTotalAceite">0</span></div>
-                        <div><small class="d-block text-muted">CAJAS</small><span class="fw-bold text-primary fs-5" id="resTotalCajas">0</span></div>
+                    <div class="resumen-vta mt-3 p-2 bg-light rounded d-flex justify-content-around text-center border">
+                        <div><small class="d-block text-muted">Art.</small><span class="fw-bold text-danger" id="resTotalAceite">0</span></div>
+                        <div><small class="d-block text-muted">Cajas</small><span class="fw-bold text-primary" id="resTotalCajas">0</span></div>
+                        <div><small class="d-block text-muted">Etiquet.</small><span class="fw-bold text-success" id="resTotalEtiquetas">0</span></div>
                     </div>
-                    <button class="btn btn-primary w-100 mt-3 py-3 fw-bold" onclick="procesarDespacho()">CONFIRMAR Y DESCARGAR REMITO</button>
+                    <button class="btn btn-primary w-100 mt-3 py-2 fw-bold" onclick="procesarDespacho()">CONFIRMAR DESPACHO</button>
                 </div>
             </div>
 
-            <div id="historial" class="content-section hidden"><div class="card p-3"><h5>Historial</h5><input type="month" id="filtroMes" class="form-control w-50 mb-3" onchange="cargarHistorial()"><table class="table table-sm"><tbody id="listaHistorial"></tbody></table></div></div>
-            <div id="config" class="content-section hidden">...</div> <div id="clientes" class="content-section hidden"><div class="card p-3"><h6>Gestión Clientes</h6><input type="text" id="cliNombre" class="form-control mb-2" placeholder="Nombre"><input type="text" id="cliDir" class="form-control mb-2" placeholder="Dirección"><button class="btn btn-dark w-100" onclick="guardarCliente()">AÑADIR CLIENTE</button><table class="table mt-3"><tbody id="tablaClientes"></tbody></table></div></div>
+            <div id="historial" class="content-section hidden">
+                <div class="card p-3 border-top border-info border-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0">Historial</h5>
+                        <input type="month" id="filtroMes" class="form-control form-control-sm w-50" onchange="cargarHistorial()">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm" style="font-size: 0.8rem;">
+                            <thead><tr><th>Fecha</th><th>Art.</th><th>Tipo</th><th class="text-center">Cant.</th></tr></thead>
+                            <tbody id="listaHistorial"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="config" class="content-section hidden">
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <div class="card p-3">
+                            <h6 class="fw-bold border-bottom pb-2">Maestro Artículos</h6>
+                            <div class="input-group input-group-sm mb-2">
+                                <input type="text" id="confNuevoArt" class="form-control" placeholder="Nombre">
+                                <input type="number" id="confMinArt" class="form-control" placeholder="Mín">
+                                <button class="btn btn-info text-white" onclick="guardarArt()">+</button>
+                            </div>
+                            <div id="listaArts" class="list-group list-group-flush" style="max-height: 200px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="card p-3">
+                            <h6 class="fw-bold border-bottom pb-2">Vínculos Proveedor</h6>
+                            <div class="row g-1">
+                                <div class="col-6"><select id="acProv" class="form-select form-select-sm"></select></div>
+                                <div class="col-6"><select id="acArt" class="form-select form-select-sm"></select></div>
+                                <div class="col-6"><input type="number" id="acUxC" class="form-control form-select-sm" placeholder="U/C"></div>
+                                <div class="col-6"><input type="number" id="acCxP" class="form-control form-select-sm" placeholder="C/P"></div>
+                                <button class="btn btn-warning btn-sm w-100 mt-1 fw-bold" onclick="guardarAcuerdo()">VINCULAR</button>
+                            </div>
+                            <div id="listaAcuerdos" class="mt-2 small" style="max-height: 150px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="clientes" class="content-section hidden">
+                <div class="card p-3">
+                    <h6 class="fw-bold">Gestión de Clientes</h6>
+                    <div class="row g-2 mb-3">
+                        <div class="col-12"><input type="text" id="cliNombre" class="form-control" placeholder="Nombre"></div>
+                        <div class="col-12"><div class="input-group"><input type="text" id="cliDir" class="form-control" placeholder="Dirección"><button class="btn btn-dark" onclick="guardarCliente()">+</button></div></div>
+                    </div>
+                    <div class="table-responsive"><table class="table table-sm"><tbody id="tablaClientes"></tbody></table></div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    const { jsPDF } = window.jspdf;
-
-    // CONFIG FIREBASE (Tus datos originales)
+    // Tu lógica original de la v10 se mantiene idéntica para asegurar el funcionamiento
     const firebaseConfig = {
       apiKey: "AIzaSyCjYp0idCxs32QAofYLVEGcwvmd3HXy-3Y",
       authDomain: "prados-del-sol.firebaseapp.com",
@@ -163,6 +243,8 @@
         if (user) { 
             document.getElementById('loginScreen').classList.add('hidden'); 
             document.getElementById('appSystem').classList.remove('hidden'); 
+            const hoy = new Date();
+            document.getElementById('filtroMes').value = hoy.getFullYear() + "-" + String(hoy.getMonth()+1).padStart(2, '0');
             iniciarApp(); 
         } else {
             document.getElementById('loginScreen').classList.remove('hidden');
@@ -173,31 +255,82 @@
     async function iniciarApp() {
         db.collection("articulos").orderBy("nombre").onSnapshot(s => {
             articulos = s.docs.map(d => ({id:d.id, ...d.data()}));
-            document.getElementById('vtaArticulo').innerHTML = '<option value="">-- Prod --</option>' + articulos.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
-            document.getElementById('consumoArticulo').innerHTML = articulos.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
+            renderMaestro();
+            const html = articulos.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
+            document.getElementById('acArt').innerHTML = html;
+            document.getElementById('vtaArticulo').innerHTML = '<option value="">-- Prod --</option>' + html;
+            document.getElementById('consumoArticulo').innerHTML = '<option value="">-- Uso --</option>' + html;
         });
+
         db.collection("proveedores").orderBy("nombre").onSnapshot(s => {
             proveedores = s.docs.map(d => ({id:d.id, ...d.data()}));
-            document.getElementById('selProveedor').innerHTML = '<option value="">-- Prov --</option>' + proveedores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
+            const provHtml = '<option value="">-- Prov --</option>' + proveedores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
+            document.getElementById('selProveedor').innerHTML = provHtml;
+            document.getElementById('acProv').innerHTML = provHtml;
+            renderLista('listaProvs', proveedores, 'proveedores');
         });
+
         db.collection("clientes").orderBy("nombre").onSnapshot(s => {
             clientes = s.docs.map(d => ({id:d.id, ...d.data()}));
             document.getElementById('vtaCliente').innerHTML = '<option value="">-- Cliente --</option>' + clientes.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
             renderClientes();
         });
-        db.collection("acuerdos").onSnapshot(s => { acuerdos = s.docs.map(d => ({id:d.id, ...d.data()})); });
+
+        db.collection("acuerdos").onSnapshot(s => { acuerdos = s.docs.map(d => ({id:d.id, ...d.data()})); renderAcuerdos(); });
+
         db.collection("stock").onSnapshot(s => {
             const res = {}; s.docs.forEach(d => { res[d.data().articulo] = (res[d.data().articulo] || 0) + d.data().cantidad; });
             stockActualGlobal = res;
             document.getElementById('tablaStock').innerHTML = Object.keys(res).map(artNombre => {
                 const artData = articulos.find(a => a.nombre === artNombre);
+                const min = artData ? (artData.minimo || 0) : 0;
                 const actual = res[artNombre];
-                return `<tr><td>${artNombre}</td><td class="text-center fw-bold">${actual.toLocaleString()}</td><td class="text-end"><i class="fas fa-trash text-muted" onclick="limpiarArt('${artNombre}')"></i></td></tr>`;
+                return `<tr class="${actual <= min ? 'stock-peligro' : ''}">
+                    <td>${artNombre}</td>
+                    <td class="text-center fw-bold">${actual.toLocaleString()}</td>
+                    <td class="text-center text-muted small">${min}</td>
+                    <td class="text-end"><i class="fas fa-trash text-muted" onclick="limpiarArt('${artNombre}')"></i></td>
+                </tr>`;
             }).join('');
         });
     }
 
-    // --- LÓGICA DE VENTAS Y PDF ---
+    function filtrarArticulosAcuerdo() {
+        const prov = document.getElementById('selProveedor').value;
+        const filtrados = acuerdos.filter(a => a.proveedor === prov);
+        document.getElementById('selArticulo').innerHTML = '<option value="">-- Art --</option>' + filtrados.map(a => `<option value="${a.articulo}">${a.articulo}</option>`).join('');
+        calcularCarga();
+    }
+    
+    function calcularCarga() {
+        const prov = document.getElementById('selProveedor').value;
+        const art = document.getElementById('selArticulo').value;
+        const cant = parseInt(document.getElementById('inpCantidad').value) || 0;
+        const tipo = document.getElementById('selTipoCarga').value;
+        const ac = acuerdos.find(x => x.proveedor === prov && x.articulo === art);
+        let total = (ac && tipo === 'p') ? cant * ac.cxp * ac.uxc : (ac && tipo === 'c') ? cant * ac.uxc : cant;
+        document.getElementById('txtTotalFinal').innerText = total.toLocaleString();
+    }
+
+    async function guardarIngreso() {
+        const art = document.getElementById('selArticulo').value;
+        const totalU = parseInt(document.getElementById('txtTotalFinal').innerText.replace(/\./g,''));
+        if(art && totalU > 0) {
+            await db.collection("stock").add({ articulo: art, cantidad: totalU, tipo: "ingreso", fecha: firebase.firestore.FieldValue.serverTimestamp() });
+            alert("Stock sumado");
+            document.getElementById('inpCantidad').value = "";
+            document.getElementById('txtTotalFinal').innerText = "0";
+        }
+    }
+
+    async function registrarConsumo() {
+        const art = document.getElementById('consumoArticulo').value;
+        const cant = parseInt(document.getElementById('consumoCantidad').value) || 0;
+        if(!art || cant <= 0) return;
+        await db.collection("stock").add({ articulo: art, cantidad: -cant, tipo: "consumo_interno", fecha: firebase.firestore.FieldValue.serverTimestamp() });
+        alert("Descontado de stock");
+        document.getElementById('consumoCantidad').value = "";
+    }
 
     function actualizarPrevisualizacion() {
         const p = parseInt(document.getElementById('vtaPallets').value) || 0;
@@ -205,93 +338,63 @@
         const u = parseInt(document.getElementById('vtaUxC').value) || 0;
         document.getElementById('resTotalAceite').innerText = (p * c * u).toLocaleString();
         document.getElementById('resTotalCajas').innerText = (p * c).toLocaleString();
+        document.getElementById('resTotalEtiquetas').innerText = (p * c * u).toLocaleString();
     }
 
     async function procesarDespacho() {
-        const clienteNom = document.getElementById('vtaCliente').value;
         const prod = document.getElementById('vtaArticulo').value;
         const totalU = parseInt(document.getElementById('resTotalAceite').innerText.replace(/\./g,''));
         const totalC = parseInt(document.getElementById('resTotalCajas').innerText.replace(/\./g,''));
-        const p = document.getElementById('vtaPallets').value;
-        const cxp = document.getElementById('vtaCxP').value;
-
-        if(!clienteNom || !prod || totalU <= 0) return alert("Faltan datos");
-
+        if(!prod || totalU <= 0) return alert("Selección inválida");
         const batch = db.batch();
-        batch.set(db.collection("stock").doc(), { articulo: prod, cantidad: -totalU, tipo: "venta", cliente: clienteNom, fecha: firebase.firestore.FieldValue.serverTimestamp() });
-        
-        // Descontar cajas y etiquetas (Lógica automática)
+        batch.set(db.collection("stock").doc(), { articulo: prod, cantidad: -totalU, tipo: "venta", fecha: firebase.firestore.FieldValue.serverTimestamp() });
         let pN = prod.toLowerCase();
-        let caja = pN.includes("900") ? "caja de 900cc" : pN.includes("1.5") ? "caja 1.5lts" : pN.includes("5") ? "caja de 5lts" : "";
+        let caja = pN.includes("850cc") || pN.includes("900cc") ? "caja de 900cc" : pN.includes("1.5lts") ? "caja 1.5lts" : pN.includes("5lts") ? "caja de 5lts" : "";
+        let eti = pN.includes("850cc") || pN.includes("900cc") ? "etiqueta de 900cc" : pN.includes("1.5lts") ? "etiqueta 1.5lts" : pN.includes("5lts") ? "etiqueta de 5lts" : "";
         if (caja) batch.set(db.collection("stock").doc(), { articulo: caja, cantidad: -totalC, tipo: "venta", fecha: firebase.firestore.FieldValue.serverTimestamp() });
-
+        if (eti) batch.set(db.collection("stock").doc(), { articulo: eti, cantidad: -totalU, tipo: "venta", fecha: firebase.firestore.FieldValue.serverTimestamp() });
         await batch.commit();
-
-        // Generar Remito PDF
-        const cliData = clientes.find(c => c.nombre === clienteNom);
-        generarPDF({
-            cliente: clienteNom,
-            direccion: cliData ? cliData.dir : "S/D",
-            producto: prod,
-            pallets: p,
-            cajas: totalC,
-            unidades: totalU,
-            cxp: cxp
-        });
-
-        alert("Despacho registrado y PDF generado");
+        alert("Despacho realizado");
+        actualizarPrevisualizacion();
     }
 
-    function generarPDF(d) {
-        const doc = new jsPDF();
-        const fecha = new Date().toLocaleDateString();
-
-        // Cabecera
-        doc.setFillColor(26, 92, 55); // Verde Prados
-        doc.rect(0, 0, 210, 40, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(22);
-        doc.text("PRADOS DEL SOL", 15, 20);
-        doc.setFontSize(10);
-        doc.text("REMITO DE DESPACHO INTERNO", 15, 30);
-        doc.text(`FECHA: ${fecha}`, 160, 20);
-
-        // Datos Cliente
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(12);
-        doc.text("DATOS DEL DESTINO:", 15, 55);
-        doc.setFont("helvetica", "bold");
-        doc.text(`CLIENTE: ${d.cliente}`, 15, 62);
-        doc.setFont("helvetica", "normal");
-        doc.text(`DIRECCIÓN: ${d.direccion}`, 15, 68);
-
-        // Tabla de Contenido
-        doc.autoTable({
-            startY: 80,
-            head: [['PRODUCTO', 'PALLETS', 'CAJAS TOTALES', 'UNIDADES TOTALES']],
-            body: [
-                [d.producto, d.pallets, d.cajas, d.unidades.toLocaleString()]
-            ],
-            headStyles: { fillStyle: [43, 120, 210] },
-            theme: 'grid'
+    async function cargarHistorial() {
+        const mesSel = document.getElementById('filtroMes').value;
+        const start = new Date(mesSel + "-01T00:00:00");
+        const end = new Date(start.getFullYear(), start.getMonth() + 1, 0, 23, 59, 59);
+        const snp = await db.collection("stock").where("fecha", ">=", start).where("fecha", "<=", end).orderBy("fecha", "desc").get();
+        let h = "";
+        snp.forEach(doc => {
+            const d = doc.data();
+            h += `<tr><td style="font-size:0.7rem">${d.fecha ? d.fecha.toDate().toLocaleDateString() : 'S/F'}</td><td class="fw-bold">${d.articulo}</td><td>${d.tipo || 'mov'}</td><td class="text-center ${d.cantidad<0?'text-danger':'text-success'}">${d.cantidad}</td></tr>`;
         });
-
-        doc.setFontSize(10);
-        doc.text("OBSERVACIONES: Carga sujeta a control de recepción.", 15, doc.lastAutoTable.finalY + 20);
-
-        // Firmas
-        doc.line(20, 250, 80, 250);
-        doc.text("Firma Despacho", 35, 255);
-        doc.line(130, 250, 190, 250);
-        doc.text("Firma Recepción", 145, 255);
-
-        doc.save(`Remito_${d.cliente}_${fecha}.pdf`);
+        document.getElementById('listaHistorial').innerHTML = h;
     }
 
-    // Funciones base de v10 (simplificadas para el ejemplo)
-    function showTab(id) { document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
+    function showTab(id) {
+        document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
+        document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+        document.getElementById(id).classList.remove('hidden');
+        if(event) event.currentTarget.classList.add('active');
+        if(id === 'historial') cargarHistorial();
+    }
+
+    function guardarArt() { const n = document.getElementById('confNuevoArt').value.toLowerCase(); const m = parseInt(document.getElementById('confMinArt').value) || 0; if(n) db.collection("articulos").add({nombre: n, minimo: m}); }
+    function renderMaestro() { document.getElementById('listaArts').innerHTML = articulos.map(a => `<div class="list-group-item d-flex justify-content-between p-1 small">${a.nombre} <i class="fas fa-trash text-danger" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join(''); }
+    function guardarProv() { db.collection("proveedores").add({nombre: prompt("Nombre del proveedor:")}); }
+    function guardarAcuerdo() { db.collection("acuerdos").add({proveedor: document.getElementById('acProv').value, articulo: document.getElementById('acArt').value, uxc: parseInt(document.getElementById('acUxC').value), cxp: parseInt(document.getElementById('acCxP').value)}); }
+    function renderAcuerdos() { document.getElementById('listaAcuerdos').innerHTML = acuerdos.map(ac => `<div class="border-bottom py-1 small">${ac.proveedor} ➔ ${ac.articulo} <i class="fas fa-times text-danger" onclick="db.collection('acuerdos').doc('${ac.id}').delete()"></i></div>`).join(''); }
+    function renderLista(id, data, coll) { document.getElementById(id).innerHTML = data.map(item => `<div class="list-group-item d-flex justify-content-between p-1 small">${item.nombre} <i class="fas fa-trash text-danger" onclick="db.collection('${coll}').doc('${item.id}').delete()"></i></div>`).join(''); }
     function guardarCliente() { db.collection("clientes").add({nombre: document.getElementById('cliNombre').value, dir: document.getElementById('cliDir').value}); }
-    function renderClientes() { document.getElementById('tablaClientes').innerHTML = clientes.map(c => `<tr><td>${c.nombre}</td><td>${c.dir}</td></tr>`).join(''); }
+    function renderClientes() { document.getElementById('tablaClientes').innerHTML = clientes.map(c => `<tr><td class="small">${c.nombre}</td><td class="text-end"><i class="fas fa-trash text-danger" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></td></tr>`).join(''); }
+    async function limpiarArt(n) { if(confirm("Vaciar stock?")) { const snp = await db.collection("stock").where("articulo","==",n).get(); const b = db.batch(); snp.forEach(d => b.delete(d.ref)); await b.commit(); } }
+    function exportarExcel() {
+        const data = Object.keys(stockActualGlobal).map(k => ({ "Artículo": k, "Stock": stockActualGlobal[k] }));
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Stock");
+        XLSX.writeFile(wb, "Stock_Prados.xlsx");
+    }
 </script>
 </body>
 </html>
