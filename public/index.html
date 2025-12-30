@@ -24,6 +24,7 @@
         .card { border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-radius: 12px; margin-bottom: 15px; }
         .stock-peligro { background-color: #fff5f5 !important; color: #dc3545 !important; border-left: 5px solid #dc3545 !important; }
         label { font-size: 0.8rem; font-weight: bold; }
+        .cursor-pointer { cursor: pointer; }
     </style>
 </head>
 <body>
@@ -157,9 +158,41 @@
             </div>
 
             <div id="config" class="content-section hidden">
-                <div class="row">
-                    <div class="col-md-6"><div class="card p-3"><h6>Maestro de Artículos</h6><div class="input-group mb-2"><input type="text" id="confNuevoArt" class="form-control" placeholder="Nombre"><input type="number" id="confMinArt" class="form-control" placeholder="Mín"><button class="btn btn-primary" onclick="guardarArt()">+</button></div><div id="listaArts"></div></div></div>
-                    <div class="col-md-6"><div class="card p-3"><h6>Vínculos de Proveedor</h6><div class="row g-1"><div class="col-6"><select id="acProv" class="form-select"></select></div><div class="col-6"><select id="acArt" class="form-select"></select></div><div class="col-6"><input type="number" id="acUxC" class="form-control" placeholder="UxC"></div><div class="col-6"><input type="number" id="acCxP" class="form-control" placeholder="CxP"></div><button class="btn btn-warning w-100" onclick="guardarAcuerdo()">VINCULAR</button></div><div id="listaAcuerdos" class="mt-2"></div></div></div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="card p-3 h-100">
+                            <h6 class="fw-bold text-primary">Maestro de Artículos</h6>
+                            <div class="input-group mb-2">
+                                <input type="text" id="confNuevoArt" class="form-control" placeholder="Nombre">
+                                <input type="number" id="confMinArt" class="form-control" placeholder="Mín">
+                                <button class="btn btn-primary" onclick="guardarArt()">+</button>
+                            </div>
+                            <div id="listaArts" class="overflow-auto" style="max-height: 300px;"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card p-3 h-100">
+                            <h6 class="fw-bold text-success">Maestro de Proveedores</h6>
+                            <div class="input-group mb-2">
+                                <input type="text" id="confNuevoProv" class="form-control" placeholder="Nombre Proveedor">
+                                <button class="btn btn-success" onclick="guardarProv()">+</button>
+                            </div>
+                            <div id="listaProvsCont" class="overflow-auto" style="max-height: 300px;"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card p-3 h-100">
+                            <h6 class="fw-bold text-warning">Vínculos de Proveedor</h6>
+                            <div class="row g-1">
+                                <div class="col-6"><select id="acProv" class="form-select"></select></div>
+                                <div class="col-6"><select id="acArt" class="form-select"></select></div>
+                                <div class="col-6"><input type="number" id="acUxC" class="form-control" placeholder="UxC"></div>
+                                <div class="col-6"><input type="number" id="acCxP" class="form-control" placeholder="CxP"></div>
+                                <button class="btn btn-warning w-100 mt-1" onclick="guardarAcuerdo()">VINCULAR</button>
+                            </div>
+                            <div id="listaAcuerdos" class="mt-2 overflow-auto" style="max-height: 250px;"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -192,6 +225,7 @@
             const h = proveedores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
             document.getElementById('selProveedor').innerHTML = '<option value="">-- Proveedor --</option>' + h;
             document.getElementById('acProv').innerHTML = h;
+            renderMaestroProvs();
         });
         db.collection("acuerdos").onSnapshot(s => { acuerdos = s.docs.map(d => ({id:d.id, ...d.data()})); renderAcuerdos(); });
         db.collection("clientes").orderBy("nombre").onSnapshot(s => {
@@ -209,7 +243,7 @@
         });
     }
 
-    // VENTAS
+    // VENTAS Y REMITOS
     function agregarItemALista() {
         const prod = document.getElementById('vtaArticulo').value, pal = parseInt(document.getElementById('vtaPallets').value) || 0, cxp = parseInt(document.getElementById('vtaCxP').value) || 0, uxc = parseInt(document.getElementById('vtaUxC').value) || 0;
         if (!prod || pal <= 0) return alert("Complete cantidad y producto");
@@ -236,7 +270,6 @@
         itemsVentaActual = []; renderTablaTemporal(); alert("Venta Exitosa");
     }
 
-    // PDF REMITO
     function generarPDFOficial(v) {
         const { jsPDF } = window.jspdf; const doc = new jsPDF(); const cliData = clientes.find(c => c.nombre === v.cliente) || {}; const f = new Date(); const nro = "0001-00000" + Math.floor(Math.random() * 900 + 100);
         doc.setFontSize(22); doc.setFont(undefined, 'bold'); doc.text("MAXIMILIANO MEZA", 10, 15);
@@ -273,18 +306,11 @@
     }
 
     async function resetHistorialMes() {
-        const mes = document.getElementById('filtroMes').value;
-        if(!mes) return;
-        if(!confirm(`¿ESTÁ SEGURO? Se borrarán TODOS los movimientos de ${mes}. Esta acción no se puede deshacer.`)) return;
-        
+        const mes = document.getElementById('filtroMes').value; if(!mes || !confirm(`¿Borrar TODO el historial de ${mes}?`)) return;
         const s = new Date(mes + "-01T00:00:00"), e = new Date(s.getFullYear(), s.getMonth()+1, 0, 23, 59, 59);
         const snp = await db.collection("stock").where("fecha", ">=", s).where("fecha", "<=", e).get();
-        
-        const batch = db.batch();
-        snp.forEach(d => batch.delete(d.ref));
-        await batch.commit();
-        alert(`Historial de ${mes} borrado correctamente.`);
-        cargarHistorial();
+        const batch = db.batch(); snp.forEach(d => batch.delete(d.ref)); await batch.commit();
+        alert("Mes borrado."); cargarHistorial();
     }
 
     async function exportarHistorialPDF() {
@@ -295,7 +321,21 @@
         doc.save(`Reporte_${mes}.pdf`);
     }
 
-    // CONFIG Y OTROS
+    // CONFIGURACIÓN (ARTICULOS, PROVEEDORES, VINCULOS)
+    function guardarArt() { const n = document.getElementById('confNuevoArt').value; if(n) db.collection("articulos").add({nombre: n.toLowerCase(), minimo: parseInt(document.getElementById('confMinArt').value)||0}); }
+    function renderMaestro() { document.getElementById('listaArts').innerHTML = articulos.map(a => `<div class="p-1 border-bottom small d-flex justify-content-between"><span>${a.nombre}</span><i class="fas fa-trash text-danger cursor-pointer" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join(''); }
+    
+    function guardarProv() { const n = document.getElementById('confNuevoProv').value; if(n) db.collection("proveedores").add({nombre: n.toUpperCase()}); document.getElementById('confNuevoProv').value = ""; }
+    function renderMaestroProvs() { document.getElementById('listaProvsCont').innerHTML = proveedores.map(p => `<div class="p-1 border-bottom small d-flex justify-content-between"><span>${p.nombre}</span><i class="fas fa-trash text-danger cursor-pointer" onclick="db.collection('proveedores').doc('${p.id}').delete()"></i></div>`).join(''); }
+
+    function guardarAcuerdo() { db.collection("acuerdos").add({proveedor: document.getElementById('acProv').value, articulo: document.getElementById('acArt').value, uxc: parseInt(document.getElementById('acUxC').value), cxp: parseInt(document.getElementById('acCxP').value)}); }
+    function renderAcuerdos() { document.getElementById('listaAcuerdos').innerHTML = acuerdos.map(a => `<div class="small p-1 border-bottom d-flex justify-content-between"><span>${a.proveedor} ➔ ${a.articulo}</span><i class="fas fa-trash text-muted cursor-pointer" onclick="db.collection('acuerdos').doc('${a.id}').delete()"></i></div>`).join(''); }
+
+    // CLIENTES
+    function guardarCliente() { db.collection("clientes").add({ nombre: document.getElementById('cliNombre').value, cuit: document.getElementById('cliCuit').value, iva: document.getElementById('cliIva').value, calle: document.getElementById('cliCalle').value, localidad: document.getElementById('cliLocalidad').value, provincia: document.getElementById('cliProvincia').value }); alert("Cliente Guardado"); }
+    function renderClientes() { document.getElementById('tablaClientes').innerHTML = clientes.map(c => `<tr><td><b>${c.nombre}</b><br><small>${c.localidad}</small></td><td class="text-end"><i class="fas fa-trash text-danger cursor-pointer" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></td></tr>`).join(''); }
+
+    // AUXILIARES
     function filtrarArticulosAcuerdo() { const p = document.getElementById('selProveedor').value; const f = acuerdos.filter(a => a.proveedor === p); document.getElementById('selArticulo').innerHTML = f.map(a => `<option value="${a.articulo}">${a.articulo}</option>`).join(''); }
     function calcularCarga() { 
         const p = document.getElementById('selProveedor').value, a = document.getElementById('selArticulo').value, c = parseInt(document.getElementById('inpCantidad').value)||0, t = document.getElementById('selTipoCarga').value;
@@ -304,14 +344,8 @@
         document.getElementById('txtTotalFinal').innerText = tot.toLocaleString();
     }
     async function guardarIngreso() { const a = document.getElementById('selArticulo').value, t = parseInt(document.getElementById('txtTotalFinal').innerText.replace(/\./g,'')); if(a && t > 0) await db.collection("stock").add({ articulo: a, cantidad: t, tipo: "Ingreso", fecha: firebase.firestore.FieldValue.serverTimestamp() }); }
-    function showTab(id) { document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); if(id==='historial') cargarHistorial(); }
-    function guardarArt() { db.collection("articulos").add({nombre: document.getElementById('confNuevoArt').value.toLowerCase(), minimo: parseInt(document.getElementById('confMinArt').value)||0}); }
-    function renderMaestro() { document.getElementById('listaArts').innerHTML = articulos.map(a => `<div class="p-1 border-bottom small d-flex justify-content-between"><span>${a.nombre}</span><i class="fas fa-trash text-danger" style="cursor:pointer" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join(''); }
-    function guardarAcuerdo() { db.collection("acuerdos").add({proveedor: document.getElementById('acProv').value, articulo: document.getElementById('acArt').value, uxc: parseInt(document.getElementById('acUxC').value), cxp: parseInt(document.getElementById('acCxP').value)}); }
-    function renderAcuerdos() { document.getElementById('listaAcuerdos').innerHTML = acuerdos.map(a => `<div class="small p-1 border-bottom">${a.proveedor} ➔ ${a.articulo}</div>`).join(''); }
-    function guardarCliente() { db.collection("clientes").add({ nombre: document.getElementById('cliNombre').value, cuit: document.getElementById('cliCuit').value, iva: document.getElementById('cliIva').value, calle: document.getElementById('cliCalle').value, localidad: document.getElementById('cliLocalidad').value, provincia: document.getElementById('cliProvincia').value }); alert("Cliente Guardado"); }
-    function renderClientes() { document.getElementById('tablaClientes').innerHTML = clientes.map(c => `<tr><td><b>${c.nombre}</b><br><small>${c.localidad}</small></td><td class="text-end"><i class="fas fa-trash text-danger" style="cursor:pointer" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></td></tr>`).join(''); }
     async function registrarConsumo() { const a = document.getElementById('consumoArticulo').value, c = parseInt(document.getElementById('consumoCantidad').value)||0; if(a && c > 0) await db.collection("stock").add({ articulo: a, cantidad: -c, tipo: "Consumo", fecha: firebase.firestore.FieldValue.serverTimestamp() }); }
+    function showTab(id) { document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); if(id==='historial') cargarHistorial(); }
 </script>
 </body>
 </html>
