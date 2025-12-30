@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prados del Sol - Gestión Integral v9</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Prados del Sol - Gestión Móvil v10</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -14,176 +14,185 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
-        .sidebar { min-height: 100vh; background-color: #212529; color: white; padding: 20px; position: sticky; top: 0; z-index: 1000; }
-        .nav-link { color: #adb5bd; cursor: pointer; padding: 12px; border-radius: 8px; margin-bottom: 5px; display: block; text-decoration: none; }
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; overflow-x: hidden; }
+        
+        /* Sidebar Responsiva */
+        .sidebar { background-color: #212529; color: white; padding: 15px; z-index: 1000; }
+        
+        @media (min-width: 768px) {
+            .sidebar { min-height: 100vh; position: sticky; top: 0; }
+            .nav-link { margin-bottom: 5px; }
+        }
+
+        @media (max-width: 767px) {
+            .sidebar { position: relative; min-height: auto; padding: 10px; }
+            .nav-custom { display: flex; overflow-x: auto; white-space: nowrap; gap: 5px; padding-bottom: 5px; }
+            .nav-link { font-size: 0.85rem; padding: 8px 12px !important; flex: 0 0 auto; border: 1px solid #444; }
+            h5.sidebar-title { font-size: 1rem; margin-bottom: 10px !important; text-align: left !important; }
+        }
+
+        .nav-link { color: #adb5bd; cursor: pointer; padding: 12px; border-radius: 8px; text-decoration: none; transition: 0.3s; }
         .nav-link:hover, .nav-link.active { color: white; background-color: #0d6efd; }
         .hidden { display: none !important; }
-        .card { border: none; box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); border-radius: 10px; }
-        .resumen-vta { background-color: #fff3cd; border: 1px dashed #ffc107; padding: 15px; border-radius: 8px; }
-        .stock-peligro { background-color: #f8d7da !important; color: #721c24 !important; font-weight: bold; border: 2px solid #dc3545 !important; }
-        .badge-venta { background-color: #cfe2ff; color: #084298; }
-        .badge-ingreso { background-color: #d1e7dd; color: #0f5132; }
-        .badge-consumo { background-color: #fff3cd; color: #856404; }
+        
+        /* Cards y Tablas */
+        .card { border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-radius: 12px; margin-bottom: 15px; }
+        .table-responsive { border-radius: 8px; }
+        .stock-peligro { background-color: #fff5f5 !important; color: #dc3545 !important; border-left: 5px solid #dc3545 !important; }
+        
+        /* Botones grandes para móviles */
+        .btn { padding: 10px 15px; border-radius: 8px; font-weight: 600; }
+        input, select { height: 45px !important; } /* Más fácil de tocar */
+        
+        .resumen-vta h4 { font-size: 1.2rem; }
     </style>
 </head>
 <body>
 
-<div id="loginScreen" class="container d-flex justify-content-center align-items-center vh-100">
-    <div class="card p-4 shadow-lg" style="width: 380px;">
-        <h4 class="text-center mb-4 text-primary fw-bold">Prados del Sol</h4>
+<div id="loginScreen" class="container d-flex justify-content-center align-items-center vh-100 p-3">
+    <div class="card p-4 shadow-lg w-100" style="max-width: 400px;">
+        <h4 class="text-center mb-4 text-primary fw-bold">PRADOS DEL SOL</h4>
         <input type="email" id="loginEmail" class="form-control mb-3" placeholder="Correo">
         <input type="password" id="loginPass" class="form-control mb-3" placeholder="Contraseña">
-        <button onclick="login()" class="btn btn-primary w-100">Ingresar</button>
+        <button onclick="login()" class="btn btn-primary w-100">INGRESAR</button>
     </div>
 </div>
 
 <div id="appSystem" class="container-fluid hidden">
     <div class="row">
         <div class="col-md-2 sidebar">
-            <h5 class="text-center mb-4 border-bottom pb-3 text-info">SISTEMA PRADOS</h5>
-            <nav>
-                <a class="nav-link active" onclick="showTab('stock')"><i class="fas fa-boxes me-2"></i> Stock e Ingresos</a>
-                <a class="nav-link" onclick="showTab('ventas')"><i class="fas fa-shopping-cart me-2"></i> Nueva Venta</a>
-                <a class="nav-link" onclick="showTab('historial')"><i class="fas fa-history me-2"></i> Historial / Mes</a>
-                <a class="nav-link" onclick="showTab('clientes')"><i class="fas fa-user-friends me-2"></i> Clientes</a>
-                <a class="nav-link" onclick="showTab('config')"><i class="fas fa-cog me-2"></i> Configuración</a>
-                <a class="nav-link mt-5 text-danger" onclick="logout()"><i class="fas fa-power-off me-2"></i> Salir</a>
+            <h5 class="text-center mb-4 border-bottom pb-2 text-info sidebar-title">SISTEMA PRADOS</h5>
+            <nav class="nav-custom">
+                <a class="nav-link active" onclick="showTab('stock')"><i class="fas fa-boxes me-1"></i> Stock</a>
+                <a class="nav-link" onclick="showTab('ventas')"><i class="fas fa-truck me-1"></i> Ventas</a>
+                <a class="nav-link" onclick="showTab('historial')"><i class="fas fa-history me-1"></i> Historial</a>
+                <a class="nav-link" onclick="showTab('clientes')"><i class="fas fa-users me-1"></i> Clientes</a>
+                <a class="nav-link" onclick="showTab('config')"><i class="fas fa-cog me-1"></i> Config</a>
+                <a class="nav-link text-danger" onclick="logout()"><i class="fas fa-power-off"></i></a>
             </nav>
         </div>
 
-        <div class="col-md-10 p-4">
+        <div class="col-md-10 p-2 p-md-4">
             
             <div id="stock" class="content-section">
                 <div class="row">
-                    <div class="col-md-8">
-                        <div class="card p-4 mb-4 border-top border-success border-4 shadow-sm">
-                            <h4><i class="fas fa-plus-circle me-2"></i>Ingreso de Insumos</h4>
-                            <div class="row g-3">
-                                <div class="col-md-4"><label class="fw-bold small">Proveedor</label><select id="selProveedor" class="form-select" onchange="filtrarArticulosAcuerdo()"></select></div>
-                                <div class="col-md-4"><label class="fw-bold small">Artículo</label><select id="selArticulo" class="form-select" onchange="calcularCarga()"></select></div>
-                                <div class="col-md-2"><label class="fw-bold small">Tipo</label>
+                    <div class="col-lg-8">
+                        <div class="card p-3 border-top border-success border-4 shadow-sm">
+                            <h5 class="mb-3 text-success fw-bold">Carga por Proveedor</h5>
+                            <div class="row g-2">
+                                <div class="col-6 col-md-4"><label class="small fw-bold">Proveedor</label><select id="selProveedor" class="form-select" onchange="filtrarArticulosAcuerdo()"></select></div>
+                                <div class="col-6 col-md-4"><label class="small fw-bold">Artículo</label><select id="selArticulo" class="form-select" onchange="calcularCarga()"></select></div>
+                                <div class="col-6 col-md-2"><label class="small fw-bold">Tipo</label>
                                     <select id="selTipoCarga" class="form-select" onchange="calcularCarga()"><option value="p">Pallets</option><option value="c">Cajas</option><option value="u">Unidades</option></select>
                                 </div>
-                                <div class="col-md-2"><label class="fw-bold small">Cant.</label><input type="number" id="inpCantidad" class="form-control" oninput="calcularCarga()"></div>
+                                <div class="col-6 col-md-2"><label class="small fw-bold">Cantidad</label><input type="number" id="inpCantidad" class="form-control" oninput="calcularCarga()"></div>
                             </div>
-                            <div class="mt-3 d-flex justify-content-between align-items-center">
-                                <span class="fs-5">Total a ingresar: <strong id="txtTotalFinal" class="text-success">0</strong></span>
-                                <button class="btn btn-success fw-bold px-4" onclick="guardarIngreso()">SUMAR AL STOCK</button>
+                            <div class="mt-3 d-flex justify-content-between align-items-center bg-light p-2 rounded">
+                                <span class="small fw-bold">Total: <span id="txtTotalFinal" class="text-success fs-5">0</span> u.</span>
+                                <button class="btn btn-success btn-sm" onclick="guardarIngreso()">CONFIRMAR</button>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="card p-4 mb-4 border-top border-warning border-4 shadow-sm bg-light">
-                            <h4 class="text-warning"><i class="fas fa-hand-holding me-2"></i>Uso de Fábrica</h4>
+                    <div class="col-lg-4">
+                        <div class="card p-3 border-top border-warning border-4 shadow-sm">
+                            <h5 class="text-warning fw-bold">Uso de Fábrica</h5>
                             <select id="consumoArticulo" class="form-select mb-2"></select>
-                            <input type="number" id="consumoCantidad" class="form-control mb-3" placeholder="Cantidad Usada">
-                            <button class="btn btn-warning w-100 fw-bold text-white" onclick="registrarConsumo()">DESCONTAR USO</button>
+                            <div class="input-group">
+                                <input type="number" id="consumoCantidad" class="form-control" placeholder="Cant.">
+                                <button class="btn btn-warning text-white" onclick="registrarConsumo()">RESTAL</button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card p-3 shadow-sm">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0">Existencias Actuales</h5>
-                        <button class="btn btn-outline-success fw-bold" onclick="exportarExcel()"><i class="fas fa-file-excel me-2"></i>Exportar Excel</button>
-                    </div>
-                    <table class="table table-hover align-middle">
-                        <thead class="table-dark"><tr><th>Artículo</th><th class="text-center">Existencia</th><th class="text-center">Mínimo</th><th class="text-end">Acción</th></tr></thead>
-                        <tbody id="tablaStock"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div id="historial" class="content-section hidden">
-                <div class="card p-4 border-top border-info border-4 shadow-sm">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h4><i class="fas fa-list-alt me-2"></i>Movimientos del Mes</h4>
-                        <div class="d-flex gap-2">
-                            <input type="month" id="filtroMes" class="form-control" onchange="cargarHistorial()">
-                        </div>
+                <div class="card p-2 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center p-2">
+                        <h6 class="mb-0 fw-bold">Inventario Actual</h6>
+                        <button class="btn btn-sm btn-outline-success" onclick="exportarExcel()"><i class="fas fa-file-excel"></i></button>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-sm table-hover border">
-                            <thead class="bg-light">
-                                <tr>
-                                    <th>Fecha/Hora</th>
-                                    <th>Artículo</th>
-                                    <th>Tipo</th>
-                                    <th class="text-center">Cantidad</th>
-                                </tr>
-                            </thead>
-                            <tbody id="listaHistorial"></tbody>
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="table-dark"><tr><th>Artículo</th><th class="text-center">Stock</th><th class="text-center">Mín.</th><th class="text-end"></th></tr></thead>
+                            <tbody id="tablaStock" style="font-size: 0.9rem;"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
             <div id="ventas" class="content-section hidden">
-                <div class="card p-4 border-top border-primary border-4 shadow-sm">
-                    <h4 class="mb-3 text-primary"><i class="fas fa-truck-moving me-2"></i>Despacho de Mercadería</h4>
-                    <div class="row g-3">
-                        <div class="col-md-4"><label class="fw-bold">Cliente</label><select id="vtaCliente" class="form-select" onchange="actualizarPrevisualizacion()"></select></div>
-                        <div class="col-md-4"><label class="fw-bold">Producto</label><select id="vtaArticulo" class="form-select" onchange="actualizarPrevisualizacion()"></select></div>
-                        <div class="col-md-4"><label class="fw-bold">Transporte</label><input type="text" id="vtaTransporte" class="form-control"></div>
-                        <div class="col-md-4"><label>Pallets</label><input type="number" id="vtaPallets" class="form-control" value="28" oninput="actualizarPrevisualizacion()"></div>
-                        <div class="col-md-4"><label>Cajas x Pallet</label><input type="number" id="vtaCxP" class="form-control" value="75" oninput="actualizarPrevisualizacion()"></div>
-                        <div class="col-md-4"><label>Unid. x Caja</label><input type="number" id="vtaUxC" class="form-control" value="12" oninput="actualizarPrevisualizacion()"></div>
+                <div class="card p-3 border-top border-primary border-4 shadow-sm">
+                    <h5 class="text-primary fw-bold mb-3">Nueva Venta / Despacho</h5>
+                    <div class="row g-2">
+                        <div class="col-12 col-md-6"><label class="small fw-bold">Cliente</label><select id="vtaCliente" class="form-select"></select></div>
+                        <div class="col-12 col-md-6"><label class="small fw-bold">Producto</label><select id="vtaArticulo" class="form-select" onchange="actualizarPrevisualizacion()"></select></div>
+                        <div class="col-4"><label class="small">Pallets</label><input type="number" id="vtaPallets" class="form-control" value="28" oninput="actualizarPrevisualizacion()"></div>
+                        <div class="col-4"><label class="small">CxP</label><input type="number" id="vtaCxP" class="form-control" value="75" oninput="actualizarPrevisualizacion()"></div>
+                        <div class="col-4"><label class="small">UxC</label><input type="number" id="vtaUxC" class="form-control" value="12" oninput="actualizarPrevisualizacion()"></div>
                     </div>
-                    <div class="resumen-vta mt-4 shadow-sm d-flex justify-content-around text-center">
-                        <div><small class="text-muted d-block">PRODUCTO</small><h4 class="text-danger" id="resTotalAceite">0</h4></div>
-                        <div><small class="text-muted d-block">CAJAS</small><h4 class="text-primary" id="resTotalCajas">0</h4></div>
-                        <div><small class="text-muted d-block">ETIQUETAS</small><h4 class="text-success" id="resTotalEtiquetas">0</h4></div>
+                    <div class="resumen-vta mt-3 p-2 bg-light rounded d-flex justify-content-around text-center border">
+                        <div><small class="d-block text-muted">Art.</small><span class="fw-bold text-danger" id="resTotalAceite">0</span></div>
+                        <div><small class="d-block text-muted">Cajas</small><span class="fw-bold text-primary" id="resTotalCajas">0</span></div>
+                        <div><small class="d-block text-muted">Etiquet.</small><span class="fw-bold text-success" id="resTotalEtiquetas">0</span></div>
                     </div>
-                    <button class="btn btn-primary w-100 mt-4 py-3 fw-bold shadow" onclick="procesarDespacho()">CONFIRMAR DESPACHO</button>
+                    <button class="btn btn-primary w-100 mt-3 py-2 fw-bold" onclick="procesarDespacho()">CONFIRMAR DESPACHO</button>
+                </div>
+            </div>
+
+            <div id="historial" class="content-section hidden">
+                <div class="card p-3 border-top border-info border-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0">Historial</h5>
+                        <input type="month" id="filtroMes" class="form-control form-control-sm w-50" onchange="cargarHistorial()">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm" style="font-size: 0.8rem;">
+                            <thead><tr><th>Fecha</th><th>Art.</th><th>Tipo</th><th class="text-center">Cant.</th></tr></thead>
+                            <tbody id="listaHistorial"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
             <div id="config" class="content-section hidden">
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <div class="card p-3 shadow-sm">
-                            <h6 class="border-bottom pb-2">Maestro de Artículos</h6>
-                            <div class="row g-2 mb-3">
-                                <div class="col-6"><input type="text" id="confNuevoArt" class="form-control" placeholder="Nombre"></div>
-                                <div class="col-4"><input type="number" id="confMinArt" class="form-control" placeholder="Stock Mín."></div>
-                                <div class="col-2"><button class="btn btn-info text-white w-100" onclick="guardarArt()">+</button></div>
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <div class="card p-3">
+                            <h6 class="fw-bold border-bottom pb-2">Maestro Artículos</h6>
+                            <div class="input-group input-group-sm mb-2">
+                                <input type="text" id="confNuevoArt" class="form-control" placeholder="Nombre">
+                                <input type="number" id="confMinArt" class="form-control" placeholder="Mín">
+                                <button class="btn btn-info text-white" onclick="guardarArt()">+</button>
                             </div>
-                            <div id="listaArts" class="list-group list-group-flush small" style="max-height: 400px; overflow-y: auto;"></div>
+                            <div id="listaArts" class="list-group list-group-flush" style="max-height: 200px; overflow-y: auto;"></div>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="card p-3 shadow-sm mb-3">
-                            <h6 class="border-bottom pb-2">Proveedores</h6>
-                            <div class="input-group"><input type="text" id="confNuevoProv" class="form-control"><button class="btn btn-dark" onclick="guardarProv()">+</button></div>
-                            <div id="listaProvs" class="list-group list-group-flush small"></div>
-                        </div>
-                        <div class="card p-3 shadow-sm border-warning border-start border-4">
-                            <h6 class="border-bottom pb-2">Vincular para Carga</h6>
-                            <div class="row g-2">
-                                <div class="col-6"><select id="acProv" class="form-select"></select></div>
-                                <div class="col-6"><select id="acArt" class="form-select"></select></div>
-                                <div class="col-6"><label class="small">U. por Caja</label><input type="number" id="acUxC" class="form-control" value="12"></div>
-                                <div class="col-6"><label class="small">C. por Pallet</label><input type="number" id="acCxP" class="form-control" value="75"></div>
-                                <button class="btn btn-warning w-100 fw-bold mt-2" onclick="guardarAcuerdo()">VINCULAR</button>
+                    <div class="col-12 col-md-6">
+                        <div class="card p-3">
+                            <h6 class="fw-bold border-bottom pb-2">Vínculos Proveedor</h6>
+                            <div class="row g-1">
+                                <div class="col-6"><select id="acProv" class="form-select form-select-sm"></select></div>
+                                <div class="col-6"><select id="acArt" class="form-select form-select-sm"></select></div>
+                                <div class="col-6"><input type="number" id="acUxC" class="form-control form-select-sm" placeholder="U/C"></div>
+                                <div class="col-6"><input type="number" id="acCxP" class="form-control form-select-sm" placeholder="C/P"></div>
+                                <button class="btn btn-warning btn-sm w-100 mt-1 fw-bold" onclick="guardarAcuerdo()">VINCULAR</button>
                             </div>
-                            <div id="listaAcuerdos" class="mt-2 small overflow-auto" style="max-height: 150px;"></div>
+                            <div id="listaAcuerdos" class="mt-2 small" style="max-height: 150px; overflow-y: auto;"></div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div id="clientes" class="content-section hidden">
-                <div class="card p-4 shadow-sm">
-                    <h4>Clientes</h4>
+                <div class="card p-3">
+                    <h6 class="fw-bold">Gestión de Clientes</h6>
                     <div class="row g-2 mb-3">
-                        <div class="col-md-5"><input type="text" id="cliNombre" class="form-control" placeholder="Nombre"></div>
-                        <div class="col-md-5"><input type="text" id="cliDir" class="form-control" placeholder="Dirección"></div>
-                        <div class="col-md-2"><button class="btn btn-dark w-100" onclick="guardarCliente()">Añadir</button></div>
+                        <div class="col-12"><input type="text" id="cliNombre" class="form-control" placeholder="Nombre"></div>
+                        <div class="col-12"><div class="input-group"><input type="text" id="cliDir" class="form-control" placeholder="Dirección"><button class="btn btn-dark" onclick="guardarCliente()">+</button></div></div>
                     </div>
-                    <table class="table"><tbody id="tablaClientes"></tbody></table>
+                    <div class="table-responsive"><table class="table table-sm"><tbody id="tablaClientes"></tbody></table></div>
                 </div>
             </div>
+
         </div>
     </div>
 </div>
@@ -212,8 +221,10 @@
             const hoy = new Date();
             document.getElementById('filtroMes').value = hoy.getFullYear() + "-" + String(hoy.getMonth()+1).padStart(2, '0');
             iniciarApp(); 
+        } else {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('appSystem').classList.add('hidden');
         }
-        else { document.getElementById('loginScreen').classList.remove('hidden'); document.getElementById('appSystem').classList.add('hidden'); }
     });
 
     async function iniciarApp() {
@@ -222,13 +233,13 @@
             renderMaestro();
             const html = articulos.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
             document.getElementById('acArt').innerHTML = html;
-            document.getElementById('vtaArticulo').innerHTML = '<option value="">-- Seleccionar --</option>' + html;
-            document.getElementById('consumoArticulo').innerHTML = '<option value="">-- Seleccionar --</option>' + html;
+            document.getElementById('vtaArticulo').innerHTML = '<option value="">-- Prod --</option>' + html;
+            document.getElementById('consumoArticulo').innerHTML = '<option value="">-- Uso --</option>' + html;
         });
 
         db.collection("proveedores").orderBy("nombre").onSnapshot(s => {
             proveedores = s.docs.map(d => ({id:d.id, ...d.data()}));
-            const provHtml = '<option value="">-- Proveedor --</option>' + proveedores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
+            const provHtml = '<option value="">-- Prov --</option>' + proveedores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
             document.getElementById('selProveedor').innerHTML = provHtml;
             document.getElementById('acProv').innerHTML = provHtml;
             renderLista('listaProvs', proveedores, 'proveedores');
@@ -249,64 +260,21 @@
                 const artData = articulos.find(a => a.nombre === artNombre);
                 const min = artData ? (artData.minimo || 0) : 0;
                 const actual = res[artNombre];
-                const claseFila = actual <= min ? 'stock-peligro' : '';
-                return `<tr class="${claseFila}">
-                    <td>${actual <= min ? '⚠️ ' : ''}${artNombre}</td>
-                    <td class="text-center fs-5">${actual.toLocaleString()}</td>
-                    <td class="text-center text-muted">${min.toLocaleString()}</td>
-                    <td class="text-end"><button class="btn btn-sm btn-link text-danger" onclick="limpiarArt('${artNombre}')"><i class="fas fa-trash"></i></button></td>
+                return `<tr class="${actual <= min ? 'stock-peligro' : ''}">
+                    <td>${artNombre}</td>
+                    <td class="text-center fw-bold">${actual.toLocaleString()}</td>
+                    <td class="text-center text-muted small">${min}</td>
+                    <td class="text-end"><i class="fas fa-trash text-muted" onclick="limpiarArt('${artNombre}')"></i></td>
                 </tr>`;
             }).join('');
         });
     }
 
-    // --- LOGICA HISTORIAL ---
-    async function cargarHistorial() {
-        const mesSel = document.getElementById('filtroMes').value; // YYYY-MM
-        if(!mesSel) return;
-        
-        const start = new Date(mesSel + "-01T00:00:00");
-        const end = new Date(start.getFullYear(), start.getMonth() + 1, 0, 23, 59, 59);
-
-        const snapshot = await db.collection("stock")
-            .where("fecha", ">=", start)
-            .where("fecha", "<=", end)
-            .orderBy("fecha", "desc").get();
-
-        let html = "";
-        snapshot.forEach(doc => {
-            const d = doc.data();
-            const fechaStr = d.fecha ? d.fecha.toDate().toLocaleString() : 'S/F';
-            let badge = "badge-venta";
-            if(d.tipo === "ingreso") badge = "badge-ingreso";
-            if(d.tipo === "consumo_interno") badge = "badge-consumo";
-
-            html += `<tr>
-                <td class="small">${fechaStr}</td>
-                <td class="fw-bold">${d.articulo}</td>
-                <td><span class="badge ${badge}">${d.tipo || 'movimiento'}</span></td>
-                <td class="text-center fw-bold ${d.cantidad < 0 ? 'text-danger':'text-success'}">${d.cantidad.toLocaleString()}</td>
-            </tr>`;
-        });
-        document.getElementById('listaHistorial').innerHTML = html || "<tr><td colspan='4' class='text-center'>Sin movimientos este mes.</td></tr>";
-    }
-
-    // --- CONSUMO ---
-    async function registrarConsumo() {
-        const art = document.getElementById('consumoArticulo').value;
-        const cant = parseInt(document.getElementById('consumoCantidad').value) || 0;
-        if(!art || cant <= 0) return alert("Verifique datos");
-        await db.collection("stock").add({ articulo: art, cantidad: -cant, tipo: "consumo_interno", fecha: firebase.firestore.FieldValue.serverTimestamp() });
-        alert("Consumo registrado");
-        document.getElementById('consumoCantidad').value = "";
-        cargarHistorial();
-    }
-
-    // --- CARGA ---
+    // --- LÓGICA DE CARGA Y RESTA ---
     function filtrarArticulosAcuerdo() {
         const prov = document.getElementById('selProveedor').value;
         const filtrados = acuerdos.filter(a => a.proveedor === prov);
-        document.getElementById('selArticulo').innerHTML = '<option value="">-- Art. vinculados --</option>' + filtrados.map(a => `<option value="${a.articulo}">${a.articulo}</option>`).join('');
+        document.getElementById('selArticulo').innerHTML = '<option value="">-- Art --</option>' + filtrados.map(a => `<option value="${a.articulo}">${a.articulo}</option>`).join('');
         calcularCarga();
     }
     function calcularCarga() {
@@ -315,12 +283,7 @@
         const cant = parseInt(document.getElementById('inpCantidad').value) || 0;
         const tipo = document.getElementById('selTipoCarga').value;
         const ac = acuerdos.find(x => x.proveedor === prov && x.articulo === art);
-        let total = 0;
-        if(ac) {
-            if(tipo === 'u') total = cant;
-            if(tipo === 'c') total = cant * (ac.uxc || 0);
-            if(tipo === 'p') total = cant * (ac.cxp || 0) * (ac.uxc || 0);
-        } else { total = cant; }
+        let total = (ac && tipo === 'p') ? cant * ac.cxp * ac.uxc : (ac && tipo === 'c') ? cant * ac.uxc : cant;
         document.getElementById('txtTotalFinal').innerText = total.toLocaleString();
     }
     async function guardarIngreso() {
@@ -328,11 +291,18 @@
         const totalU = parseInt(document.getElementById('txtTotalFinal').innerText.replace(/\./g,''));
         if(art && totalU > 0) {
             await db.collection("stock").add({ articulo: art, cantidad: totalU, tipo: "ingreso", fecha: firebase.firestore.FieldValue.serverTimestamp() });
-            alert("Ingreso exitoso");
+            alert("Stock sumado");
             document.getElementById('inpCantidad').value = "";
             document.getElementById('txtTotalFinal').innerText = "0";
-            cargarHistorial();
         }
+    }
+    async function registrarConsumo() {
+        const art = document.getElementById('consumoArticulo').value;
+        const cant = parseInt(document.getElementById('consumoCantidad').value) || 0;
+        if(!art || cant <= 0) return;
+        await db.collection("stock").add({ articulo: art, cantidad: -cant, tipo: "consumo_interno", fecha: firebase.firestore.FieldValue.serverTimestamp() });
+        alert("Descontado de stock");
+        document.getElementById('consumoCantidad').value = "";
     }
 
     // --- VENTAS ---
@@ -340,66 +310,65 @@
         const p = parseInt(document.getElementById('vtaPallets').value) || 0;
         const c = parseInt(document.getElementById('vtaCxP').value) || 0;
         const u = parseInt(document.getElementById('vtaUxC').value) || 0;
-        const totalU = p * c * u;
-        const totalC = p * c;
-        document.getElementById('resTotalAceite').innerText = totalU.toLocaleString();
-        document.getElementById('resTotalCajas').innerText = totalC.toLocaleString();
-        document.getElementById('resTotalEtiquetas').innerText = totalU.toLocaleString();
+        document.getElementById('resTotalAceite').innerText = (p * c * u).toLocaleString();
+        document.getElementById('resTotalCajas').innerText = (p * c).toLocaleString();
+        document.getElementById('resTotalEtiquetas').innerText = (p * c * u).toLocaleString();
     }
     async function procesarDespacho() {
         const prod = document.getElementById('vtaArticulo').value;
         const totalU = parseInt(document.getElementById('resTotalAceite').innerText.replace(/\./g,''));
         const totalC = parseInt(document.getElementById('resTotalCajas').innerText.replace(/\./g,''));
-        if(!prod || totalU <= 0) return alert("Error en selección");
+        if(!prod || totalU <= 0) return alert("Selección inválida");
         const batch = db.batch();
         batch.set(db.collection("stock").doc(), { articulo: prod, cantidad: -totalU, tipo: "venta", fecha: firebase.firestore.FieldValue.serverTimestamp() });
-        let caja = "", etiqueta = "";
-        const pN = prod.toLowerCase();
-        if (pN.includes("850cc") || pN.includes("900cc")) { caja = "caja de 900cc"; etiqueta = "etiqueta de 900cc"; }
-        else if (pN.includes("1.5lts")) { caja = "caja 1.5lts"; etiqueta = "etiqueta 1.5lts"; }
-        else if (pN.includes("5lts")) { caja = "caja de 5lts"; etiqueta = "etiqueta de 5lts"; }
-        if (caja !== "") batch.set(db.collection("stock").doc(), { articulo: caja, cantidad: -totalC, tipo: "venta", fecha: firebase.firestore.FieldValue.serverTimestamp() });
-        if (etiqueta !== "") batch.set(db.collection("stock").doc(), { articulo: etiqueta, cantidad: -totalU, tipo: "venta", fecha: firebase.firestore.FieldValue.serverTimestamp() });
+        let pN = prod.toLowerCase();
+        let caja = pN.includes("850cc") || pN.includes("900cc") ? "caja de 900cc" : pN.includes("1.5lts") ? "caja 1.5lts" : pN.includes("5lts") ? "caja de 5lts" : "";
+        let eti = pN.includes("850cc") || pN.includes("900cc") ? "etiqueta de 900cc" : pN.includes("1.5lts") ? "etiqueta 1.5lts" : pN.includes("5lts") ? "etiqueta de 5lts" : "";
+        if (caja) batch.set(db.collection("stock").doc(), { articulo: caja, cantidad: -totalC, tipo: "venta", fecha: firebase.firestore.FieldValue.serverTimestamp() });
+        if (eti) batch.set(db.collection("stock").doc(), { articulo: eti, cantidad: -totalU, tipo: "venta", fecha: firebase.firestore.FieldValue.serverTimestamp() });
         await batch.commit();
-        alert("Despacho registrado");
+        alert("Despacho realizado");
         actualizarPrevisualizacion();
-        cargarHistorial();
     }
 
-    function exportarExcel() {
-        const dataParaExcel = Object.keys(stockActualGlobal).map(artNombre => {
-            const artData = articulos.find(a => a.nombre === artNombre);
-            return { "Artículo": artNombre, "Stock Actual": stockActualGlobal[artNombre], "Mínimo": artData ? artData.minimo : 0 };
+    // --- HISTORIAL ---
+    async function cargarHistorial() {
+        const mesSel = document.getElementById('filtroMes').value;
+        const start = new Date(mesSel + "-01T00:00:00");
+        const end = new Date(start.getFullYear(), start.getMonth() + 1, 0, 23, 59, 59);
+        const snp = await db.collection("stock").where("fecha", ">=", start).where("fecha", "<=", end).orderBy("fecha", "desc").get();
+        let h = "";
+        snp.forEach(doc => {
+            const d = doc.data();
+            h += `<tr><td style="font-size:0.7rem">${d.fecha ? d.fecha.toDate().toLocaleDateString() : 'S/F'}</td><td class="fw-bold">${d.articulo}</td><td>${d.tipo || 'mov'}</td><td class="text-center ${d.cantidad<0?'text-danger':'text-success'}">${d.cantidad}</td></tr>`;
         });
-        const ws = XLSX.utils.json_to_sheet(dataParaExcel);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Stock");
-        XLSX.writeFile(wb, `Inventario_Prados.xlsx`);
+        document.getElementById('listaHistorial').innerHTML = h;
     }
 
-    function guardarArt() { const n = document.getElementById('confNuevoArt').value.toLowerCase().trim(); const m = parseInt(document.getElementById('confMinArt').value) || 0; if(n) db.collection("articulos").add({nombre: n, minimo: m}); }
-    function renderMaestro() {
-        document.getElementById('listaArts').innerHTML = articulos.map(a => `
-            <div class="list-group-item d-flex justify-content-between p-1">
-                <span>${a.nombre} (Mín: ${a.minimo})</span>
-                <div><i class="fas fa-edit text-primary me-2" onclick="editMin('${a.id}', ${a.minimo})"></i><i class="fas fa-trash text-danger" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>
-            </div>`).join('');
-    }
-    function editMin(id, actual) { const nuevo = prompt("Mínimo:", actual); if(nuevo) db.collection("articulos").doc(id).update({minimo: parseInt(nuevo)}); }
-    function guardarProv() { db.collection("proveedores").add({nombre: document.getElementById('confNuevoProv').value}); }
-    function guardarAcuerdo() { db.collection("acuerdos").add({proveedor: document.getElementById('acProv').value, articulo: document.getElementById('acArt').value, uxc: parseInt(document.getElementById('acUxC').value), cxp: parseInt(document.getElementById('acCxP').value)}); }
-    function renderAcuerdos() { document.getElementById('listaAcuerdos').innerHTML = acuerdos.map(ac => `<div class="border-bottom py-1 small">${ac.proveedor} ➔ ${ac.articulo} <i class="fas fa-times text-danger" onclick="db.collection('acuerdos').doc('${ac.id}').delete()"></i></div>`).join(''); }
-    function renderLista(id, data, coll) { document.getElementById(id).innerHTML = data.map(item => `<div class="list-group-item d-flex justify-content-between p-1">${item.nombre} <i class="fas fa-times text-danger" onclick="db.collection('${coll}').doc('${item.id}').delete()"></i></div>`).join(''); }
-    function guardarCliente() { db.collection("clientes").add({nombre: document.getElementById('cliNombre').value, dir: document.getElementById('cliDir').value}); }
-    function renderClientes() { document.getElementById('tablaClientes').innerHTML = clientes.map(c => `<tr><td>${c.nombre}</td><td>${c.dir}</td><td><i class="fas fa-trash text-danger" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></td></tr>`).join(''); }
-    function showTab(id) { 
-        document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden')); 
+    // --- OTROS ---
+    function showTab(id) {
+        document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
         document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
-        document.getElementById(id).classList.remove('hidden'); 
-        event.currentTarget.classList.add('active');
+        document.getElementById(id).classList.remove('hidden');
+        if(event) event.currentTarget.classList.add('active');
         if(id === 'historial') cargarHistorial();
     }
-    async function limpiarArt(n) { if(confirm("¿Vaciar stock?")) { const snp = await db.collection("stock").where("articulo","==",n).get(); const b = db.batch(); snp.forEach(d => b.delete(d.ref)); await b.commit(); } }
+    function guardarArt() { const n = document.getElementById('confNuevoArt').value.toLowerCase(); const m = parseInt(document.getElementById('confMinArt').value) || 0; if(n) db.collection("articulos").add({nombre: n, minimo: m}); }
+    function renderMaestro() { document.getElementById('listaArts').innerHTML = articulos.map(a => `<div class="list-group-item d-flex justify-content-between p-1 small">${a.nombre} <i class="fas fa-trash text-danger" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join(''); }
+    function guardarProv() { db.collection("proveedores").add({nombre: prompt("Nombre del proveedor:")}); }
+    function guardarAcuerdo() { db.collection("acuerdos").add({proveedor: document.getElementById('acProv').value, articulo: document.getElementById('acArt').value, uxc: parseInt(document.getElementById('acUxC').value), cxp: parseInt(document.getElementById('acCxP').value)}); }
+    function renderAcuerdos() { document.getElementById('listaAcuerdos').innerHTML = acuerdos.map(ac => `<div class="border-bottom py-1 small">${ac.proveedor} ➔ ${ac.articulo} <i class="fas fa-times text-danger" onclick="db.collection('acuerdos').doc('${ac.id}').delete()"></i></div>`).join(''); }
+    function renderLista(id, data, coll) { document.getElementById(id).innerHTML = data.map(item => `<div class="list-group-item d-flex justify-content-between p-1 small">${item.nombre} <i class="fas fa-times text-danger" onclick="db.collection('${coll}').doc('${item.id}').delete()"></i></div>`).join(''); }
+    function guardarCliente() { db.collection("clientes").add({nombre: document.getElementById('cliNombre').value, dir: document.getElementById('cliDir').value}); }
+    function renderClientes() { document.getElementById('tablaClientes').innerHTML = clientes.map(c => `<tr><td class="small">${c.nombre}</td><td class="text-end"><i class="fas fa-trash text-danger" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></td></tr>`).join(''); }
+    async function limpiarArt(n) { if(confirm("Vaciar stock?")) { const snp = await db.collection("stock").where("articulo","==",n).get(); const b = db.batch(); snp.forEach(d => b.delete(d.ref)); await b.commit(); } }
+    function exportarExcel() {
+        const data = Object.keys(stockActualGlobal).map(k => ({ "Artículo": k, "Stock": stockActualGlobal[k] }));
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Stock");
+        XLSX.writeFile(wb, "Stock_Prados.xlsx");
+    }
 </script>
 </body>
 </html>
