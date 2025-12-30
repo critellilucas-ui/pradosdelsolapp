@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Prados del Sol - Sistema Integral</title>
+    <title>Stock Prados del Sol - Control Total</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -128,39 +128,40 @@
             </div>
 
             <div id="config" class="content-section hidden">
-                <h3 class="mb-4">Configuración de Matriz</h3>
+                <h3 class="mb-4">Configuración del Sistema</h3>
                 <div class="row g-3">
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <div class="card p-3 border-start border-info border-4">
-                            <h5>1. Artículos</h5>
-                            <div class="input-group mb-2">
-                                <input type="text" id="confNuevoArt" class="form-control" placeholder="Nombre...">
+                            <h5>1. Maestro de Artículos</h5>
+                            <p class="text-muted small">Eliminar un artículo borrará también todo su historial de stock.</p>
+                            <div class="input-group mb-3">
+                                <input type="text" id="confNuevoArt" class="form-control" placeholder="Nombre del artículo...">
                                 <button class="btn btn-info text-white" onclick="guardarArticuloCloud()">+</button>
                             </div>
-                            <div id="listaArticulosMaster" class="list-group overflow-auto" style="max-height: 250px;"></div>
+                            <div id="listaArticulosMaster" class="list-group overflow-auto" style="max-height: 400px;"></div>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <div class="card p-3 border-start border-success border-4">
                             <h5>2. Proveedores</h5>
-                            <input type="text" id="confNombreProv" class="form-control mb-2" placeholder="Nombre">
-                            <select id="confProductosProv" class="form-select mb-2" multiple style="height: 100px;"></select>
-                            <button class="btn btn-success w-100" onclick="guardarProveedorCloud()">Agregar</button>
+                            <input type="text" id="confNombreProv" class="form-control mb-2" placeholder="Nombre Proveedor">
+                            <select id="confProductosProv" class="form-select mb-2" multiple style="height: 120px;"></select>
+                            <button class="btn btn-success w-100" onclick="guardarProveedorCloud()">Agregar Proveedor</button>
                             <div id="listaProveedores" class="list-group mt-2"></div>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="card p-3 border-start border-primary border-4">
-                            <h5>3. Matriz (u/Caja y Cajas/Pallet)</h5>
+                            <h5>3. Matriz de Empaque</h5>
                             <div class="row g-2 mb-2">
-                                <div class="col-6"><select id="confSelProv" class="form-select" onchange="filtrarArticulosConfig()"></select></div>
-                                <div class="col-6"><select id="confSelArt" class="form-select"></select></div>
+                                <div class="col-12"><select id="confSelProv" class="form-select" onchange="filtrarArticulosConfig()"></select></div>
+                                <div class="col-12"><select id="confSelArt" class="form-select"></select></div>
                                 <div class="col-6"><input type="number" id="confUxC" class="form-control" placeholder="u/Caja"></div>
                                 <div class="col-6"><input type="number" id="confCxP" class="form-control" placeholder="Cajas/P"></div>
                             </div>
                             <button class="btn btn-primary w-100" onclick="guardarAcuerdoEmpaque()">Guardar Vínculo</button>
                             <hr>
-                            <div id="listaAcuerdos" class="row overflow-auto" style="max-height: 150px;"></div>
+                            <div id="listaAcuerdos" class="row overflow-auto" style="max-height: 200px;"></div>
                         </div>
                     </div>
                 </div>
@@ -188,6 +189,7 @@
 </div>
 
 <script>
+    // CONFIGURACIÓN FIREBASE
     const firebaseConfig = {
       apiKey: "AIzaSyCjYp0idCxs32QAofYLVEGcwvmd3HXy-3Y",
       authDomain: "prados-del-sol.firebaseapp.com",
@@ -205,6 +207,7 @@
     let provsLocal = [];
     let acuerdosLocal = [];
     let stockActualData = {};
+    let movimientosGlobal = [];
 
     const NOMBRE_CAJA_900 = "Cajas de 900cc";
 
@@ -226,10 +229,9 @@
         db.collection("articulos").orderBy("nombre").onSnapshot(snap => {
             articulosLocal = snap.docs.map(d => ({id: d.id, ...d.data()}));
             renderizarArticulosMaster();
-            const selects = ['confProductosProv', 'vtaArticulo'];
-            selects.forEach(id => {
-                document.getElementById(id).innerHTML = (id==='vtaArticulo'?'<option value="">-- Seleccionar --</option>':'') + articulosLocal.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
-            });
+            const vtaSel = document.getElementById('vtaArticulo');
+            vtaSel.innerHTML = '<option value="">-- Seleccionar --</option>' + articulosLocal.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
+            document.getElementById('confProductosProv').innerHTML = articulosLocal.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
         });
 
         db.collection("proveedores").orderBy("nombre").onSnapshot(snap => {
@@ -246,13 +248,35 @@
         });
 
         db.collection("stock").onSnapshot(snap => {
-            const movs = snap.docs.map(d => ({id: d.id, ...d.data()}));
-            renderizarConsolidado(movs);
-            renderizarUltimasVentas(movs);
+            movimientosGlobal = snap.docs.map(d => ({id: d.id, ...d.data()}));
+            renderizarConsolidado(movimientosGlobal);
+            renderizarUltimasVentas(movimientosGlobal);
         });
     }
 
-    // --- LÓGICA DE VENTAS CON VALIDACIÓN ---
+    // --- ELIMINACIÓN DE ARTÍCULO Y SU STOCK ---
+    async function eliminarArticuloMaestro(id, nombre) {
+        if (!confirm(`¿Estás SEGURO de eliminar "${nombre}"?\n\nEsta acción borrará el artículo y TODO su historial de movimientos de stock permanentemente.`)) return;
+
+        try {
+            // 1. Buscar todos los movimientos de stock de este artículo
+            const snapshot = await db.collection("stock").where("articulo", "==", nombre).get();
+            const batch = db.batch();
+            
+            snapshot.forEach(doc => batch.delete(doc.ref));
+            
+            // 2. Eliminar el artículo del maestro
+            const artRef = db.collection("articulos").doc(id);
+            batch.delete(artRef);
+
+            await batch.commit();
+            alert(`"${nombre}" y sus movimientos han sido eliminados.`);
+        } catch (e) {
+            alert("Error al eliminar: " + e.message);
+        }
+    }
+
+    // --- LÓGICA DE VENTAS ---
     function calcularVentaCompuesta() {
         const art = document.getElementById('vtaArticulo').value;
         const cant = parseFloat(document.getElementById('vtaCantidad').value) || 0;
@@ -275,32 +299,15 @@
 
         if(!artVendido || (botellasADescontar <= 0 && cajasADescontar <= 0)) return alert("Datos inválidos.");
 
-        // Determinar si aplica la regla de cajas de 900cc
-        let nombreCajaEspecífica = "";
-        if (artVendido.includes("850") || artVendido.includes("900")) {
-            nombreCajaEspecífica = NOMBRE_CAJA_900;
-        }
+        let nombreCajaEspecífica = (artVendido.includes("850") || artVendido.includes("900")) ? NOMBRE_CAJA_900 : "";
 
-        // Validaciones de stock
-        if(botellasADescontar > (stockActualData[artVendido] || 0)) {
-            return alert(`Stock insuficiente de ${artVendido}.`);
-        }
-        if(cajasADescontar > 0 && nombreCajaEspecífica !== "") {
-            if(cajasADescontar > (stockActualData[nombreCajaEspecífica] || 0)) {
-                return alert(`Faltan ${nombreCajaEspecífica}. No se puede completar el empaque.`);
-            }
-        }
+        if(botellasADescontar > (stockActualData[artVendido] || 0)) return alert(`Stock insuficiente de ${artVendido}.`);
+        if(cajasADescontar > 0 && nombreCajaEspecífica !== "" && cajasADescontar > (stockActualData[nombreCajaEspecífica] || 0)) return alert(`Faltan ${nombreCajaEspecífica}.`);
 
         try {
-            await db.collection("stock").add({
-                articulo: artVendido, proveedor: "VENTA", cantidad: -botellasADescontar,
-                fecha: firebase.firestore.FieldValue.serverTimestamp(), motivo: "Venta"
-            });
+            await db.collection("stock").add({ articulo: artVendido, proveedor: "VENTA", cantidad: -botellasADescontar, fecha: firebase.firestore.FieldValue.serverTimestamp(), motivo: "Venta" });
             if(cajasADescontar > 0 && nombreCajaEspecífica !== "") {
-                await db.collection("stock").add({
-                    articulo: nombreCajaEspecífica, proveedor: "VENTA", cantidad: -cajasADescontar,
-                    fecha: firebase.firestore.FieldValue.serverTimestamp(), motivo: `Empaque ${artVendido}`
-                });
+                await db.collection("stock").add({ articulo: nombreCajaEspecífica, proveedor: "VENTA", cantidad: -cajasADescontar, fecha: firebase.firestore.FieldValue.serverTimestamp(), motivo: `Empaque ${artVendido}` });
             }
             alert("Salida registrada.");
             document.getElementById('vtaCantidad').value = 0;
@@ -308,11 +315,10 @@
         } catch (e) { alert("Error: " + e.message); }
     }
 
-    // --- CONSOLIDACIÓN ---
-    function renderizarConsolidado(movimientos) {
+    function renderizarConsolidado(movs) {
         const consolidado = {};
         stockActualData = {};
-        movimientos.forEach(m => {
+        movs.forEach(m => {
             if (!consolidado[m.articulo]) consolidado[m.articulo] = { total: 0, ids: [] };
             consolidado[m.articulo].total += m.cantidad;
             consolidado[m.articulo].ids.push(m.id);
@@ -324,27 +330,32 @@
             const data = consolidado[art] || { total: 0, ids: [] };
             stockActualData[art] = data.total;
             const esCritico = data.total <= 0;
-
             html += `<tr class="${esCritico ? 'stock-critico' : ''}">
                 <td><b>${art}</b></td>
                 <td class="text-center fw-bold fs-5">${data.total.toLocaleString()}</td>
-                <td>${esCritico ? '<span class="badge bg-danger badge-alerta">SIN STOCK</span>' : '<span class="badge bg-success badge-alerta">OK</span>'}</td>
+                <td>${esCritico ? '<span class="badge bg-danger">SIN STOCK</span>' : '<span class="badge bg-success">OK</span>'}</td>
                 <td class="text-end"><button class="btn btn-sm btn-outline-danger" onclick="borrarStockArticulo('${art}', ${JSON.stringify(data.ids)})"><i class="fas fa-undo"></i></button></td>
             </tr>`;
         });
         document.getElementById('tablaStockConsolidado').innerHTML = html;
     }
 
-    // --- SOPORTE ---
-    function renderizarUltimasVentas(movs) {
-        const ventas = movs.filter(m => m.cantidad < 0).sort((a,b) => b.fecha - a.fecha).slice(0, 10);
-        document.getElementById('listaUltimasVentas').innerHTML = ventas.map(v => `
-            <tr>
-                <td><small>${v.fecha ? v.fecha.toDate().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : ''}</small></td>
-                <td>${v.articulo}</td>
-                <td class="text-danger fw-bold">${v.cantidad}</td>
-                <td><button class="btn btn-sm text-muted" onclick="db.collection('stock').doc('${v.id}').delete()">×</button></td>
-            </tr>`).join('');
+    function renderizarArticulosMaster() {
+        document.getElementById('listaArticulosMaster').innerHTML = articulosLocal.map(a => `
+            <div class="list-group-item d-flex justify-content-between align-items-center p-2">
+                <span>${a.nombre}</span>
+                <button class="btn btn-sm btn-danger" onclick="eliminarArticuloMaestro('${a.id}', '${a.nombre}')">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>`).join('');
+    }
+
+    // --- RESTO DE FUNCIONES ---
+    function showTab(id) {
+        document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        document.getElementById('btn-'+id).classList.add('active');
     }
 
     function guardarArticuloCloud() {
@@ -352,19 +363,47 @@
         if(nombre) db.collection("articulos").add({ nombre }).then(() => document.getElementById('confNuevoArt').value = '');
     }
 
-    function renderizarArticulosMaster() {
-        document.getElementById('listaArticulosMaster').innerHTML = articulosLocal.map(a => `<div class="list-group-item d-flex justify-content-between p-1 small"><span>${a.nombre}</span><button class="btn btn-sm text-danger border-0" onclick="db.collection('articulos').doc('${a.id}').delete()">×</button></div>`).join('');
+    function guardarProveedorCloud() {
+        const nombre = document.getElementById('confNombreProv').value.trim();
+        const prods = Array.from(document.getElementById('confProductosProv').selectedOptions).map(o => o.value);
+        if(nombre && prods.length > 0) db.collection("proveedores").add({ nombre, productos: prods }).then(() => document.getElementById('confNombreProv').value = '');
+    }
+
+    function renderizarListaProvs() {
+        document.getElementById('listaProveedores').innerHTML = provsLocal.map(p => `
+            <div class="list-group-item d-flex justify-content-between p-2">
+                <span>${p.nombre}</span>
+                <button class="btn btn-sm text-danger border-0" onclick="db.collection('proveedores').doc('${p.id}').delete()">×</button>
+            </div>`).join('');
+    }
+
+    function filtrarArticulosConfig() {
+        const prov = provsLocal.find(p => p.nombre === document.getElementById('confSelProv').value);
+        document.getElementById('confSelArt').innerHTML = prov ? prov.productos.map(a => `<option value="${a}">${a}</option>`).join('') : '';
+    }
+
+    function guardarAcuerdoEmpaque() {
+        const prov = document.getElementById('confSelProv').value;
+        const art = document.getElementById('confSelArt').value;
+        const uxc = parseInt(document.getElementById('confUxC').value) || 1;
+        const cxp = parseInt(document.getElementById('confCxP').value) || 1;
+        if(prov && art) db.collection("acuerdos_empaque").doc(`${prov}_${art}`.replace(/\s+/g, '')).set({ proveedor: prov, articulo: art, uxc, cxp });
+    }
+
+    function renderizarAcuerdos() {
+        document.getElementById('listaAcuerdos').innerHTML = acuerdosLocal.map(a => `
+            <div class="col-12 mb-1">
+                <div class="p-2 bg-light border rounded d-flex justify-content-between align-items-center" style="font-size:0.75rem">
+                    <div><b>${a.proveedor}</b>: ${a.articulo} (${a.uxc}u/cj · ${a.cxp}cj/p)</div>
+                    <button class="btn btn-sm text-danger border-0" onclick="db.collection('acuerdos_empaque').doc('${a.id}').delete()">×</button>
+                </div>
+            </div>`).join('');
     }
 
     function actualizarFiltroArticulos() {
         const prov = provsLocal.find(p => p.nombre === document.getElementById('selProveedor').value);
         document.getElementById('selArticulo').innerHTML = prov ? prov.productos.map(a => `<option value="${a}">${a}</option>`).join('') : '';
         calcularIngreso();
-    }
-
-    function filtrarArticulosConfig() {
-        const prov = provsLocal.find(p => p.nombre === document.getElementById('confSelProv').value);
-        document.getElementById('confSelArt').innerHTML = prov ? prov.productos.map(a => `<option value="${a}">${a}</option>`).join('') : '';
     }
 
     function calcularIngreso() {
@@ -386,37 +425,19 @@
             .then(() => { bootstrap.Modal.getInstance(document.getElementById('modalIngreso')).hide(); document.getElementById('inpCantidad').value = 0; });
     }
 
-    function guardarProveedorCloud() {
-        const nombre = document.getElementById('confNombreProv').value.trim();
-        const prods = Array.from(document.getElementById('confProductosProv').selectedOptions).map(o => o.value);
-        if(nombre && prods.length > 0) db.collection("proveedores").add({ nombre, productos: prods }).then(() => document.getElementById('confNombreProv').value = '');
-    }
-
-    function guardarAcuerdoEmpaque() {
-        const prov = document.getElementById('confSelProv').value;
-        const art = document.getElementById('confSelArt').value;
-        const uxc = parseInt(document.getElementById('confUxC').value) || 1;
-        const cxp = parseInt(document.getElementById('confCxP').value) || 1;
-        if(prov && art) db.collection("acuerdos_empaque").doc(`${prov}_${art}`.replace(/\s+/g, '')).set({ proveedor: prov, articulo: art, uxc, cxp });
+    function renderizarUltimasVentas(movs) {
+        const ventas = movs.filter(m => m.cantidad < 0).sort((a,b) => b.fecha - a.fecha).slice(0, 10);
+        document.getElementById('listaUltimasVentas').innerHTML = ventas.map(v => `
+            <tr>
+                <td><small>${v.fecha ? v.fecha.toDate().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : ''}</small></td>
+                <td>${v.articulo}</td>
+                <td class="text-danger fw-bold">${v.cantidad}</td>
+                <td><button class="btn btn-sm text-muted" onclick="db.collection('stock').doc('${v.id}').delete()">×</button></td>
+            </tr>`).join('');
     }
 
     async function borrarStockArticulo(nombre, ids) {
-        if(confirm(`¿Resetear stock de ${nombre}?`)) { for (const id of ids) await db.collection("stock").doc(id).delete(); }
-    }
-
-    function renderizarListaProvs() {
-        document.getElementById('listaProveedores').innerHTML = provsLocal.map(p => `<div class="list-group-item d-flex justify-content-between p-1 small"><span>${p.nombre}</span><button class="btn btn-sm text-danger border-0" onclick="db.collection('proveedores').doc('${p.id}').delete()">×</button></div>`).join('');
-    }
-
-    function renderizarAcuerdos() {
-        document.getElementById('listaAcuerdos').innerHTML = acuerdosLocal.map(a => `<div class="col-12 mb-1"><div class="p-2 bg-light border rounded d-flex justify-content-between align-items-center" style="font-size:0.7rem"><div><b>${a.proveedor}</b>: ${a.articulo} (${a.uxc}u/cj · ${a.cxp}cj/p)</div><button class="btn btn-sm text-danger border-0" onclick="db.collection('acuerdos_empaque').doc('${a.id}').delete()">×</button></div></div>`).join('');
-    }
-
-    function showTab(id) {
-        document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
-        document.getElementById(id).classList.remove('hidden');
-        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-        document.getElementById('btn-'+id).classList.add('active');
+        if(confirm(`¿Resetear historial de stock de ${nombre}?`)) { for (const id of ids) await db.collection("stock").doc(id).delete(); }
     }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
