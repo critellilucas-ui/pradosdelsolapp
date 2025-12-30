@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Prados del Sol </title>
+    <title>Stock Prados del Sol - Gestión Profesional</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -21,13 +21,14 @@
         .card { border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-radius: 12px; height: 100%; }
         .pallet-info { font-size: 0.85em; color: #2980b9; background: #ebf5fb; padding: 5px 12px; border-radius: 20px; font-weight: bold; }
         .table thead { background-color: #34495e; color: white; }
+        .input-unit { background-color: #fff9e6; font-weight: bold; border: 1px solid #f1c40f !important; }
     </style>
 </head>
 <body>
 
 <div id="loginScreen" class="container d-flex justify-content-center align-items-center vh-100">
-    <div class="card p-4 shadow-lg" style="width: 380px; height: auto;">
-        <h4 class="text-center mb-4"><i class="fas fa-cloud me-2 text-primary"></i>Prados del Sol lobo critelli</h4>
+    <div class="card p-4 shadow-lg" style="width: 380px;">
+        <h4 class="text-center mb-4"><i class="fas fa-cloud me-2 text-primary"></i>Prados del Sol</h4>
         <div class="mb-3">
             <label>Correo Electrónico</label>
             <input type="email" id="loginEmail" class="form-control" placeholder="usuario@gmail.com">
@@ -38,7 +39,6 @@
         </div>
         <button onclick="login()" class="btn btn-primary w-100 py-2">Ingresar</button>
         <div id="loginError" class="text-danger mt-2 small text-center"></div>
-        <p class="mt-3 small text-muted text-center">Nota: El administrador debe haber creado tu cuenta previamente en Firebase Auth.</p>
     </div>
 </div>
 
@@ -72,8 +72,8 @@
                                 <tr>
                                     <th>Artículo</th>
                                     <th>Proveedor</th>
-                                    <th>Unidades</th>
-                                    <th>Equivalencia</th>
+                                    <th>Unidades Totales</th>
+                                    <th>Desglose (Cajas/Pallets)</th>
                                     <th class="text-center">Acción</th>
                                 </tr>
                             </thead>
@@ -84,53 +84,50 @@
             </div>
 
             <div id="config" class="content-section hidden">
-                <h3 class="mb-4">Panel de Control Administrativo</h3>
+                <h3 class="mb-4">Panel de Configuración</h3>
                 <div class="row g-4">
-                    <div class="col-xl-4 col-md-6">
-                        <div class="card p-3 border-start border-primary border-4">
-                            <h5><i class="fas fa-users-cog me-2"></i>Permisos de Usuarios</h5>
-                            <p class="small text-muted">Define quién es ADMIN. Los demás serán OPERADORES.</p>
-                            <div class="mb-2">
-                                <input type="email" id="newUserEmail" class="form-control mb-2" placeholder="email@gmail.com">
-                                <select id="newUserRol" class="form-select mb-2">
-                                    <option value="OPERADOR">Operador (Solo Carga)</option>
-                                    <option value="ADMIN">Administrador (Control Total)</option>
-                                </select>
-                                <button class="btn btn-primary w-100" onclick="guardarPermisoUsuario()">Asignar Permiso</button>
+                    <div class="col-xl-6 col-md-12">
+                        <div class="card p-3 border-start border-warning border-4">
+                            <h5><i class="fas fa-th me-2"></i>Configuración de Unidades por Artículo</h5>
+                            <p class="small text-muted">Define cuántas unidades trae una <b>Caja</b> y cuántas unidades trae un <b>Pallet</b> para cada producto.</p>
+                            <div class="row fw-bold mb-2 border-bottom pb-1 small text-center">
+                                <div class="col-4 text-start">Artículo</div>
+                                <div class="col-4">U. por Caja</div>
+                                <div class="col-4">U. por Pallet</div>
                             </div>
-                            <div id="listaPermisos" class="list-group list-group-flush mt-3 overflow-auto" style="max-height: 200px;"></div>
+                            <div id="matrizConfigEditor"></div>
                         </div>
                     </div>
 
-                    <div class="col-xl-4 col-md-6">
+                    <div class="col-xl-6 col-md-12">
+                        <div class="card p-3 border-start border-primary border-4 mb-4">
+                            <h5><i class="fas fa-users-cog me-2"></i>Permisos de Usuarios</h5>
+                            <div class="d-flex gap-2 mb-3">
+                                <input type="email" id="newUserEmail" class="form-control" placeholder="email@gmail.com">
+                                <select id="newUserRol" class="form-select" style="width: 150px;">
+                                    <option value="OPERADOR">Operador</option>
+                                    <option value="ADMIN">Admin</option>
+                                </select>
+                                <button class="btn btn-primary" onclick="guardarPermisoUsuario()">Asignar</button>
+                            </div>
+                            <div id="listaPermisos" class="list-group overflow-auto" style="max-height: 150px;"></div>
+                        </div>
+                        
                         <div class="card p-3 border-start border-success border-4">
                             <h5><i class="fas fa-truck me-2"></i>Proveedores</h5>
-                            <div class="mb-2">
-                                <input type="text" id="confNombreProv" class="form-control mb-2" placeholder="Nombre Proveedor">
-                                <label class="small fw-bold">Productos que provee:</label>
+                            <div class="mb-3">
+                                <input type="text" id="confNombreProv" class="form-control mb-2" placeholder="Nombre del Proveedor">
                                 <select id="confProductosProv" class="form-select mb-2" multiple style="height: 100px;">
                                     <option value="Botella 850cc">Botella 850cc</option>
-                                    <option value="Botella 900cc">Botella 900cc lobo</option>
+                                    <option value="Botella 900cc">Botella 900cc</option>
                                     <option value="Botella 4lts">Botella 4lts</option>
                                     <option value="Tapa 29fl">Tapa 29fl</option>
                                     <option value="Tapa 48fl">Tapa 48fl</option>
                                     <option value="Cajas">Cajas</option>
                                 </select>
-                                <button class="btn btn-success w-100" onclick="guardarProveedorCloud()">Guardar Proveedor</button>
+                                <button class="btn btn-success w-100" onclick="guardarProveedorCloud()">Registrar Proveedor</button>
                             </div>
-                            <div id="listaProveedores" class="list-group list-group-flush mt-2 overflow-auto" style="max-height: 150px;"></div>
-                        </div>
-                    </div>
-
-                    <div class="col-xl-4 col-md-12">
-                        <div class="card p-3 border-start border-warning border-4">
-                            <h5><i class="fas fa-th me-2"></i>Matriz de Empaque</h5>
-                            <div class="row fw-bold mb-2 border-bottom pb-1 small">
-                                <div class="col-5">Artículo</div>
-                                <div class="col-3 text-center">u/Caja</div>
-                                <div class="col-4 text-center">C/Pallet</div>
-                            </div>
-                            <div id="matrizConfigEditor"></div>
+                            <div id="listaProveedores" class="list-group overflow-auto" style="max-height: 150px;"></div>
                         </div>
                     </div>
                 </div>
@@ -142,14 +139,14 @@
 <div class="modal fade" id="modalIngreso" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white border-0">
+            <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title">Entrada de Mercadería</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="fw-bold mb-1">Artículo</label>
+                        <label class="fw-bold">Artículo</label>
                         <select id="selArticulo" class="form-select" onchange="actualizarFiltroProveedores(); calcularIngreso();">
                             <option value="Botella 850cc">Botella 850cc</option>
                             <option value="Botella 900cc">Botella 900cc</option>
@@ -160,44 +157,42 @@
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label class="fw-bold mb-1">Proveedor</label>
+                        <label class="fw-bold">Proveedor</label>
                         <select id="selProveedor" class="form-select"></select>
                     </div>
                     <div class="col-md-4">
-                        <label class="fw-bold mb-1">Cantidad</label>
+                        <label class="fw-bold">Cantidad a Ingresar</label>
                         <input type="number" id="inpCantidad" class="form-control" value="0" oninput="calcularIngreso()">
                     </div>
                     <div class="col-md-4">
-                        <label class="fw-bold mb-1">Unidad</label>
+                        <label class="fw-bold">Formato de Carga</label>
                         <select id="selTipoCarga" class="form-select" onchange="calcularIngreso()">
-                            <option value="u">Unidades</option>
-                            <option value="c">Cajas</option>
-                            <option value="p">Pallets</option>
+                            <option value="u">Unidades Sueltas</option>
+                            <option value="c">Cajas completas</option>
+                            <option value="p">Pallets completos</option>
                         </select>
                     </div>
                     <div class="col-md-4 text-center bg-light rounded p-2">
-                        <small class="text-muted d-block">Total Unidades</small>
+                        <small class="text-muted d-block">Conversión a Unidades</small>
                         <span id="txtTotalFinal" class="fs-3 fw-bold text-primary">0</span>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer border-0">
-                <button class="btn btn-success btn-lg w-100 fw-bold" onclick="guardarIngresoCloud()">CONFIRMAR INGRESO</button>
+            <div class="modal-footer">
+                <button class="btn btn-success btn-lg w-100" onclick="guardarIngresoCloud()">CONFIRMAR CARGA EN STOCK</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // CONFIGURACIÓN FIREBASE
     const firebaseConfig = {
       apiKey: "AIzaSyCjYp0idCxs32QAofYLVEGcwvmd3HXy-3Y",
       authDomain: "prados-del-sol.firebaseapp.com",
       projectId: "prados-del-sol",
       storageBucket: "prados-del-sol.firebasestorage.app",
       messagingSenderId: "30316921952",
-      appId: "1:30316921952:web:b0f88b9c35f270d548ef05",
-      measurementId: "G-2SJZFMZRXC"
+      appId: "1:30316921952:web:b0f88b9c35f270d548ef05"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -208,28 +203,19 @@
     let provsLocal = [];
     let usuarioRol = 'OPERADOR';
 
-    // LOGIN
     function login() {
         const email = document.getElementById('loginEmail').value;
         const pass = document.getElementById('loginPass').value;
         auth.signInWithEmailAndPassword(email, pass).catch(err => {
-            document.getElementById('loginError').innerText = "Error: Usuario no autorizado o datos incorrectos.";
+            document.getElementById('loginError').innerText = "Acceso denegado.";
         });
     }
 
-    // ESTADO DE SESIÓN Y PERMISOS
     auth.onAuthStateChanged(user => {
         if (user) {
-            // Verificar rol en base de datos
             db.collection("permisos").doc(user.email).get().then(doc => {
-                if(user.email === 'critellilucas@gmail.com' || (doc.exists && doc.data().rol === 'ADMIN')) {
-                    usuarioRol = 'ADMIN';
-                    document.getElementById('btn-config').classList.remove('hidden');
-                } else {
-                    usuarioRol = 'OPERADOR';
-                    document.getElementById('btn-config').classList.add('hidden');
-                }
-                
+                usuarioRol = (user.email === 'critellilucas@gmail.com' || (doc.exists && doc.data().rol === 'ADMIN')) ? 'ADMIN' : 'OPERADOR';
+                document.getElementById('btn-config').style.display = (usuarioRol === 'ADMIN') ? 'block' : 'none';
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('appSystem').classList.remove('hidden');
                 document.getElementById('userDisplay').innerText = user.email;
@@ -245,100 +231,152 @@
     function logout() { auth.signOut(); }
 
     function inicializarListeners() {
-        // Matriz
+        // Cargar Matriz de Empaque (Equivalencias)
         db.collection("config").doc("matriz").onSnapshot(doc => {
-            if(doc.exists) matrizLocal = doc.data();
+            if(doc.exists) {
+                matrizLocal = doc.data();
+            } else {
+                // Valores por defecto si no existe la matriz
+                const items = ["Botella 850cc", "Botella 900cc", "Botella 4lts", "Tapa 29fl", "Tapa 48fl", "Cajas"];
+                items.forEach(i => matrizLocal[i] = {uxc: 1, uxp: 1});
+            }
             renderizarMatrizEditor();
         });
 
-        // Proveedores
         db.collection("proveedores").onSnapshot(snap => {
             provsLocal = snap.docs.map(d => ({id: d.id, ...d.data()}));
             renderizarListaProvs();
             actualizarFiltroProveedores();
         });
 
-        // Lista de Permisos (Solo Admin)
-        if(usuarioRol === 'ADMIN') {
-            db.collection("permisos").onSnapshot(snap => {
-                const cont = document.getElementById('listaPermisos');
-                cont.innerHTML = snap.docs.map(d => `
-                    <div class="list-group-item d-flex justify-content-between align-items-center py-1 px-0 border-0 border-bottom">
-                        <div style="font-size: 0.8rem;">
-                            <span class="fw-bold">${d.id}</span><br>
-                            <span class="badge ${d.data().rol === 'ADMIN' ? 'bg-danger' : 'bg-secondary'}">${d.data().rol}</span>
-                        </div>
-                        <button class="btn btn-sm text-muted" onclick="eliminarPermiso('${d.id}')"><i class="fas fa-times"></i></button>
-                    </div>
-                `).join('');
-            });
-        }
-
-        // Stock
         db.collection("stock").orderBy("fecha", "desc").onSnapshot(snap => {
             const tbody = document.getElementById('tablaStock');
             tbody.innerHTML = '';
             snap.forEach(doc => {
                 const s = doc.data();
-                const m = matrizLocal[s.articulo] || {uxc:1, cxp:1};
-                const uP = (m.uxc || 1) * (m.cxp || 1);
-                const pallets = Math.floor(s.cantidad / uP);
-                const cajas = Math.floor((s.cantidad % uP) / (m.uxc || 1));
+                const m = matrizLocal[s.articulo] || {uxc:1, uxp:1};
+                
+                // Cálculo de visualización
+                const pallets = Math.floor(s.cantidad / m.uxp);
+                const restoCajas = s.cantidad % m.uxp;
+                const cajas = Math.floor(restoCajas / m.uxc);
+                const unidadesSueltas = restoCajas % m.uxc;
 
                 tbody.innerHTML += `<tr>
                     <td><strong>${s.articulo}</strong></td>
-                    <td><span class="badge bg-light text-dark">${s.proveedor}</span></td>
+                    <td><span class="badge bg-light text-dark border">${s.proveedor}</span></td>
                     <td class="fw-bold">${s.cantidad.toLocaleString()} u.</td>
-                    <td><span class="pallet-info">${pallets}P + ${cajas}C</span></td>
+                    <td><span class="pallet-info">${pallets} Pallets | ${cajas} Cajas | ${unidadesSueltas} u.</span></td>
                     <td class="text-center">
                         ${usuarioRol === 'ADMIN' ? `<button class="btn btn-sm text-danger" onclick="borrarStockCloud('${doc.id}')"><i class="fas fa-trash"></i></button>` : '-'}
                     </td>
                 </tr>`;
             });
         });
+
+        if(usuarioRol === 'ADMIN') {
+            db.collection("permisos").onSnapshot(snap => {
+                document.getElementById('listaPermisos').innerHTML = snap.docs.map(d => `
+                    <div class="list-group-item d-flex justify-content-between align-items-center py-1">
+                        <span class="small">${d.id} (${d.data().rol})</span>
+                        <button class="btn btn-sm text-danger" onclick="eliminarPermiso('${d.id}')">×</button>
+                    </div>
+                `).join('');
+            });
+        }
     }
 
-    // GESTIÓN DE PERMISOS
+    // --- FUNCIONES DE CÁLCULO ---
+    function calcularIngreso() {
+        const art = document.getElementById('selArticulo').value;
+        const m = matrizLocal[art] || {uxc:1, uxp:1};
+        const cant = parseFloat(document.getElementById('inpCantidad').value) || 0;
+        const tipo = document.getElementById('selTipoCarga').value;
+        
+        let total = 0;
+        if (tipo === 'u') total = cant;
+        if (tipo === 'c') total = cant * m.uxc;
+        if (tipo === 'p') total = cant * m.uxp;
+        
+        document.getElementById('txtTotalFinal').innerText = Math.round(total).toLocaleString();
+    }
+
+    function renderizarMatrizEditor() {
+        const cont = document.getElementById('matrizConfigEditor');
+        const items = ["Botella 850cc", "Botella 900cc", "Botella 4lts", "Tapa 29fl", "Tapa 48fl", "Cajas"];
+        
+        cont.innerHTML = items.map(key => {
+            const val = matrizLocal[key] || {uxc: 1, uxp: 1};
+            return `
+            <div class="row mb-2 align-items-center bg-light p-2 rounded mx-0">
+                <div class="col-4"><strong>${key}</strong></div>
+                <div class="col-4">
+                    <div class="input-group input-group-sm">
+                        <input type="number" class="form-control text-center input-unit" value="${val.uxc}" 
+                        onchange="actualizarMatrizCloud('${key}','uxc',this.value)" title="Unidades por Caja">
+                        <span class="input-group-text">u.</span>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="input-group input-group-sm">
+                        <input type="number" class="form-control text-center input-unit" value="${val.uxp}" 
+                        onchange="actualizarMatrizCloud('${key}','uxp',this.value)" title="Unidades por Pallet">
+                        <span class="input-group-text">u.</span>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function actualizarMatrizCloud(art, campo, valor) {
+        if(!matrizLocal[art]) matrizLocal[art] = {uxc:1, uxp:1};
+        matrizLocal[art][campo] = parseInt(valor) || 1;
+        db.collection("config").doc("matriz").set(matrizLocal);
+    }
+
+    // --- OTRAS FUNCIONES ---
+    function guardarIngresoCloud() {
+        const art = document.getElementById('selArticulo').value;
+        const prov = document.getElementById('selProveedor').value;
+        const totalU = parseInt(document.getElementById('txtTotalFinal').innerText.replace(/\./g, ''));
+        
+        if(!prov || totalU <= 0) return alert("Verifique los datos de ingreso");
+
+        db.collection("stock").add({
+            articulo: art,
+            proveedor: prov,
+            cantidad: totalU,
+            fecha: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+            bootstrap.Modal.getInstance(document.getElementById('modalIngreso')).hide();
+            document.getElementById('inpCantidad').value = 0;
+            document.getElementById('txtTotalFinal').innerText = "0";
+        });
+    }
+
     function guardarPermisoUsuario() {
         const email = document.getElementById('newUserEmail').value.trim().toLowerCase();
         const rol = document.getElementById('newUserRol').value;
-        if(!email) return alert("Ingrese un email");
-        db.collection("permisos").doc(email).set({ rol })
-            .then(() => {
-                alert("Permiso asignado. Recuerda crear el usuario en Firebase Authentication para que pueda entrar.");
-                document.getElementById('newUserEmail').value = '';
-            });
+        if(!email) return;
+        db.collection("permisos").doc(email).set({ rol }).then(() => {
+            document.getElementById('newUserEmail').value = '';
+        });
     }
 
     function eliminarPermiso(id) {
-        if(id === 'critellilucas@gmail.com') return alert("No puedes quitarte el permiso a ti mismo");
-        if(confirm("¿Eliminar permisos para este correo?")) db.collection("permisos").doc(id).delete();
+        if(confirm("Eliminar acceso?")) db.collection("permisos").doc(id).delete();
     }
 
-    // FUNCIONES RESTANTES
     function guardarProveedorCloud() {
         const nombre = document.getElementById('confNombreProv').value.trim();
         const prods = Array.from(document.getElementById('confProductosProv').selectedOptions).map(o => o.value);
-        if(!nombre || prods.length === 0) return alert("Complete nombre y productos");
+        if(!nombre || prods.length === 0) return alert("Nombre y productos requeridos");
         db.collection("proveedores").add({ nombre, productos: prods });
         document.getElementById('confNombreProv').value = '';
     }
 
-    function guardarIngresoCloud() {
-        const art = document.getElementById('selArticulo').value;
-        const prov = document.getElementById('selProveedor').value;
-        const cant = parseInt(document.getElementById('txtTotalFinal').innerText.replace(/\./g, ''));
-        if(!prov || cant <= 0) return alert("Datos inválidos");
-        db.collection("stock").add({
-            articulo: art, proveedor: prov, cantidad: cant,
-            fecha: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(() => {
-            bootstrap.Modal.getInstance(document.getElementById('modalIngreso')).hide();
-        });
-    }
-
     function borrarStockCloud(id) {
-        if(confirm("¿Borrar este registro?")) db.collection("stock").doc(id).delete();
+        if(confirm("¿Eliminar este registro de stock?")) db.collection("stock").doc(id).delete();
     }
 
     function showTab(id) {
@@ -354,34 +392,9 @@
         document.getElementById('selProveedor').innerHTML = filtrados.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('') || '<option value="">Sin prov.</option>';
     }
 
-    function calcularIngreso() {
-        const art = document.getElementById('selArticulo').value;
-        const m = matrizLocal[art] || {uxc:1, cxp:1};
-        const cant = parseFloat(document.getElementById('inpCantidad').value) || 0;
-        const tipo = document.getElementById('selTipoCarga').value;
-        let total = (tipo==='u') ? cant : (tipo==='c') ? cant*m.uxc : cant*(m.uxc*m.cxp);
-        document.getElementById('txtTotalFinal').innerText = Math.round(total).toLocaleString();
-    }
-
-    function renderizarMatrizEditor() {
-        const cont = document.getElementById('matrizConfigEditor');
-        cont.innerHTML = Object.keys(matrizLocal).sort().map(key => `
-            <div class="row mb-2 align-items-center">
-                <div class="col-5" style="font-size:0.75rem"><strong>${key}</strong></div>
-                <div class="col-3"><input type="number" class="form-control form-control-sm text-center" value="${matrizLocal[key].uxc}" onchange="actualizarMatrizCloud('${key}','uxc',this.value)"></div>
-                <div class="col-4"><input type="number" class="form-control form-control-sm text-center" value="${matrizLocal[key].cxp}" onchange="actualizarMatrizCloud('${key}','cxp',this.value)"></div>
-            </div>
-        `).join('');
-    }
-
-    function actualizarMatrizCloud(art, campo, valor) {
-        matrizLocal[art][campo] = parseInt(valor) || 1;
-        db.collection("config").doc("matriz").set(matrizLocal);
-    }
-
     function renderizarListaProvs() {
         document.getElementById('listaProveedores').innerHTML = provsLocal.map(p => `
-            <div class="list-group-item d-flex justify-content-between align-items-center p-1 border-0 border-bottom">
+            <div class="list-group-item d-flex justify-content-between align-items-center p-2">
                 <span class="small">${p.nombre}</span>
                 <button class="btn btn-sm text-danger" onclick="db.collection('proveedores').doc('${p.id}').delete()"><i class="fas fa-trash-alt"></i></button>
             </div>
