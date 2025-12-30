@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prados del Sol - Gestión de Insumos</title>
+    <title>Prados del Sol - Gestión por Proveedor</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -19,7 +19,7 @@
         .nav-link:hover, .nav-link.active { color: white; background-color: #0d6efd; }
         .hidden { display: none !important; }
         .card { border: none; box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); border-radius: 10px; }
-        .bg-detalle { background-color: #e9ecef; border-radius: 8px; padding: 10px; }
+        .resumen-carga { background-color: #e7f1ff; border-radius: 8px; padding: 15px; }
     </style>
 </head>
 <body>
@@ -36,11 +36,9 @@
 <div id="appSystem" class="container-fluid hidden">
     <div class="row">
         <div class="col-md-2 sidebar">
-            <h5 class="text-center mb-4 border-bottom pb-3 text-info">GESTIÓN PRADOS</h5>
+            <h5 class="text-center mb-4 border-bottom pb-3 text-info">SISTEMA PRADOS</h5>
             <nav>
                 <a class="nav-link active" onclick="showTab('stock')"><i class="fas fa-boxes me-2"></i> Inventario</a>
-                <a class="nav-link" onclick="showTab('ventas')"><i class="fas fa-file-contract me-2"></i> Nueva Venta</a>
-                <a class="nav-link" onclick="showTab('clientes')"><i class="fas fa-user-friends me-2"></i> Clientes</a>
                 <a class="nav-link" onclick="showTab('config')"><i class="fas fa-cog me-2"></i> Configuración</a>
                 <a class="nav-link mt-5 text-danger" onclick="logout()"><i class="fas fa-power-off me-2"></i> Salir</a>
             </nav>
@@ -49,116 +47,91 @@
         <div class="col-md-10 p-4">
             
             <div id="stock" class="content-section">
-                <div class="d-flex justify-content-between mb-4">
-                    <h3>Panel de Stock Real</h3>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalIngreso"><i class="fas fa-plus me-1"></i> Entrada de Mercancía</button>
-                </div>
-                <div class="card p-3">
-                    <table class="table align-middle">
-                        <thead class="table-dark">
-                            <tr><th>Artículo / Insumo</th><th class="text-center">Cant. Unidades</th><th>Estado</th><th class="text-end">Limpiar</th></tr>
-                        </thead>
-                        <tbody id="tablaStockConsolidado"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div id="ventas" class="content-section hidden">
-                <div class="row">
-                    <div class="col-md-7">
-                        <div class="card p-4 border-top border-primary border-4">
-                            <h4>Armado de Despacho</h4>
-                            <div class="row g-3">
-                                <div class="col-md-6"><label>Cliente</label><select id="vtaCliente" class="form-select" onchange="calcularVentaFinal()"></select></div>
-                                <div class="col-md-6"><label>Aceite</label><select id="vtaArticulo" class="form-select" onchange="calcularVentaFinal()"></select></div>
-                                <div class="col-md-12"><label class="text-primary">Formato Guardado</label><select id="vtaFormatoSel" class="form-select" onchange="aplicarFormatoVenta()"></select></div>
-                                <div class="col-md-4"><label>Pallets</label><input type="number" id="vtaPallets" class="form-control" value="28" oninput="calcularVentaFinal()"></div>
-                                <div class="col-md-4"><label>Cajas x Pallet</label><input type="number" id="vtaCjxP" class="form-control" oninput="calcularVentaFinal()"></div>
-                                <div class="col-md-4"><label>Unid. x Caja</label><input type="number" id="vtaUxC" class="form-control" oninput="calcularVentaFinal()"></div>
+                <div class="card p-4 mb-4 border-top border-primary border-4">
+                    <h4>Carga de Mercadería</h4>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="fw-bold">1. Proveedor</label>
+                            <select id="selProveedor" class="form-select" onchange="filtrarArticulosAcuerdo()"></select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="fw-bold">2. Artículo Acordado</label>
+                            <select id="selArticulo" class="form-select" onchange="actualizarEquivalenciasCarga()"></select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="fw-bold">3. Tipo de Carga</label>
+                            <select id="selTipoCarga" class="form-select" onchange="calcularCarga()">
+                                <option value="p">Pallets</option>
+                                <option value="c">Cajas</option>
+                                <option value="u">Unidades Sueltas</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="fw-bold">4. Cantidad</label>
+                            <input type="number" id="inpCantidad" class="form-control" oninput="calcularCarga()">
+                        </div>
+                        <div class="col-md-8">
+                            <div class="resumen-carga">
+                                <span class="small text-muted">DETALLE DE CONVERSIÓN:</span>
+                                <div class="d-flex justify-content-between">
+                                    <span id="infoConversion">--</span>
+                                    <span class="fw-bold fs-4 text-primary">Total: <span id="txtTotalFinal">0</span> u.</span>
+                                </div>
                             </div>
-                            <button class="btn btn-primary w-100 mt-4 py-2 fw-bold" onclick="confirmarVentaRemito()">DESCONTAR STOCK</button>
                         </div>
                     </div>
+                    <button class="btn btn-primary w-100 mt-3 py-2 fw-bold" onclick="guardarIngreso()">CONFIRMAR INGRESO</button>
                 </div>
-            </div>
 
-            <div id="clientes" class="content-section hidden">
-                <div class="card p-4">
-                    <h4>Gestión de Clientes</h4>
-                    <div class="row g-2 mb-4">
-                        <div class="col-md-3"><input type="text" id="cliNombre" class="form-control" placeholder="Nombre"></div>
-                        <div class="col-md-3"><input type="text" id="cliID" class="form-control" placeholder="CUIT"></div>
-                        <div class="col-md-4"><input type="text" id="cliDir" class="form-control" placeholder="Dirección"></div>
-                        <div class="col-md-2"><button class="btn btn-dark w-100" onclick="guardarCliente()">Añadir</button></div>
-                    </div>
-                    <table class="table table-hover">
-                        <tbody id="tablaClientes"></tbody>
+                <div class="card p-3">
+                    <h5>Existencias en Stock</h5>
+                    <table class="table table-striped align-middle">
+                        <thead class="table-dark"><tr><th>Artículo</th><th class="text-center">Unidades</th><th class="text-end">Limpiar</th></tr></thead>
+                        <tbody id="tablaStock"></tbody>
                     </table>
                 </div>
             </div>
 
             <div id="config" class="content-section hidden">
                 <div class="row g-4">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="card p-3">
-                            <h5>Proveedores</h5>
-                            <div class="input-group mb-2"><input type="text" id="confNuevoProv" class="form-control"><button class="btn btn-dark" onclick="guardarProveedor()">+</button></div>
-                            <div id="listaProveedores" class="list-group"></div>
+                            <h6><i class="fas fa-truck me-2"></i>Proveedores</h6>
+                            <div class="input-group mb-2">
+                                <input type="text" id="confNuevoProv" class="form-control">
+                                <button class="btn btn-dark" onclick="guardarProv()">+</button>
+                            </div>
+                            <div id="listaProvs" class="list-group"></div>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="card p-3">
-                            <h5>Artículos</h5>
-                            <div class="input-group mb-2"><input type="text" id="confNuevoArt" class="form-control"><button class="btn btn-info text-white" onclick="guardarArticuloCloud()">+</button></div>
-                            <div id="listaArticulosMaster" class="list-group"></div>
+                            <h6><i class="fas fa-tag me-2"></i>Artículos</h6>
+                            <div class="input-group mb-2">
+                                <input type="text" id="confNuevoArt" class="form-control">
+                                <button class="btn btn-info text-white" onclick="guardarArt()">+</button>
+                            </div>
+                            <div id="listaArts" class="list-group"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card p-3 border-top border-warning border-4">
+                            <h6><i class="fas fa-handshake me-2"></i>Acuerdos de Proveedor (Unidades y Cajas)</h6>
+                            <div class="row g-2">
+                                <div class="col-6"><label class="small">Proveedor</label><select id="acProv" class="form-select"></select></div>
+                                <div class="col-6"><label class="small">Artículo</label><select id="acArt" class="form-select"></select></div>
+                                <div class="col-6"><label class="small">u. x Caja</label><input type="number" id="acUxC" class="form-control" value="12"></div>
+                                <div class="col-6"><label class="small">Cajas x Pallet</label><input type="number" id="acCxP" class="form-control" value="75"></div>
+                                <div class="col-12"><button class="btn btn-warning w-100 mt-2" onclick="guardarAcuerdo()">Vincular Articulo a Proveedor</button></div>
+                            </div>
+                            <hr>
+                            <div id="listaAcuerdos" class="small"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-
-<div class="modal fade" id="modalIngreso" tabindex="-1">
-    <div class="modal-dialog"><div class="modal-content">
-        <div class="modal-header bg-primary text-white"><h5>Entrada de Mercadería</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-        <div class="modal-body">
-            <label class="fw-bold">Proveedor</label><select id="selProveedor" class="form-select mb-3"></select>
-            <label class="fw-bold">Artículo</label><select id="selArticulo" class="form-select mb-3"></select>
-            
-            <div class="bg-detalle mb-3">
-                <label class="fw-bold">Modo de Carga</label>
-                <select id="selTipoCarga" class="form-select mb-3" onchange="toggleInputsCarga()">
-                    <option value="u">Carga por Unidades Sueltas</option>
-                    <option value="c">Carga por Cajas</option>
-                    <option value="p">Carga por Pallets</option>
-                </select>
-
-                <div class="row g-2">
-                    <div class="col-12" id="divPrincipal">
-                        <label id="lblPrincipal">Cantidad de Unidades</label>
-                        <input type="number" id="inpCantidad" class="form-control" oninput="calcularIngreso()">
-                    </div>
-                    
-                    <div class="col-6 hidden" id="divCajasXPallet">
-                        <label>Cajas x Pallet</label>
-                        <input type="number" id="inpCjxP" class="form-control" value="75" oninput="calcularIngreso()">
-                    </div>
-
-                    <div class="col-6 hidden" id="divUnidXCaja">
-                        <label>Unid. x Caja</label>
-                        <input type="number" id="inpUxC" class="form-control" value="12" oninput="calcularIngreso()">
-                    </div>
-                </div>
-            </div>
-
-            <div class="text-center p-3 border border-primary rounded">
-                <span class="text-muted d-block small">TOTAL A INGRESAR AL STOCK</span>
-                <span id="txtTotalFinal" class="fs-2 fw-bold text-primary">0</span> <span class="text-primary fw-bold">Unidades</span>
-            </div>
-        </div>
-        <div class="modal-footer"><button class="btn btn-success w-100 py-2 fw-bold" onclick="guardarIngresoCloud()">CONFIRMAR ENTRADA</button></div>
-    </div></div>
 </div>
 
 <script>
@@ -174,7 +147,7 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    let articulosLocal = [], provsLocal = [], formatosLocal = [], clientesLocal = [];
+    let articulos = [], proveedores = [], acuerdos = [];
 
     function login() { auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPass').value); }
     function logout() { auth.signOut(); }
@@ -184,87 +157,89 @@
         else { document.getElementById('loginScreen').classList.remove('hidden'); document.getElementById('appSystem').classList.add('hidden'); }
     });
 
-    function toggleInputsCarga() {
-        const modo = document.getElementById('selTipoCarga').value;
-        const divPrincipal = document.getElementById('divPrincipal');
-        const lblPrincipal = document.getElementById('lblPrincipal');
-        const divCjxP = document.getElementById('divCajasXPallet');
-        const divUxC = document.getElementById('divUnidXCaja');
-
-        // Resetear campos
-        divCjxP.classList.add('hidden');
-        divUxC.classList.add('hidden');
-
-        if (modo === 'u') {
-            lblPrincipal.innerText = "Cantidad de Unidades";
-        } else if (modo === 'c') {
-            lblPrincipal.innerText = "Cantidad de Cajas";
-            divUxC.classList.remove('hidden');
-        } else if (modo === 'p') {
-            lblPrincipal.innerText = "Cantidad de Pallets";
-            divCjxP.classList.remove('hidden');
-            divUxC.classList.remove('hidden');
-        }
-        calcularIngreso();
-    }
-
-    function calcularIngreso() {
-        const cant = parseInt(document.getElementById('inpCantidad').value) || 0;
-        const modo = document.getElementById('selTipoCarga').value;
-        const uxc = parseInt(document.getElementById('inpUxC').value) || 0;
-        const cjxp = parseInt(document.getElementById('inpCjxP').value) || 0;
-
-        let total = 0;
-        if (modo === 'u') total = cant;
-        if (modo === 'c') total = cant * uxc;
-        if (modo === 'p') total = cant * cjxp * uxc;
-
-        document.getElementById('txtTotalFinal').innerText = total.toLocaleString();
-    }
-
-    // Funciones de Inicialización
     function iniciarApp() {
         db.collection("articulos").orderBy("nombre").onSnapshot(s => {
-            articulosLocal = s.docs.map(d => ({id:d.id, ...d.data()}));
-            const html = '<option value="">-- Seleccionar --</option>' + articulosLocal.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
-            document.getElementById('vtaArticulo').innerHTML = html;
-            document.getElementById('selArticulo').innerHTML = html;
-            renderArticulosMaster();
+            articulos = s.docs.map(d => ({id:d.id, ...d.data()}));
+            document.getElementById('acArt').innerHTML = articulos.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
+            renderLista('listaArts', articulos, 'articulos');
         });
         db.collection("proveedores").orderBy("nombre").onSnapshot(s => {
-            provsLocal = s.docs.map(d => ({id:d.id, ...d.data()}));
-            document.getElementById('selProveedor').innerHTML = '<option value="">-- Proveedor --</option>' + provsLocal.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
-            renderProveedores();
+            proveedores = s.docs.map(d => ({id:d.id, ...d.data()}));
+            const html = '<option value="">-- Proveedor --</option>' + proveedores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
+            document.getElementById('selProveedor').innerHTML = html;
+            document.getElementById('acProv').innerHTML = html;
+            renderLista('listaProvs', proveedores, 'proveedores');
         });
-        db.collection("clientes").orderBy("nombre").onSnapshot(s => {
-            clientesLocal = s.docs.map(d => ({id:d.id, ...d.data()}));
-            document.getElementById('vtaCliente').innerHTML = '<option value="">-- Cliente --</option>' + clientesLocal.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
-            renderClientes();
+        db.collection("acuerdos").onSnapshot(s => {
+            acuerdos = s.docs.map(d => ({id:d.id, ...d.data()}));
+            renderAcuerdos();
         });
         db.collection("stock").onSnapshot(s => {
             const res = {}; s.docs.forEach(d => res[d.data().articulo] = (res[d.data().articulo] || 0) + d.data().cantidad);
-            document.getElementById('tablaStockConsolidado').innerHTML = articulosLocal.map(a => `<tr><td>${a.nombre}</td><td class="text-center fw-bold">${(res[a.nombre] || 0).toLocaleString()}</td><td><span class="badge bg-success">STOCK</span></td><td class="text-end"><button class="btn btn-sm btn-outline-danger" onclick="limpiarArt('${a.nombre}')">×</button></td></tr>`).join('');
+            document.getElementById('tablaStock').innerHTML = Object.keys(res).map(art => `<tr><td>${art}</td><td class="text-center fw-bold">${res[art].toLocaleString()}</td><td class="text-end"><button class="btn btn-sm btn-outline-danger" onclick="limpiarArt('${art}')">×</button></td></tr>`).join('');
         });
     }
 
-    async function guardarIngresoCloud() {
+    // LÓGICA DE CARGA FILTRADA
+    function filtrarArticulosAcuerdo() {
+        const p = document.getElementById('selProveedor').value;
+        const filtrados = acuerdos.filter(a => a.proveedor === p);
+        document.getElementById('selArticulo').innerHTML = '<option value="">-- Elegir Artículo --</option>' + filtrados.map(a => `<option value="${a.articulo}">${a.articulo}</option>`).join('');
+    }
+
+    function actualizarEquivalenciasCarga() {
+        const p = document.getElementById('selProveedor').value;
         const art = document.getElementById('selArticulo').value;
-        const prov = document.getElementById('selProveedor').value;
+        const ac = acuerdos.find(x => x.proveedor === p && x.articulo === art);
+        if(ac) {
+            document.getElementById('infoConversion').innerText = `Equivalencia: 1 Caja = ${ac.uxc} u. | 1 Pallet = ${ac.cxp} cajas.`;
+            calcularCarga();
+        }
+    }
+
+    function calcularCarga() {
+        const cant = parseInt(document.getElementById('inpCantidad').value) || 0;
+        const tipo = document.getElementById('selTipoCarga').value;
+        const p = document.getElementById('selProveedor').value;
+        const art = document.getElementById('selArticulo').value;
+        const ac = acuerdos.find(x => x.proveedor === p && x.articulo === art);
+
+        let total = 0;
+        if(!ac) { total = cant; } 
+        else {
+            if(tipo === 'u') total = cant;
+            if(tipo === 'c') total = cant * ac.uxc;
+            if(tipo === 'p') total = cant * ac.cxp * ac.uxc;
+        }
+        document.getElementById('txtTotalFinal').innerText = total.toLocaleString();
+    }
+
+    async function guardarIngreso() {
+        const art = document.getElementById('selArticulo').value;
         const cant = parseInt(document.getElementById('txtTotalFinal').innerText.replace(/\./g,''));
-        if(!art || !prov || cant <= 0) return alert("Faltan datos");
-        await db.collection("stock").add({ articulo: art, proveedor: prov, cantidad: cant, fecha: firebase.firestore.FieldValue.serverTimestamp() });
-        alert("¡Ingreso Exitoso!");
+        if(!art || cant <= 0) return alert("Faltan datos");
+        await db.collection("stock").add({ articulo: art, cantidad: cant, fecha: firebase.firestore.FieldValue.serverTimestamp() });
+        alert("Stock Ingresado");
         document.getElementById('inpCantidad').value = "";
     }
 
-    // Restauración de auxiliares
-    function guardarProveedor() { const n = document.getElementById('confNuevoProv').value; if(n) db.collection("proveedores").add({nombre:n}); }
-    function guardarArticuloCloud() { const n = document.getElementById('confNuevoArt').value; if(n) db.collection("articulos").add({nombre:n}); }
-    function renderProveedores() { document.getElementById('listaProveedores').innerHTML = provsLocal.map(p => `<div class="list-group-item d-flex justify-content-between p-1">${p.nombre} <i class="fas fa-times text-danger" onclick="db.collection('proveedores').doc('${p.id}').delete()"></i></div>`).join(''); }
-    function renderArticulosMaster() { document.getElementById('listaArticulosMaster').innerHTML = articulosLocal.map(a => `<div class="list-group-item d-flex justify-content-between p-1">${a.nombre} <i class="fas fa-times text-danger" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join(''); }
+    // GESTIÓN DE ACUERDOS
+    function guardarAcuerdo() {
+        const p = document.getElementById('acProv').value, a = document.getElementById('acArt').value;
+        const u = parseInt(document.getElementById('acUxC').value), c = parseInt(document.getElementById('acCxP').value);
+        if(p && a) db.collection("acuerdos").add({proveedor: p, articulo: a, uxc: u, cxp: c});
+    }
+
+    function renderAcuerdos() {
+        document.getElementById('listaAcuerdos').innerHTML = acuerdos.map(ac => `<div class="border-bottom py-1 d-flex justify-content-between"><span>${ac.proveedor} ➔ ${ac.articulo} (${ac.uxc} u/c, ${ac.cxp} c/p)</span><i class="fas fa-trash text-danger" onclick="db.collection('acuerdos').doc('${ac.id}').delete()"></i></div>`).join('');
+    }
+
+    // AUXILIARES
+    function guardarProv() { const n = document.getElementById('confNuevoProv').value; if(n) db.collection("proveedores").add({nombre:n}); }
+    function guardarArt() { const n = document.getElementById('confNuevoArt').value; if(n) db.collection("articulos").add({nombre:n}); }
+    function renderLista(id, data, coll) { document.getElementById(id).innerHTML = data.map(item => `<div class="list-group-item d-flex justify-content-between p-1 small">${item.nombre} <i class="fas fa-times text-danger" onclick="db.collection('${coll}').doc('${item.id}').delete()"></i></div>`).join(''); }
     function showTab(id) { document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
     async function limpiarArt(n) { if(confirm("¿Vaciar stock?")) { const snp = await db.collection("stock").where("articulo","==",n).get(); const b = db.batch(); snp.forEach(d => b.delete(d.ref)); await b.commit(); } }
 </script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
