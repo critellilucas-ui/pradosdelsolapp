@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Prados del Sol - Gestión Integral</title>
+    <title>Prados del Sol - Sistema de Gestión</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -15,253 +15,193 @@
     
     <style>
         :root {
-            --primary-prados: #1a5c37; /* Verde Bosque */
-            --secondary-prados: #f9bc15; /* Amarillo Sol */
-            --accent-prados: #007bff; /* Azul */
+            --primary-color: #1a5c37;
+            --accent-color: #007bff;
+            --sun-color: #f9bc15;
         }
 
         body { 
             background-color: #f4f7f6; 
-            font-family: 'Segoe UI', Roboto, sans-serif; 
-            overflow-x: hidden;
+            font-family: 'Segoe UI', sans-serif; 
+            margin: 0;
         }
 
-        /* FONDO LOGIN ESTILO LOGO */
+        /* FONDO PERSONALIZADO DE PORTADA */
         #loginScreen {
-            background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), 
-                        url('https://img.freepik.com/free-photo/sunlight-shining-through-green-leaves_23-2148200021.jpg?t=st=1715875000');
+            background: url('https://r.jina.ai/i/9e009f45348f43068f3e589cc5987157') no-repeat center center fixed;
             background-size: cover;
-            background-position: center;
-        }
-
-        .login-card {
-            border: none;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            backdrop-filter: blur(5px);
-            background: rgba(255, 255, 255, 0.9);
-        }
-
-        .logo-placeholder {
-            width: 120px;
-            height: 120px;
-            background: white;
-            margin: -60px auto 20px;
-            border-radius: 50%;
+            height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            font-weight: bold;
-            color: var(--primary-prados);
-            border: 4px solid var(--secondary-prados);
-            flex-direction: column;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 25px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
             text-align: center;
-            line-height: 1;
+            border: none;
         }
 
-        /* DISEÑO SISTEMA */
-        .sidebar { background-color: var(--primary-prados); color: white; padding: 15px; }
-        
-        .nav-link { 
-            color: rgba(255,255,255,0.8); 
-            cursor: pointer; 
-            padding: 12px; 
-            border-radius: 10px; 
-            margin-bottom: 8px;
-            transition: all 0.3s;
-        }
-        
-        .nav-link:hover, .nav-link.active { 
-            color: white; 
-            background-color: rgba(255,255,255,0.2); 
-            transform: translateX(5px);
+        .login-card img {
+            width: 180px;
+            margin-bottom: 20px;
         }
 
-        .content-section {
-            background: rgba(255,255,255,0.7);
-            border-radius: 15px;
-            min-height: 80vh;
+        .form-control {
+            border-radius: 10px;
+            height: 48px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
         }
 
-        /* MARCA DE AGUA EN FONDO DEL SISTEMA */
-        #appSystem {
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" opacity="0.03"><text x="50%" y="50%" font-size="20" fill="green" text-anchor="middle" font-family="Arial">PRADOS DEL SOL</text></svg>');
+        .btn-ingresar {
+            background-color: #2b78d2;
+            color: white;
+            border-radius: 10px;
+            height: 48px;
+            font-weight: bold;
+            width: 100%;
+            border: none;
+            transition: 0.3s;
         }
 
-        .card { 
-            border: none; 
-            border-radius: 15px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            overflow: hidden;
-        }
+        .btn-ingresar:hover { background-color: #1a5cad; }
 
-        .btn-primary { background-color: var(--accent-prados); border: none; }
-        .btn-success { background-color: var(--primary-prados); border: none; }
-        .btn-warning { background-color: var(--secondary-prados); border: none; color: #333; font-weight: bold; }
-
+        /* ESTILO INTERNO DEL SISTEMA */
+        .sidebar { background-color: var(--primary-color); color: white; min-height: 100vh; padding: 20px; }
+        .nav-link { color: rgba(255,255,255,0.8); cursor: pointer; padding: 12px; border-radius: 10px; margin-bottom: 5px; }
+        .nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.15); color: white; }
+        .content-section { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         .hidden { display: none !important; }
 
-        @media (max-width: 767px) {
-            .nav-custom { display: flex; overflow-x: auto; white-space: nowrap; gap: 10px; padding: 10px 0; }
-            .nav-link { flex: 0 0 auto; margin-bottom: 0; padding: 8px 15px !important; border: 1px solid rgba(255,255,255,0.2); }
-            .sidebar-title { display: none; }
+        @media (max-width: 768px) {
+            .sidebar { min-height: auto; padding: 10px; }
+            .nav-custom { display: flex; overflow-x: auto; white-space: nowrap; gap: 5px; }
+            .nav-link { font-size: 0.8rem; padding: 8px 12px !important; }
         }
     </style>
 </head>
 <body>
 
-<div id="loginScreen" class="container-fluid d-flex justify-content-center align-items-center vh-100 p-3">
-    <div class="card login-card p-4 w-100 text-center" style="max-width: 400px;">
-        <div class="logo-placeholder">
-            <i class="fas fa-sun fa-2x mb-1" style="color:#f9bc15"></i>
-            <span style="font-size: 0.7rem;">PRADOS DEL SOL</span>
+<div id="loginScreen">
+    <div class="login-card mx-3">
+        <div class="mb-4">
+            <i class="fas fa-sun fa-3x text-warning"></i>
+            <h3 class="fw-bold mt-2" style="color: #0b4a8d; letter-spacing: 1px;">PRADOS <small style="font-size: 0.5em; vertical-align: middle;">DEL</small> SOL</h3>
         </div>
-        <h4 class="mb-4 fw-bold" style="color: var(--primary-prados)">Gestión de Planta</h4>
-        <div class="text-start">
-            <label class="small fw-bold text-muted">Acceso Usuario</label>
-            <input type="email" id="loginEmail" class="form-control mb-3 py-2" placeholder="usuario@prados.com">
-            <input type="password" id="loginPass" class="form-control mb-4 py-2" placeholder="••••••••">
-            <button onclick="login()" class="btn btn-primary w-100 py-2 shadow fw-bold">INGRESAR AL SISTEMA</button>
-        </div>
+        <input type="email" id="loginEmail" class="form-control" placeholder="Correo electrónico">
+        <input type="password" id="loginPass" class="form-control" placeholder="Contraseña">
+        <button onclick="login()" class="btn-ingresar shadow-sm">INGRESAR</button>
     </div>
 </div>
 
 <div id="appSystem" class="container-fluid hidden">
     <div class="row">
-        <div class="col-md-2 sidebar shadow-lg">
-            <div class="text-center mb-4 sidebar-title">
-                <i class="fas fa-seedling fa-2x text-warning"></i>
-                <h6 class="mt-2 fw-bold">PRADOS DEL SOL</h6>
-                <hr>
-            </div>
+        <div class="col-md-2 sidebar shadow">
+            <h5 class="text-center fw-bold mb-4">MENÚ PLANTA</h5>
             <nav class="nav-custom">
                 <a class="nav-link active" onclick="showTab('stock')"><i class="fas fa-boxes me-2"></i> Stock</a>
-                <a class="nav-link" onclick="showTab('ventas')"><i class="fas fa-truck-loading me-2"></i> Despachos</a>
+                <a class="nav-link" onclick="showTab('ventas')"><i class="fas fa-truck me-2"></i> Ventas</a>
                 <a class="nav-link" onclick="showTab('historial')"><i class="fas fa-history me-2"></i> Historial</a>
-                <a class="nav-link" onclick="showTab('clientes')"><i class="fas fa-user-friends me-2"></i> Clientes</a>
-                <a class="nav-link" onclick="showTab('config')"><i class="fas fa-tools me-2"></i> Panel</a>
-                <a class="nav-link text-danger mt-md-4" onclick="logout()"><i class="fas fa-sign-out-alt"></i></a>
+                <a class="nav-link" onclick="showTab('config')"><i class="fas fa-cogs me-2"></i> Config</a>
+                <a class="nav-link text-warning mt-4" onclick="logout()"><i class="fas fa-power-off me-2"></i> Salir</a>
             </nav>
         </div>
 
-        <div class="col-md-10 p-3 p-md-4">
-            
-            <div id="stock" class="content-section p-3">
-                <div class="row g-3 mb-4">
-                    <div class="col-lg-8">
-                        <div class="card p-3 border-start border-success border-5 shadow-sm">
-                            <h5 class="fw-bold"><i class="fas fa-plus-circle text-success me-2"></i>Entrada de Mercadería</h5>
-                            <div class="row g-2 mt-2">
-                                <div class="col-6"><label class="small fw-bold">Proveedor</label><select id="selProveedor" class="form-select" onchange="filtrarArticulosAcuerdo()"></select></div>
-                                <div class="col-6"><label class="small fw-bold">Insumo</label><select id="selArticulo" class="form-select" onchange="calcularCarga()"></select></div>
-                                <div class="col-4"><label class="small fw-bold">Formato</label><select id="selTipoCarga" class="form-select" onchange="calcularCarga()"><option value="p">Pallets</option><option value="c">Cajas</option><option value="u">Unidades</option></select></div>
-                                <div class="col-4"><label class="small fw-bold">Cant.</label><input type="number" id="inpCantidad" class="form-control" oninput="calcularCarga()"></div>
-                                <div class="col-4"><label class="small d-block opacity-0">ok</label><button class="btn btn-success w-100 fw-bold" onclick="guardarIngreso()">SUMAR</button></div>
-                            </div>
-                            <div class="mt-2 small text-muted">Total unidades a ingresar: <span id="txtTotalFinal" class="fw-bold text-success">0</span></div>
-                        </div>
-                    </div>
-                    <div class="col-lg-4">
-                        <div class="card p-3 border-start border-warning border-5 shadow-sm bg-light">
-                            <h5 class="fw-bold text-dark"><i class="fas fa-hand-holding text-warning me-2"></i>Consumo Interno</h5>
-                            <select id="consumoArticulo" class="form-select mb-2 mt-2"></select>
-                            <div class="input-group">
-                                <input type="number" id="consumoCantidad" class="form-control" placeholder="Cant.">
-                                <button class="btn btn-warning" onclick="registrarConsumo()">RESTAR</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card shadow-sm">
-                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-                        <h6 class="mb-0 fw-bold"><i class="fas fa-warehouse me-2 text-primary"></i>EXISTENCIAS ACTUALES</h6>
-                        <button class="btn btn-sm btn-outline-success" onclick="exportarExcel()"><i class="fas fa-file-excel me-1"></i> Excel</button>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table align-middle mb-0">
-                            <thead class="bg-light"><tr><th>Detalle del Artículo</th><th class="text-center">Stock</th><th class="text-center">Min.</th><th class="text-end"></th></tr></thead>
-                            <tbody id="tablaStock"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <div id="ventas" class="content-section hidden p-3">
-                <div class="card p-4 border-top border-primary border-4 shadow-sm">
-                    <h5 class="text-primary fw-bold mb-4"><i class="fas fa-truck-moving me-2"></i>Despacho a Cliente</h5>
-                    <div class="row g-3">
-                        <div class="col-md-6"><label class="fw-bold small">Seleccione Cliente</label><select id="vtaCliente" class="form-select"></select></div>
-                        <div class="col-md-6"><label class="fw-bold small">Producto Final</label><select id="vtaArticulo" class="form-select" onchange="actualizarPrevisualizacion()"></select></div>
-                        <div class="col-4"><label class="small">Pallets</label><input type="number" id="vtaPallets" class="form-control" value="28" oninput="actualizarPrevisualizacion()"></div>
-                        <div class="col-4"><label class="small">Cajas x Pallet</label><input type="number" id="vtaCxP" class="form-control" value="75" oninput="actualizarPrevisualizacion()"></div>
-                        <div class="col-4"><label class="small">Unid x Caja</label><input type="number" id="vtaUxC" class="form-control" value="12" oninput="actualizarPrevisualizacion()"></div>
-                    </div>
-                    <div class="row mt-4 g-2 text-center">
-                        <div class="col-4"><div class="p-2 border rounded bg-white"><small class="text-muted d-block">ACEITE</small><strong id="resTotalAceite" class="text-danger">0</strong></div></div>
-                        <div class="col-4"><div class="p-2 border rounded bg-white"><small class="text-muted d-block">CAJAS</small><strong id="resTotalCajas" class="text-primary">0</strong></div></div>
-                        <div class="col-4"><div class="p-2 border rounded bg-white"><small class="text-muted d-block">ETIQ.</small><strong id="resTotalEtiquetas" class="text-success">0</strong></div></div>
-                    </div>
-                    <button class="btn btn-primary w-100 mt-4 py-3 fw-bold" onclick="procesarDespacho()">CONFIRMAR CARGA Y DESCONTAR STOCK</button>
-                </div>
-            </div>
-
-            <div id="historial" class="content-section hidden p-3">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0 fw-bold">MOVIMIENTOS MENSUALES</h6>
-                        <input type="month" id="filtroMes" class="form-control form-control-sm w-auto" onchange="cargarHistorial()">
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead class="bg-light"><tr><th>Fecha</th><th>Artículo</th><th>Motivo</th><th class="text-center">Cant.</th></tr></thead>
-                            <tbody id="listaHistorial"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <div id="config" class="content-section hidden p-3">
+        <div class="col-md-10 p-4">
+            <div id="stock" class="content-section shadow-sm">
                 <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="card p-3 shadow-sm">
-                            <h6 class="fw-bold border-bottom pb-2">Maestro Insumos / Fábrica</h6>
-                            <div class="input-group input-group-sm mb-3">
-                                <input type="text" id="confNuevoArt" class="form-control" placeholder="Nombre">
-                                <input type="number" id="confMinArt" class="form-control" placeholder="Stock Mín">
-                                <button class="btn btn-dark" onclick="guardarArt()">+</button>
+                    <div class="col-md-8">
+                        <div class="p-3 border rounded bg-light mb-3">
+                            <h6 class="fw-bold text-success"><i class="fas fa-plus me-2"></i>Ingreso de Mercadería</h6>
+                            <div class="row g-2">
+                                <div class="col-6"><select id="selProveedor" class="form-select" onchange="filtrarArticulosAcuerdo()"></select></div>
+                                <div class="col-6"><select id="selArticulo" class="form-select" onchange="calcularCarga()"></select></div>
+                                <div class="col-4"><select id="selTipoCarga" class="form-select" onchange="calcularCarga()"><option value="p">Pallets</option><option value="c">Cajas</option><option value="u">Unidades</option></select></div>
+                                <div class="col-4"><input type="number" id="inpCantidad" class="form-control" placeholder="Cant." oninput="calcularCarga()"></div>
+                                <div class="col-4"><button class="btn btn-success w-100 fw-bold" onclick="guardarIngreso()">SUMAR</button></div>
                             </div>
-                            <div id="listaArts" class="list-group list-group-flush small" style="max-height: 300px; overflow-y: auto;"></div>
+                            <small class="text-muted">Total unidades: <span id="txtTotalFinal" class="fw-bold">0</span></small>
                         </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded bg-white mb-3 border-warning">
+                            <h6 class="fw-bold text-warning"><i class="fas fa-cut me-2"></i>Uso Interno (Stretch/Cintas)</h6>
+                            <select id="consumoArticulo" class="form-select mb-2"></select>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="consumoCantidad" class="form-control" placeholder="Cant.">
+                                <button class="btn btn-warning fw-bold" onclick="registrarConsumo()">RESTAR</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive mt-3">
+                    <table class="table table-hover">
+                        <thead class="table-dark"><tr><th>Artículo</th><th class="text-center">Stock Real</th><th class="text-center">Mínimo</th><th></th></tr></thead>
+                        <tbody id="tablaStock"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="ventas" class="content-section hidden">
+                <h5 class="fw-bold text-primary mb-4">Despacho de Productos</h5>
+                <div class="row g-3">
+                    <div class="col-md-6"><label class="small fw-bold">Cliente</label><select id="vtaCliente" class="form-select"></select></div>
+                    <div class="col-md-6"><label class="small fw-bold">Producto</label><select id="vtaArticulo" class="form-select" onchange="actualizarPrevisualizacion()"></select></div>
+                    <div class="col-4"><label class="small">Pallets</label><input type="number" id="vtaPallets" class="form-control" value="28" oninput="actualizarPrevisualizacion()"></div>
+                    <div class="col-4"><label class="small">CxP</label><input type="number" id="vtaCxP" class="form-control" value="75" oninput="actualizarPrevisualizacion()"></div>
+                    <div class="col-4"><label class="small">UxC</label><input type="number" id="vtaUxC" class="form-control" value="12" oninput="actualizarPrevisualizacion()"></div>
+                </div>
+                <div class="mt-4 p-3 bg-light rounded border d-flex justify-content-around text-center">
+                    <div><small class="d-block">ACEITE (U)</small><h4 id="resTotalAceite" class="text-danger fw-bold">0</h4></div>
+                    <div><small class="d-block">CAJAS (U)</small><h4 id="resTotalCajas" class="text-primary fw-bold">0</h4></div>
+                    <div><small class="d-block">ETIQ. (U)</small><h4 id="resTotalEtiquetas" class="text-success fw-bold">0</h4></div>
+                </div>
+                <button class="btn btn-primary w-100 mt-4 py-3 fw-bold shadow" onclick="procesarDespacho()">CONFIRMAR CARGA</button>
+            </div>
+
+            <div id="historial" class="content-section hidden">
+                <div class="d-flex justify-content-between mb-3">
+                    <h5 class="fw-bold">Movimientos del Mes</h5>
+                    <input type="month" id="filtroMes" class="form-control w-auto" onchange="cargarHistorial()">
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead class="table-light"><tr><th>Fecha</th><th>Artículo</th><th>Tipo</th><th class="text-center">Cant.</th></tr></thead>
+                        <tbody id="listaHistorial"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="config" class="content-section hidden">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <h6>Maestro de Insumos</h6>
+                        <div class="input-group mb-3">
+                            <input type="text" id="confNuevoArt" class="form-control" placeholder="Nombre">
+                            <input type="number" id="confMinArt" class="form-control" placeholder="Min" style="max-width: 80px;">
+                            <button class="btn btn-dark" onclick="guardarArt()">+</button>
+                        </div>
+                        <div id="listaArts" class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;"></div>
                     </div>
                     <div class="col-md-6">
-                        <div class="card p-3 shadow-sm mb-3">
-                            <h6 class="fw-bold border-bottom pb-2">Proveedores</h6>
-                            <div class="input-group input-group-sm"><input type="text" id="confNuevoProv" class="form-control"><button class="btn btn-dark" onclick="guardarProv()">+</button></div>
-                            <div id="listaProvs" class="list-group list-group-flush small mt-2"></div>
-                        </div>
+                        <h6>Proveedores</h6>
+                        <div class="input-group mb-3"><input type="text" id="confNuevoProv" class="form-control"><button class="btn btn-dark" onclick="guardarProv()">+</button></div>
+                        <div id="listaProvs" class="list-group list-group-flush"></div>
                     </div>
                 </div>
             </div>
-
-            <div id="clientes" class="content-section hidden p-3">
-                <div class="card p-3 shadow-sm">
-                    <h6 class="fw-bold mb-3">Directorio de Clientes</h6>
-                    <div class="row g-2 mb-3">
-                        <div class="col-12"><input type="text" id="cliNombre" class="form-control" placeholder="Razón Social"></div>
-                        <div class="col-12"><div class="input-group"><input type="text" id="cliDir" class="form-control" placeholder="Dirección"><button class="btn btn-dark" onclick="guardarCliente()">Añadir</button></div></div>
-                    </div>
-                    <table class="table table-sm"><tbody id="tablaClientes"></tbody></table>
-                </div>
-            </div>
-
         </div>
     </div>
 </div>
 
 <script>
-    // --- FIREBASE SETUP ---
+    // --- FIREBASE CONFIG ---
     const firebaseConfig = {
       apiKey: "AIzaSyCjYp0idCxs32QAofYLVEGcwvmd3HXy-3Y",
       authDomain: "prados-del-sol.firebaseapp.com",
@@ -276,7 +216,11 @@
 
     let articulos = [], proveedores = [], acuerdos = [], clientes = [], stockActualGlobal = {};
 
-    function login() { auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPass').value); }
+    function login() { 
+        const email = document.getElementById('loginEmail').value;
+        const pass = document.getElementById('loginPass').value;
+        auth.signInWithEmailAndPassword(email, pass).catch(e => alert("Error: " + e.message)); 
+    }
     function logout() { auth.signOut(); }
     
     auth.onAuthStateChanged(user => {
@@ -298,25 +242,16 @@
             renderMaestro();
             const html = articulos.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
             document.getElementById('vtaArticulo').innerHTML = '<option value="">-- Producto --</option>' + html;
-            document.getElementById('consumoArticulo').innerHTML = '<option value="">-- Seleccionar --</option>' + html;
-            document.getElementById('acArt').innerHTML = html;
+            document.getElementById('consumoArticulo').innerHTML = '<option value="">-- Artículo de Uso --</option>' + html;
         });
 
         db.collection("proveedores").orderBy("nombre").onSnapshot(s => {
             proveedores = s.docs.map(d => ({id:d.id, ...d.data()}));
-            const provHtml = '<option value="">-- Seleccionar --</option>' + proveedores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
-            document.getElementById('selProveedor').innerHTML = provHtml;
-            document.getElementById('acProv').innerHTML = provHtml;
+            document.getElementById('selProveedor').innerHTML = '<option value="">-- Proveedor --</option>' + proveedores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
             renderLista('listaProvs', proveedores, 'proveedores');
         });
 
-        db.collection("clientes").orderBy("nombre").onSnapshot(s => {
-            clientes = s.docs.map(d => ({id:d.id, ...d.data()}));
-            document.getElementById('vtaCliente').innerHTML = '<option value="">-- Cliente --</option>' + clientes.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
-            renderClientes();
-        });
-
-        db.collection("acuerdos").onSnapshot(s => { acuerdos = s.docs.map(d => ({id:d.id, ...d.data()})); renderAcuerdos(); });
+        db.collection("acuerdos").onSnapshot(s => { acuerdos = s.docs.map(d => ({id:d.id, ...d.data()})); });
 
         db.collection("stock").onSnapshot(s => {
             const res = {}; s.docs.forEach(d => { res[d.data().articulo] = (res[d.data().articulo] || 0) + d.data().cantidad; });
@@ -325,17 +260,22 @@
                 const artData = articulos.find(a => a.nombre === artNombre);
                 const min = artData ? (artData.minimo || 0) : 0;
                 const actual = res[artNombre];
-                return `<tr class="${actual <= min ? 'stock-peligro' : ''}">
-                    <td><span class="fw-bold">${artNombre}</span></td>
+                return `<tr class="${actual <= min ? 'table-danger' : ''}">
+                    <td class="fw-bold">${artNombre}</td>
                     <td class="text-center fw-bold fs-5">${actual.toLocaleString()}</td>
                     <td class="text-center text-muted small">${min}</td>
-                    <td class="text-end"><button class="btn btn-sm btn-link text-muted" onclick="limpiarArt('${artNombre}')"><i class="fas fa-trash-alt"></i></button></td>
+                    <td class="text-end"><i class="fas fa-trash text-muted" onclick="limpiarArt('${artNombre}')"></i></td>
                 </tr>`;
             }).join('');
         });
+        
+        db.collection("clientes").orderBy("nombre").onSnapshot(s => {
+            clientes = s.docs.map(d => ({id:d.id, ...d.data()}));
+            document.getElementById('vtaCliente').innerHTML = '<option value="">-- Cliente --</option>' + clientes.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
+        });
     }
 
-    // --- LOGICA DE STOCK ---
+    // --- FUNCIONALIDAD ---
     function filtrarArticulosAcuerdo() {
         const prov = document.getElementById('selProveedor').value;
         const filtrados = acuerdos.filter(a => a.proveedor === prov);
@@ -355,7 +295,6 @@
         const totalU = parseInt(document.getElementById('txtTotalFinal').innerText.replace(/\./g,''));
         if(art && totalU > 0) {
             await db.collection("stock").add({ articulo: art, cantidad: totalU, tipo: "ingreso", fecha: firebase.firestore.FieldValue.serverTimestamp() });
-            alert("Ingreso cargado al inventario");
             document.getElementById('inpCantidad').value = "";
         }
     }
@@ -364,11 +303,8 @@
         const cant = parseInt(document.getElementById('consumoCantidad').value) || 0;
         if(!art || cant <= 0) return;
         await db.collection("stock").add({ articulo: art, cantidad: -cant, tipo: "consumo_interno", fecha: firebase.firestore.FieldValue.serverTimestamp() });
-        alert("Consumo interno registrado");
         document.getElementById('consumoCantidad').value = "";
     }
-
-    // --- VENTAS ---
     function actualizarPrevisualizacion() {
         const p = parseInt(document.getElementById('vtaPallets').value) || 0;
         const c = parseInt(document.getElementById('vtaCxP').value) || 0;
@@ -380,36 +316,22 @@
     async function procesarDespacho() {
         const prod = document.getElementById('vtaArticulo').value;
         const totalU = parseInt(document.getElementById('resTotalAceite').innerText.replace(/\./g,''));
-        const totalC = parseInt(document.getElementById('resTotalCajas').innerText.replace(/\./g,''));
-        if(!prod || totalU <= 0) return alert("Complete los datos de despacho");
-        const batch = db.batch();
-        batch.set(db.collection("stock").doc(), { articulo: prod, cantidad: -totalU, tipo: "venta", fecha: firebase.firestore.FieldValue.serverTimestamp() });
-        let pN = prod.toLowerCase();
-        let caja = pN.includes("850cc") || pN.includes("900cc") ? "caja de 900cc" : pN.includes("1.5lts") ? "caja 1.5lts" : pN.includes("5lts") ? "caja de 5lts" : "";
-        let eti = pN.includes("850cc") || pN.includes("900cc") ? "etiqueta de 900cc" : pN.includes("1.5lts") ? "etiqueta 1.5lts" : pN.includes("5lts") ? "etiqueta de 5lts" : "";
-        if (caja) batch.set(db.collection("stock").doc(), { articulo: caja, cantidad: -totalC, tipo: "venta", fecha: firebase.firestore.FieldValue.serverTimestamp() });
-        if (eti) batch.set(db.collection("stock").doc(), { articulo: eti, cantidad: -totalU, tipo: "venta", fecha: firebase.firestore.FieldValue.serverTimestamp() });
-        await batch.commit();
-        alert("Despacho exitoso y stock actualizado");
-        actualizarPrevisualizacion();
+        if(!prod || totalU <= 0) return alert("Datos incompletos");
+        await db.collection("stock").add({ articulo: prod, cantidad: -totalU, tipo: "venta", fecha: firebase.firestore.FieldValue.serverTimestamp() });
+        alert("Carga registrada con éxito");
     }
-
-    // --- HISTORIAL ---
     async function cargarHistorial() {
         const mesSel = document.getElementById('filtroMes').value;
-        if(!mesSel) return;
         const start = new Date(mesSel + "-01T00:00:00");
         const end = new Date(start.getFullYear(), start.getMonth() + 1, 0, 23, 59, 59);
         const snp = await db.collection("stock").where("fecha", ">=", start).where("fecha", "<=", end).orderBy("fecha", "desc").get();
         let h = "";
         snp.forEach(doc => {
             const d = doc.data();
-            h += `<tr><td class="small">${d.fecha ? d.fecha.toDate().toLocaleDateString() : 'S/F'}</td><td class="fw-bold">${d.articulo}</td><td><span class="badge bg-light text-dark border">${d.tipo}</span></td><td class="text-center fw-bold ${d.cantidad<0?'text-danger':'text-success'}">${d.cantidad}</td></tr>`;
+            h += `<tr><td class="small">${d.fecha ? d.fecha.toDate().toLocaleDateString() : 'S/F'}</td><td class="fw-bold">${d.articulo}</td><td>${d.tipo}</td><td class="text-center fw-bold ${d.cantidad<0?'text-danger':'text-success'}">${d.cantidad}</td></tr>`;
         });
         document.getElementById('listaHistorial').innerHTML = h;
     }
-
-    // --- NAVEGACIÓN Y CONFIG ---
     function showTab(id) {
         document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
         document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
@@ -417,25 +339,11 @@
         if(event) event.currentTarget.classList.add('active');
         if(id === 'historial') cargarHistorial();
     }
-    function guardarArt() { 
-        const n = document.getElementById('confNuevoArt').value.trim(); 
-        const m = parseInt(document.getElementById('confMinArt').value) || 0; 
-        if(n) db.collection("articulos").add({nombre: n, minimo: m}); 
-        document.getElementById('confNuevoArt').value = "";
-    }
-    function renderMaestro() { document.getElementById('listaArts').innerHTML = articulos.map(a => `<div class="list-group-item d-flex justify-content-between p-1 small">${a.nombre} (Mín: ${a.minimo}) <i class="fas fa-times text-danger" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join(''); }
-    function guardarProv() { const n = document.getElementById('confNuevoProv').value; if(n) db.collection("proveedores").add({nombre: n}); document.getElementById('confNuevoProv').value=""; }
+    function guardarArt() { const n = document.getElementById('confNuevoArt').value; const m = parseInt(document.getElementById('confMinArt').value) || 0; if(n) db.collection("articulos").add({nombre: n.toLowerCase(), minimo: m}); }
+    function renderMaestro() { document.getElementById('listaArts').innerHTML = articulos.map(a => `<div class="list-group-item d-flex justify-content-between p-1 small">${a.nombre} <i class="fas fa-times text-danger" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join(''); }
+    function guardarProv() { const n = document.getElementById('confNuevoProv').value; if(n) db.collection("proveedores").add({nombre: n}); }
     function renderLista(id, data, coll) { document.getElementById(id).innerHTML = data.map(item => `<div class="list-group-item d-flex justify-content-between p-1 small">${item.nombre} <i class="fas fa-times text-danger" onclick="db.collection('${coll}').doc('${item.id}').delete()"></i></div>`).join(''); }
-    function guardarCliente() { db.collection("clientes").add({nombre: document.getElementById('cliNombre').value, dir: document.getElementById('cliDir').value}); }
-    function renderClientes() { document.getElementById('tablaClientes').innerHTML = clientes.map(c => `<tr><td class="small fw-bold">${c.nombre}</td><td class="text-end"><i class="fas fa-trash-alt text-muted" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></td></tr>`).join(''); }
     async function limpiarArt(n) { if(confirm("¿Vaciar stock?")) { const snp = await db.collection("stock").where("articulo","==",n).get(); const b = db.batch(); snp.forEach(d => b.delete(d.ref)); await b.commit(); } }
-    function exportarExcel() {
-        const data = Object.keys(stockActualGlobal).map(k => ({ "Artículo": k, "Existencia": stockActualGlobal[k] }));
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Stock");
-        XLSX.writeFile(wb, "Stock_Prados_Actual.xlsx");
-    }
 </script>
 </body>
 </html>
