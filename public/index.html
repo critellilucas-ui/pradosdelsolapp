@@ -1,188 +1,315 @@
-<style>
-    :root {
-        --prados-green: #1a5c37;
-        --prados-yellow: #f9bc15;
-        --prados-blue: #2b78d2;
-    }
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Prados del Sol - Gestión v18</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
-    /* Estilo Historial basado en tu imagen */
-    .historial-header {
-        border-bottom: 2px solid var(--prados-blue);
-        padding-bottom: 10px;
-        margin-bottom: 20px;
-    }
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root { --p-blue: #2b78d2; --p-green: #1a5c37; }
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
+        
+        /* Login */
+        #loginScreen {
+            background: url('https://r.jina.ai/i/05e24f469399436181b51e44f8f9467d') no-repeat center center fixed;
+            background-size: cover; height: 100vh; display: flex; align-items: center; justify-content: center;
+        }
+        .login-card { background: rgba(255,255,255,0.95); border-radius: 20px; padding: 30px; width: 100%; max-width: 380px; text-align: center; }
 
-    .btn-borrar-lote {
-        background-color: #efefef;
-        border: 1px solid #767676;
-        border-radius: 2px;
-        padding: 2px 10px;
-        font-size: 14px;
-        transition: 0.2s;
-    }
+        /* Sidebar & Nav */
+        .sidebar { background-color: #212529; color: white; min-height: 100vh; padding: 15px; }
+        @media (max-width: 767px) {
+            .sidebar { min-height: auto; padding: 10px; }
+            .nav-custom { display: flex; overflow-x: auto; gap: 5px; }
+        }
+        .nav-link { color: #adb5bd; cursor: pointer; padding: 10px; border-radius: 8px; text-decoration: none; display: block; }
+        .nav-link.active { background: var(--p-blue); color: white; }
+        
+        /* Historial Estilo */
+        .historial-item { border-bottom: 1px solid #eee; padding: 12px; transition: 0.2s; }
+        .historial-item:hover { background: #f8f9fa; }
+        .hidden { display: none !important; }
+        .btn-borrar-lote { background: #efefef; border: 1px solid #767676; padding: 4px 12px; border-radius: 4px; font-size: 14px; }
+    </style>
+</head>
+<body>
 
-    .btn-borrar-lote:hover:not(:disabled) {
-        background-color: #e5e5e5;
-        border-color: #4f4f4f;
-    }
+<div id="loginScreen">
+    <div class="login-card">
+        <i class="fas fa-sun text-warning fa-3x mb-2"></i>
+        <h2 class="fw-bold mb-4">PRADOS DEL SOL</h2>
+        <input type="email" id="loginEmail" class="form-control mb-3" placeholder="Email">
+        <input type="password" id="loginPass" class="form-control mb-3" placeholder="Contraseña">
+        <button onclick="login()" class="btn btn-primary w-100">INGRESAR</button>
+    </div>
+</div>
 
-    .historial-item {
-        border-bottom: 1px solid #eee;
-        padding: 12px;
-        transition: background 0.2s;
-        display: flex;
-        align-items: center;
-    }
-
-    .historial-item:hover {
-        background-color: #fcfcfc;
-    }
-
-    .selector-fecha {
-        border: 1px solid #767676;
-        padding: 2px 5px;
-        margin: 10px 0;
-    }
-
-    .badge-tipo {
-        font-size: 0.7rem;
-        padding: 3px 8px;
-        border-radius: 10px;
-        text-transform: uppercase;
-        font-weight: bold;
-    }
-</style>
-
-<div id="historial" class="content-section hidden">
-    <div class="card p-4 shadow-sm">
-        <div class="historial-header">
-            <h4 class="fw-bold m-0">Historial de Movimientos</h4>
+<div id="appSystem" class="container-fluid hidden">
+    <div class="row">
+        <div class="col-md-2 sidebar">
+            <h5 class="text-center text-info mb-4">SISTEMA V18</h5>
+            <nav class="nav-custom">
+                <a class="nav-link active" onclick="showTab('stock')"><i class="fas fa-boxes me-2"></i>Stock</a>
+                <a class="nav-link" onclick="showTab('ventas')"><i class="fas fa-truck me-2"></i>Ventas</a>
+                <a class="nav-link" onclick="showTab('historial')"><i class="fas fa-history me-2"></i>Historial</a>
+                <a class="nav-link" onclick="showTab('clientes')"><i class="fas fa-users me-2"></i>Clientes</a>
+                <a class="nav-link text-danger mt-3" onclick="logout()"><i class="fas fa-power-off"></i> Salir</a>
+            </nav>
         </div>
 
-        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-            <button id="btnBorrarSeleccion" class="btn-borrar-lote" onclick="borrarSeleccionados()" disabled>
-                Borrar Seleccionados
-            </button>
-            <input type="month" id="filtroMes" class="selector-fecha" onchange="cargarHistorial()">
-            <button class="btn-borrar-lote" onclick="toggleSeleccionTodo()">Todo</button>
-        </div>
+        <div class="col-md-10 p-3">
+            <div id="ventas" class="content-section hidden">
+                <div class="card p-4 shadow-sm border-top border-primary border-4">
+                    <h5 class="fw-bold text-primary mb-3">Nuevo Despacho & Remito</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="small fw-bold">Cliente</label><select id="vtaCliente" class="form-select"></select></div>
+                        <div class="col-md-6">
+                            <label class="small fw-bold">Patente Camión</label>
+                            <input type="text" id="vtaPatente" class="form-control border-primary" placeholder="Ej: ABC 123" style="text-transform:uppercase">
+                        </div>
+                        <div class="col-12"><label class="small fw-bold">Producto</label><select id="vtaArticulo" class="form-select" onchange="actualizarPrevisualizacion()"></select></div>
+                        <div class="col-4"><label class="small">Pallets</label><input type="number" id="vtaPallets" class="form-control" value="28" oninput="actualizarPrevisualizacion()"></div>
+                        <div class="col-4"><label class="small">CxP</label><input type="number" id="vtaCxP" class="form-control" value="75" oninput="actualizarPrevisualizacion()"></div>
+                        <div class="col-4"><label class="small">UxC</label><input type="number" id="vtaUxC" class="form-control" value="12" oninput="actualizarPrevisualizacion()"></div>
+                    </div>
+                    <div class="bg-light p-3 mt-3 rounded d-flex justify-content-around border">
+                        <div class="text-center"><small class="text-muted d-block">CAJAS</small><b id="resTotalCajas" class="text-primary fs-5">0</b></div>
+                        <div class="text-center"><small class="text-muted d-block">UNIDADES</small><b id="resTotalAceite" class="text-danger fs-5">0</b></div>
+                    </div>
+                    <button class="btn btn-primary w-100 mt-4 py-3 fw-bold" onclick="procesarDespacho()"><i class="fas fa-file-pdf me-2"></i>CONFIRMAR Y DESCARGAR PDF</button>
+                </div>
+            </div>
 
-        <div id="listaHistorial" class="mt-2">
-            <p class="text-muted">Cargando movimientos...</p>
+            <div id="historial" class="content-section hidden">
+                <div class="card p-4 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                        <h5 class="fw-bold m-0">Historial de Movimientos</h5>
+                        <button id="btnBorrarLote" class="btn-borrar-lote" onclick="borrarSeleccionados()" disabled>Borrar Seleccionados</button>
+                    </div>
+                    <div class="d-flex gap-2 mb-3">
+                        <input type="month" id="filtroMes" class="form-control w-auto" onchange="cargarHistorial()">
+                        <button class="btn-borrar-lote" onclick="toggleSeleccionTodo()">Todo</button>
+                    </div>
+                    <div id="listaHistorial" class="mt-2">
+                        <p class="text-center p-5 text-muted">Cargando...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="stock" class="content-section">
+                <div class="card p-3 mb-3 border-success border-top border-4 shadow-sm">
+                    <h6 class="fw-bold text-success">Cargar Stock</h6>
+                    <div class="row g-2">
+                        <div class="col-6"><select id="selArticulo" class="form-select"></select></div>
+                        <div class="col-3"><input type="number" id="inpCantidad" class="form-control" placeholder="Cant."></div>
+                        <div class="col-3"><button class="btn btn-success w-100" onclick="guardarIngreso()">SUMAR</button></div>
+                    </div>
+                </div>
+                <div class="table-responsive bg-white rounded shadow-sm">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead class="table-dark"><tr><th>Artículo</th><th class="text-center">Stock Actual</th></tr></thead>
+                        <tbody id="tablaStock"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="clientes" class="content-section hidden">
+                <div class="card p-3 mb-3">
+                    <h6>Nuevo Cliente</h6>
+                    <div class="input-group">
+                        <input type="text" id="cliNombre" class="form-control" placeholder="Nombre">
+                        <input type="text" id="cliDir" class="form-control" placeholder="Dirección">
+                        <button class="btn btn-dark" onclick="guardarCliente()">AÑADIR</button>
+                    </div>
+                </div>
+                <ul id="listaClientes" class="list-group"></ul>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    // --- LÓGICA DE GESTIÓN DE HISTORIAL ---
+    const { jsPDF } = window.jspdf;
+    
+    // CONFIGURACIÓN FIREBASE
+    const firebaseConfig = {
+      apiKey: "AIzaSyCjYp0idCxs32QAofYLVEGcwvmd3HXy-3Y",
+      authDomain: "prados-del-sol.firebaseapp.com",
+      projectId: "prados-del-sol",
+      storageBucket: "prados-del-sol.firebasestorage.app",
+      messagingSenderId: "30316921952",
+      appId: "1:30316921952:web:b0f88b9c35f270d548ef05"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
 
+    let clientes = [], articulos = [];
+
+    // AUTH
+    function login() { auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPass').value); }
+    function logout() { auth.signOut(); }
+    auth.onAuthStateChanged(user => {
+        if (user) { 
+            document.getElementById('loginScreen').classList.add('hidden'); 
+            document.getElementById('appSystem').classList.remove('hidden'); 
+            iniciarApp(); 
+        } else {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('appSystem').classList.add('hidden');
+        }
+    });
+
+    async function iniciarApp() {
+        db.collection("articulos").orderBy("nombre").onSnapshot(s => {
+            articulos = s.docs.map(d => d.data().nombre);
+            const opt = articulos.map(a => `<option value="${a}">${a}</option>`).join('');
+            document.getElementById('vtaArticulo').innerHTML = opt;
+            document.getElementById('selArticulo').innerHTML = opt;
+        });
+        db.collection("clientes").orderBy("nombre").onSnapshot(s => {
+            clientes = s.docs.map(d => ({id:d.id, ...d.data()}));
+            document.getElementById('vtaCliente').innerHTML = clientes.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
+            document.getElementById('listaClientes').innerHTML = clientes.map(c => `<li class="list-group-item">${c.nombre} - ${c.dir}</li>`).join('');
+        });
+        db.collection("stock").onSnapshot(s => {
+            const res = {}; s.docs.forEach(d => { res[d.data().articulo] = (res[d.data().articulo] || 0) + d.data().cantidad; });
+            document.getElementById('tablaStock').innerHTML = Object.keys(res).map(a => `<tr><td class="ps-3">${a}</td><td class="text-center fw-bold">${res[a].toLocaleString()}</td></tr>`).join('');
+        });
+        cargarHistorial();
+    }
+
+    // VENTAS Y PDF
+    function actualizarPrevisualizacion() {
+        const p = parseInt(document.getElementById('vtaPallets').value) || 0;
+        const c = parseInt(document.getElementById('vtaCxP').value) || 0;
+        const u = parseInt(document.getElementById('vtaUxC').value) || 0;
+        document.getElementById('resTotalCajas').innerText = (p * c).toLocaleString();
+        document.getElementById('resTotalAceite').innerText = (p * c * u).toLocaleString();
+    }
+
+    async function procesarDespacho() {
+        const cli = document.getElementById('vtaCliente').value;
+        const prod = document.getElementById('vtaArticulo').value;
+        const pat = document.getElementById('vtaPatente').value.toUpperCase();
+        const totalU = parseInt(document.getElementById('resTotalAceite').innerText.replace(/\./g,''));
+        const totalC = parseInt(document.getElementById('resTotalCajas').innerText.replace(/\./g,''));
+        
+        if(!cli || !prod || !pat || totalU <= 0) return alert("Complete todos los campos.");
+
+        const batch = db.batch();
+        batch.set(db.collection("stock").doc(), { articulo: prod, cantidad: -totalU, tipo: "venta", cliente: cli, patente: pat, fecha: firebase.firestore.FieldValue.serverTimestamp() });
+        
+        // Descuento automático de cajas
+        let pN = prod.toLowerCase();
+        let caja = pN.includes("900") ? "caja de 900cc" : pN.includes("1.5") ? "caja 1.5lts" : pN.includes("5") ? "caja de 5lts" : "";
+        if (caja) batch.set(db.collection("stock").doc(), { articulo: caja, cantidad: -totalC, tipo: "venta", fecha: firebase.firestore.FieldValue.serverTimestamp() });
+
+        await batch.commit();
+
+        const cliInfo = clientes.find(c => c.nombre === cli);
+        generarPDF({ cliente: cli, direccion: cliInfo?.dir || "S/D", patente: pat, producto: prod, pallets: document.getElementById('vtaPallets').value, cajas: totalC, unidades: totalU });
+        
+        document.getElementById('vtaPatente').value = "";
+        alert("Despacho registrado.");
+    }
+
+    function generarPDF(d) {
+        const doc = new jsPDF();
+        doc.setFillColor(26, 92, 55); doc.rect(0, 0, 210, 40, 'F');
+        doc.setTextColor(255); doc.setFontSize(22); doc.text("PRADOS DEL SOL", 15, 20);
+        doc.setFontSize(10); doc.text("REMITO DE DESPACHO INTERNO", 15, 30);
+        doc.setTextColor(0); doc.setFontSize(11);
+        doc.text(`CLIENTE: ${d.cliente}`, 15, 55);
+        doc.text(`DIRECCIÓN: ${d.direccion}`, 15, 62);
+        doc.text(`PATENTE: ${d.patente}`, 15, 69);
+        doc.autoTable({ startY: 75, head: [['PRODUCTO', 'PALLETS', 'CAJAS', 'UNIDADES']], body: [[d.producto, d.pallets, d.cajas, d.unidades.toLocaleString()]], theme: 'grid' });
+        doc.save(`Remito_${d.patente}.pdf`);
+    }
+
+    // HISTORIAL ROBUSTO
     async function cargarHistorial() {
         const lista = document.getElementById('listaHistorial');
-        const mesStr = document.getElementById('filtroMes').value;
-        if (!mesStr) return;
+        const mesInput = document.getElementById('filtroMes');
+        if(!mesInput.value) {
+            const h = new Date(); mesInput.value = h.toISOString().substring(0, 7);
+        }
 
-        const [anio, mes] = mesStr.split('-').map(Number);
+        const [anio, mes] = mesInput.value.split('-').map(Number);
         const inicio = new Date(anio, mes - 1, 1);
         const fin = new Date(anio, mes, 0, 23, 59, 59);
 
-        db.collection("stock")
-            .where("fecha", ">=", inicio)
-            .where("fecha", "<=", fin)
-            .orderBy("fecha", "desc")
-            .onSnapshot(snapshot => {
-                if (snapshot.empty) {
-                    lista.innerHTML = '<p class="text-center p-4">No hay registros para este período.</p>';
-                    return;
-                }
+        db.collection("stock").where("fecha", ">=", inicio).where("fecha", "<=", fin).onSnapshot(s => {
+            if(s.empty) { lista.innerHTML = '<p class="text-center p-4">Sin datos.</p>'; return; }
+            
+            // Ordenar localmente para evitar error de Index en Firebase
+            const items = s.docs.map(doc => ({id: doc.id, ...doc.data()}))
+                               .sort((a, b) => (b.fecha?.seconds || 0) - (a.fecha?.seconds || 0));
 
-                let html = "";
-                snapshot.forEach(doc => {
-                    const d = doc.data();
-                    const fecha = d.fecha ? d.fecha.toDate().toLocaleDateString() : '---';
-                    const esVenta = d.cantidad < 0;
-                    
-                    html += `
-                        <div class="historial-item" id="row-${doc.id}">
-                            <div class="me-3">
-                                <input type="checkbox" class="chk-item" value="${doc.id}" 
-                                       data-cantidad="${d.cantidad}" data-articulo="${d.articulo}" 
-                                       onchange="actualizarEstadoBoton()">
-                            </div>
-                            <div class="flex-grow-1">
-                                <div class="d-flex justify-content-between">
-                                    <span class="fw-bold">${d.articulo}</span>
-                                    <span class="${esVenta ? 'text-danger' : 'text-success'} fw-bold">
-                                        ${d.cantidad.toLocaleString()} u.
-                                    </span>
-                                </div>
-                                <div class="small text-muted">
-                                    ${fecha} | ${d.cliente || d.proveedor || 'Mov. Interno'}
-                                    ${d.patente ? ` | <b class="text-primary">Patente: ${d.patente}</b>` : ''}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-                lista.innerHTML = html;
-                actualizarEstadoBoton();
-            });
+            lista.innerHTML = items.map(d => `
+                <div class="historial-item d-flex align-items-center">
+                    <input type="checkbox" class="chk-item me-3" value="${d.id}" data-cant="${d.cantidad}" data-art="${d.articulo}" onchange="actualizarBtnLote()">
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between"><b>${d.articulo}</b><span class="${d.cantidad < 0 ? 'text-danger' : 'text-success'}">${d.cantidad.toLocaleString()} u.</span></div>
+                        <div class="small text-muted">${d.fecha?.toDate().toLocaleDateString() || '...'} | ${d.cliente || 'Ingreso'} ${d.patente ? '| '+d.patente : ''}</div>
+                    </div>
+                </div>
+            `).join('');
+        });
     }
 
-    function actualizarEstadoBoton() {
-        const seleccionados = document.querySelectorAll('.chk-item:checked').length;
-        document.getElementById('btnBorrarSeleccion').disabled = seleccionados === 0;
+    function actualizarBtnLote() {
+        document.getElementById('btnBorrarLote').disabled = document.querySelectorAll('.chk-item:checked').length === 0;
     }
 
     function toggleSeleccionTodo() {
-        const checkboxes = document.querySelectorAll('.chk-item');
-        const algunSinMarcar = Array.from(checkboxes).some(c => !c.checked);
-        checkboxes.forEach(c => c.checked = algunSinMarcar);
-        actualizarEstadoBoton();
+        const chks = document.querySelectorAll('.chk-item');
+        const state = Array.from(chks).some(c => !c.checked);
+        chks.forEach(c => c.checked = state);
+        actualizarBtnLote();
     }
 
     async function borrarSeleccionados() {
-        const checks = document.querySelectorAll('.chk-item:checked');
-        if (checks.length === 0) return;
-
-        const confirmar = confirm(`¿Está seguro de borrar los ${checks.length} elementos seleccionados?`);
-        if (!confirmar) return;
-
-        const reversar = confirm("¿Desea restaurar el stock automáticamente para estos registros?");
+        const selected = document.querySelectorAll('.chk-item:checked');
+        if(!confirm(`¿Borrar ${selected.length} registros?`)) return;
+        const reversar = confirm("¿Desea restaurar el stock?");
         
         const batch = db.batch();
-
-        checks.forEach(chk => {
-            const id = chk.value;
-            const cantidad = parseFloat(chk.dataset.cantidad);
-            const articulo = chk.dataset.articulo;
-
-            // 1. Borrar registro
-            batch.delete(db.collection("stock").doc(id));
-
-            // 2. Reversión opcional
-            if (reversar) {
-                batch.set(db.collection("stock").doc(), {
-                    articulo: articulo,
-                    cantidad: -cantidad, // Valor opuesto para anular
-                    tipo: "ajuste_reversion",
-                    fecha: firebase.firestore.FieldValue.serverTimestamp(),
-                    notas: "Reversión por borrado masivo"
+        selected.forEach(chk => {
+            batch.delete(db.collection("stock").doc(chk.value));
+            if(reversar) {
+                batch.set(db.collection("stock").doc(), { 
+                    articulo: chk.dataset.art, cantidad: -(parseFloat(chk.dataset.cant)), 
+                    tipo: "reversion", fecha: firebase.firestore.FieldValue.serverTimestamp() 
                 });
             }
         });
-
-        try {
-            await batch.commit();
-            alert("Operación completada con éxito.");
-        } catch (error) {
-            console.error(error);
-            alert("Error al procesar el borrado masivo.");
-        }
+        await batch.commit();
+        alert("Completado.");
     }
 
-    // Inicialización
-    document.addEventListener('DOMContentLoaded', () => {
-        const hoy = new Date();
-        document.getElementById('filtroMes').value = hoy.toISOString().substring(0, 7);
-    });
+    // UTILIDADES
+    function showTab(id) { 
+        document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden')); 
+        document.getElementById(id).classList.remove('hidden');
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+    }
+    function guardarCliente() { db.collection("clientes").add({ nombre: document.getElementById('cliNombre').value, dir: document.getElementById('cliDir').value }); }
+    function guardarIngreso() {
+        const art = document.getElementById('selArticulo').value;
+        const cant = parseInt(document.getElementById('inpCantidad').value);
+        if(art && cant) db.collection("stock").add({ articulo: art, cantidad: cant, tipo: "ingreso", fecha: firebase.firestore.FieldValue.serverTimestamp() });
+    }
 </script>
+</body>
+</html>
