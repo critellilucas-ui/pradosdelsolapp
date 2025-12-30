@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Prados del Sol - Control Total</title>
+    <title>Stock Prados del Sol - Filtro Estricto</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -20,6 +20,7 @@
         .hidden { display: none !important; }
         .card { border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-radius: 12px; }
         .table thead { background-color: #34495e; color: white; }
+        .filtro-activo { border: 2px solid #3498db !important; background-color: #f0f9ff; }
     </style>
 </head>
 <body>
@@ -72,12 +73,11 @@
             <div id="config" class="content-section hidden">
                 <h3 class="mb-4">Panel de Control</h3>
                 <div class="row g-4">
-                    
                     <div class="col-md-4">
-                        <div class="card p-3 border-start border-success border-4 h-100">
-                            <h5><i class="fas fa-truck me-2"></i>1. Nuevo Proveedor</h5>
+                        <div class="card p-3 border-start border-success border-4">
+                            <h5><i class="fas fa-truck me-2"></i>1. Proveedores</h5>
                             <input type="text" id="confNombreProv" class="form-control mb-2" placeholder="Nombre Proveedor">
-                            <label class="small fw-bold">Productos que vende:</label>
+                            <label class="small fw-bold">Asignar Productos:</label>
                             <select id="confProductosProv" class="form-select mb-2" multiple style="height: 120px;">
                                 <option value="Botella 850cc">Botella 850cc</option>
                                 <option value="Botella 900cc">Botella 900cc</option>
@@ -93,45 +93,36 @@
 
                     <div class="col-md-8">
                         <div class="card p-3 border-start border-primary border-4">
-                            <h5><i class="fas fa-handshake me-2"></i>2. Configurar Cantidades (Proveedor + Artículo)</h5>
+                            <h5><i class="fas fa-handshake me-2"></i>2. Configurar Cantidades</h5>
                             <div class="row g-2 mb-3">
                                 <div class="col-md-4">
                                     <label class="small fw-bold">Proveedor</label>
-                                    <select id="confSelProv" class="form-select"></select>
+                                    <select id="confSelProv" class="form-select" onchange="filtrarArticulosConfig()"></select>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="small fw-bold">Artículo</label>
-                                    <select id="confSelArt" class="form-select">
-                                        <option value="Botella 850cc">Botella 850cc</option>
-                                        <option value="Botella 900cc">Botella 900cc</option>
-                                        <option value="Botella 4lts">Botella 4lts</option>
-                                        <option value="Tapa 29fl">Tapa 29fl</option>
-                                        <option value="Tapa 48fl">Tapa 48fl</option>
-                                        <option value="Cajas">Cajas</option>
-                                    </select>
+                                    <label class="small fw-bold">Artículo (Filtrado)</label>
+                                    <select id="confSelArt" class="form-select"></select>
                                 </div>
                                 <div class="col-md-2">
-                                    <label class="small fw-bold">U. x Caja</label>
+                                    <label class="small fw-bold">u/Caja</label>
                                     <input type="number" id="confUxC" class="form-control" value="1">
                                 </div>
                                 <div class="col-md-2">
-                                    <label class="small fw-bold">Cajas x Pallet</label>
+                                    <label class="small fw-bold">Cajas/Pallet</label>
                                     <input type="number" id="confCxP" class="form-control" value="1">
                                 </div>
                             </div>
-                            <button class="btn btn-primary w-100" onclick="guardarAcuerdoEmpaque()">Guardar Configuración de Empaque</button>
-                            
+                            <button class="btn btn-primary w-100" onclick="guardarAcuerdoEmpaque()">Guardar Configuración</button>
                             <hr>
-                            <h6>Matriz Actual de Empaque</h6>
                             <div class="table-responsive">
                                 <table class="table table-sm small">
-                                    <thead class="table-light">
+                                    <thead>
                                         <tr>
                                             <th>Proveedor</th>
                                             <th>Artículo</th>
                                             <th>u/Caja</th>
-                                            <th>Cajas/Pallet</th>
-                                            <th>Total u/Pallet</th>
+                                            <th>Cajas/P</th>
+                                            <th>u/Pallet</th>
                                             <th></th>
                                         </tr>
                                     </thead>
@@ -154,18 +145,15 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <label class="fw-bold">Artículo</label>
-                <select id="selArticulo" class="form-select mb-3" onchange="actualizarFiltroProveedores();">
-                     <option value="Botella 850cc">Botella 850cc</option>
-                     <option value="Botella 900cc">Botella 900cc</option>
-                     <option value="Botella 4lts">Botella 4lts</option>
-                     <option value="Tapa 29fl">Tapa 29fl</option>
-                     <option value="Tapa 48fl">Tapa 48fl</option>
-                     <option value="Cajas">Cajas</option>
+                <label class="fw-bold">1. Seleccionar Proveedor</label>
+                <select id="selProveedor" class="form-select mb-3 filtro-activo" onchange="actualizarFiltroArticulos();">
+                    <option value="">-- Seleccione Proveedor --</option>
                 </select>
 
-                <label class="fw-bold">Proveedor</label>
-                <select id="selProveedor" class="form-select mb-3" onchange="calcularIngreso()"></select>
+                <label class="fw-bold">2. Seleccionar Artículo (Solo los que vende el prov.)</label>
+                <select id="selArticulo" class="form-select mb-3" onchange="calcularIngreso();">
+                    <option value="">-- Seleccione Artículo --</option>
+                </select>
 
                 <div class="row mb-3">
                     <div class="col-6">
@@ -183,7 +171,6 @@
                 </div>
                 
                 <div class="bg-light p-3 rounded text-center border">
-                    <span class="text-muted small d-block" id="labelCalculo">Cálculo:</span>
                     <span id="txtTotalFinal" class="fs-2 fw-bold text-primary">0</span> <span class="text-primary fw-bold">unidades</span>
                 </div>
             </div>
@@ -208,6 +195,7 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
+    const ARTICULOS_MAESTROS = ["Botella 850cc", "Botella 900cc", "Botella 4lts", "Tapa 29fl", "Tapa 48fl", "Cajas"];
     let acuerdosLocal = [];
     let provsLocal = [];
 
@@ -226,112 +214,102 @@
     });
 
     function inicializarListeners() {
-        // 1. Cargar Proveedores
         db.collection("proveedores").onSnapshot(snap => {
             provsLocal = snap.docs.map(d => ({id: d.id, ...d.data()}));
             renderizarListaProvs();
-            const selectConf = document.getElementById('confSelProv');
-            selectConf.innerHTML = provsLocal.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
-            actualizarFiltroProveedores();
+            const htmlProvs = `<option value="">-- Seleccionar --</option>` + provsLocal.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
+            document.getElementById('confSelProv').innerHTML = htmlProvs;
+            document.getElementById('selProveedor').innerHTML = htmlProvs;
+            filtrarArticulosConfig(); 
         });
 
-        // 2. Cargar Acuerdos
         db.collection("acuerdos_empaque").onSnapshot(snap => {
             acuerdosLocal = snap.docs.map(d => ({id: d.id, ...d.data()}));
             renderizarAcuerdos();
-            calcularIngreso();
         });
 
-        // 3. Cargar Stock
         db.collection("stock").orderBy("fecha", "desc").limit(30).onSnapshot(snap => {
             document.getElementById('tablaStock').innerHTML = snap.docs.map(doc => {
                 const s = doc.data();
-                return `<tr>
-                    <td>${s.articulo}</td>
-                    <td><span class="badge bg-light text-dark border">${s.proveedor}</span></td>
-                    <td class="fw-bold">${s.cantidad.toLocaleString()}</td>
-                    <td class="small text-muted">${s.fecha ? s.fecha.toDate().toLocaleDateString() : '---'}</td>
-                    <td><button class="btn btn-sm text-danger" onclick="db.collection('stock').doc('${doc.id}').delete()"><i class="fas fa-trash"></i></button></td>
-                </tr>`;
+                return `<tr><td>${s.articulo}</td><td>${s.proveedor}</td><td class="fw-bold">${s.cantidad}</td><td>${s.fecha ? s.fecha.toDate().toLocaleDateString() : ''}</td><td><button class="btn btn-sm text-danger" onclick="db.collection('stock').doc('${doc.id}').delete()">×</button></td></tr>`;
             }).join('');
         });
     }
 
-    // --- FUNCIONES PROVEEDORES ---
+    // --- FILTROS ESTRICTOS ---
+    function actualizarFiltroArticulos() {
+        const provNombre = document.getElementById('selProveedor').value;
+        const selArt = document.getElementById('selArticulo');
+        
+        if(!provNombre) {
+            selArt.innerHTML = '<option value="">-- Seleccione Proveedor Primero --</option>';
+            return;
+        }
+
+        const proveedor = provsLocal.find(p => p.nombre === provNombre);
+        const productosAsignados = proveedor ? proveedor.productos : [];
+        
+        selArt.innerHTML = productosAsignados.map(art => `<option value="${art}">${art}</option>`).join('');
+        calcularIngreso();
+    }
+
+    function filtrarArticulosConfig() {
+        const provNombre = document.getElementById('confSelProv').value;
+        const selArtConfig = document.getElementById('confSelArt');
+        
+        if(!provNombre) {
+            selArtConfig.innerHTML = '<option value="">-- Seleccione Prov --</option>';
+            return;
+        }
+
+        const proveedor = provsLocal.find(p => p.nombre === provNombre);
+        const productosAsignados = proveedor ? proveedor.productos : [];
+        selArtConfig.innerHTML = productosAsignados.map(art => `<option value="${art}">${art}</option>`).join('');
+    }
+
+    // --- RESTO DE FUNCIONES ---
     function guardarProveedorCloud() {
         const nombre = document.getElementById('confNombreProv').value.trim();
         const prods = Array.from(document.getElementById('confProductosProv').selectedOptions).map(o => o.value);
-        if(!nombre || prods.length === 0) return alert("Ingrese nombre y seleccione productos");
-        db.collection("proveedores").add({ nombre, productos: prods })
-            .then(() => { document.getElementById('confNombreProv').value = ''; });
+        if(!nombre || prods.length === 0) return alert("Nombre y productos requeridos");
+        db.collection("proveedores").add({ nombre, productos: prods }).then(() => { document.getElementById('confNombreProv').value = ''; });
     }
 
-    function renderizarListaProvs() {
-        document.getElementById('listaProveedores').innerHTML = provsLocal.map(p => `
-            <div class="list-group-item d-flex justify-content-between align-items-center py-1">
-                <span class="small">${p.nombre}</span>
-                <button class="btn btn-sm text-danger border-0 bg-transparent" onclick="db.collection('proveedores').doc('${p.id}').delete()">×</button>
-            </div>
-        `).join('');
-    }
-
-    // --- FUNCIONES ACUERDOS (LÓGICA CxP) ---
     function guardarAcuerdoEmpaque() {
         const prov = document.getElementById('confSelProv').value;
         const art = document.getElementById('confSelArt').value;
         const uxc = parseInt(document.getElementById('confUxC').value) || 1;
         const cxp = parseInt(document.getElementById('confCxP').value) || 1;
+        if(!prov || !art) return alert("Seleccione proveedor y artículo");
         const idUnico = `${prov}_${art}`.replace(/\s+/g, '');
-        
         db.collection("acuerdos_empaque").doc(idUnico).set({ proveedor: prov, articulo: art, uxc, cxp });
     }
 
-    function renderizarAcuerdos() {
-        document.getElementById('listaAcuerdos').innerHTML = acuerdosLocal.map(a => `
-            <tr>
-                <td>${a.proveedor}</td>
-                <td>${a.articulo}</td>
-                <td class="text-center">${a.uxc}</td>
-                <td class="text-center">${a.cxp}</td>
-                <td class="fw-bold text-primary text-center">${a.uxc * a.cxp}</td>
-                <td class="text-end"><button class="btn btn-sm text-danger" onclick="db.collection('acuerdos_empaque').doc('${a.id}').delete()">×</button></td>
-            </tr>
-        `).join('');
-    }
-
-    // --- LÓGICA DE INGRESO ---
     function calcularIngreso() {
         const art = document.getElementById('selArticulo').value;
         const prov = document.getElementById('selProveedor').value;
         const cant = parseFloat(document.getElementById('inpCantidad').value) || 0;
         const tipo = document.getElementById('selTipoCarga').value;
-
         const acuerdo = acuerdosLocal.find(a => a.proveedor === prov && a.articulo === art) || {uxc:1, cxp:1};
-        const uxp = acuerdo.uxc * acuerdo.cxp;
-
-        let total = 0;
-        if(tipo === 'u') total = cant;
-        if(tipo === 'c') total = cant * acuerdo.uxc;
-        if(tipo === 'p') total = cant * uxp;
-
+        let total = (tipo === 'u') ? cant : (tipo === 'c') ? cant * acuerdo.uxc : cant * (acuerdo.uxc * acuerdo.cxp);
         document.getElementById('txtTotalFinal').innerText = Math.round(total).toLocaleString();
-        document.getElementById('labelCalculo').innerText = `Cálculo (${prov}): ${tipo === 'p' ? acuerdo.uxc + ' u. x ' + acuerdo.cxp + ' cajas' : 'Formato ' + tipo}`;
-    }
-
-    function actualizarFiltroProveedores() {
-        const art = document.getElementById('selArticulo').value;
-        const filtrados = provsLocal.filter(p => p.productos.includes(art));
-        document.getElementById('selProveedor').innerHTML = filtrados.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('') || '<option value="">Sin prov.</option>';
-        calcularIngreso();
     }
 
     function guardarIngresoCloud() {
         const art = document.getElementById('selArticulo').value;
         const prov = document.getElementById('selProveedor').value;
         const total = parseInt(document.getElementById('txtTotalFinal').innerText.replace(/\./g, ''));
-        if(!prov || total <= 0) return alert("Carga inválida");
+        if(!art || !prov || total <= 0) return alert("Carga incompleta");
         db.collection("stock").add({ articulo: art, proveedor: prov, cantidad: total, fecha: firebase.firestore.FieldValue.serverTimestamp() })
             .then(() => { bootstrap.Modal.getInstance(document.getElementById('modalIngreso')).hide(); document.getElementById('inpCantidad').value = 0; });
+    }
+
+    function renderizarListaProvs() {
+        document.getElementById('listaProveedores').innerHTML = provsLocal.map(p => `<div class="list-group-item d-flex justify-content-between p-1"><span>${p.nombre}</span><button class="btn btn-sm text-danger" onclick="db.collection('proveedores').doc('${p.id}').delete()">×</button></div>`).join('');
+    }
+
+    function renderizarAcuerdos() {
+        document.getElementById('listaAcuerdos').innerHTML = acuerdosLocal.map(a => `<tr><td>${a.proveedor}</td><td>${a.articulo}</td><td>${a.uxc}</td><td>${a.cxp}</td><td class="fw-bold">${a.uxc*a.cxp}</td><td><button class="btn btn-sm text-danger" onclick="db.collection('acuerdos_empaque').doc('${a.id}').delete()">×</button></td></tr>`).join('');
     }
 
     function showTab(id) {
