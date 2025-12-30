@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prados del Sol - Gestión Integral v8</title>
+    <title>Prados del Sol - Gestión Integral v9</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -22,8 +22,9 @@
         .card { border: none; box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); border-radius: 10px; }
         .resumen-vta { background-color: #fff3cd; border: 1px dashed #ffc107; padding: 15px; border-radius: 8px; }
         .stock-peligro { background-color: #f8d7da !important; color: #721c24 !important; font-weight: bold; border: 2px solid #dc3545 !important; }
-        .btn-consumo { background-color: #fd7e14; color: white; }
-        .btn-consumo:hover { background-color: #e8590c; color: white; }
+        .badge-venta { background-color: #cfe2ff; color: #084298; }
+        .badge-ingreso { background-color: #d1e7dd; color: #0f5132; }
+        .badge-consumo { background-color: #fff3cd; color: #856404; }
     </style>
 </head>
 <body>
@@ -44,6 +45,7 @@
             <nav>
                 <a class="nav-link active" onclick="showTab('stock')"><i class="fas fa-boxes me-2"></i> Stock e Ingresos</a>
                 <a class="nav-link" onclick="showTab('ventas')"><i class="fas fa-shopping-cart me-2"></i> Nueva Venta</a>
+                <a class="nav-link" onclick="showTab('historial')"><i class="fas fa-history me-2"></i> Historial / Mes</a>
                 <a class="nav-link" onclick="showTab('clientes')"><i class="fas fa-user-friends me-2"></i> Clientes</a>
                 <a class="nav-link" onclick="showTab('config')"><i class="fas fa-cog me-2"></i> Configuración</a>
                 <a class="nav-link mt-5 text-danger" onclick="logout()"><i class="fas fa-power-off me-2"></i> Salir</a>
@@ -66,7 +68,7 @@
                                 <div class="col-md-2"><label class="fw-bold small">Cant.</label><input type="number" id="inpCantidad" class="form-control" oninput="calcularCarga()"></div>
                             </div>
                             <div class="mt-3 d-flex justify-content-between align-items-center">
-                                <span class="fs-5">Total a ingresar: <strong id="txtTotalFinal" class="text-success">0</strong> unidades</span>
+                                <span class="fs-5">Total a ingresar: <strong id="txtTotalFinal" class="text-success">0</strong></span>
                                 <button class="btn btn-success fw-bold px-4" onclick="guardarIngreso()">SUMAR AL STOCK</button>
                             </div>
                         </div>
@@ -74,24 +76,46 @@
                     <div class="col-md-4">
                         <div class="card p-4 mb-4 border-top border-warning border-4 shadow-sm bg-light">
                             <h4 class="text-warning"><i class="fas fa-hand-holding me-2"></i>Uso de Fábrica</h4>
-                            <label class="fw-bold small">Artículo de Uso</label>
                             <select id="consumoArticulo" class="form-select mb-2"></select>
-                            <label class="fw-bold small">Cantidad Usada</label>
-                            <input type="number" id="consumoCantidad" class="form-control mb-3" placeholder="Ej: 5">
-                            <button class="btn btn-consumo w-100 fw-bold" onclick="registrarConsumo()">DESCONTAR POR USO</button>
+                            <input type="number" id="consumoCantidad" class="form-control mb-3" placeholder="Cantidad Usada">
+                            <button class="btn btn-warning w-100 fw-bold text-white" onclick="registrarConsumo()">DESCONTAR USO</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="card p-3 shadow-sm">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0">Existencias en Tiempo Real</h5>
+                        <h5 class="mb-0">Existencias Actuales</h5>
                         <button class="btn btn-outline-success fw-bold" onclick="exportarExcel()"><i class="fas fa-file-excel me-2"></i>Exportar Excel</button>
                     </div>
                     <table class="table table-hover align-middle">
                         <thead class="table-dark"><tr><th>Artículo</th><th class="text-center">Existencia</th><th class="text-center">Mínimo</th><th class="text-end">Acción</th></tr></thead>
                         <tbody id="tablaStock"></tbody>
                     </table>
+                </div>
+            </div>
+
+            <div id="historial" class="content-section hidden">
+                <div class="card p-4 border-top border-info border-4 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4><i class="fas fa-list-alt me-2"></i>Movimientos del Mes</h4>
+                        <div class="d-flex gap-2">
+                            <input type="month" id="filtroMes" class="form-control" onchange="cargarHistorial()">
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover border">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Fecha/Hora</th>
+                                    <th>Artículo</th>
+                                    <th>Tipo</th>
+                                    <th class="text-center">Cantidad</th>
+                                </tr>
+                            </thead>
+                            <tbody id="listaHistorial"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -182,12 +206,18 @@
     function login() { auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPass').value); }
     function logout() { auth.signOut(); }
     auth.onAuthStateChanged(user => {
-        if (user) { document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('appSystem').classList.remove('hidden'); iniciarApp(); }
+        if (user) { 
+            document.getElementById('loginScreen').classList.add('hidden'); 
+            document.getElementById('appSystem').classList.remove('hidden'); 
+            const hoy = new Date();
+            document.getElementById('filtroMes').value = hoy.getFullYear() + "-" + String(hoy.getMonth()+1).padStart(2, '0');
+            iniciarApp(); 
+        }
         else { document.getElementById('loginScreen').classList.remove('hidden'); document.getElementById('appSystem').classList.add('hidden'); }
     });
 
     async function iniciarApp() {
-        db.collection("articulos").orderBy("nombre").onSnapshot(async s => {
+        db.collection("articulos").orderBy("nombre").onSnapshot(s => {
             articulos = s.docs.map(d => ({id:d.id, ...d.data()}));
             renderMaestro();
             const html = articulos.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
@@ -230,20 +260,46 @@
         });
     }
 
-    // --- FUNCIÓN CONSUMO INTERNO ---
+    // --- LOGICA HISTORIAL ---
+    async function cargarHistorial() {
+        const mesSel = document.getElementById('filtroMes').value; // YYYY-MM
+        if(!mesSel) return;
+        
+        const start = new Date(mesSel + "-01T00:00:00");
+        const end = new Date(start.getFullYear(), start.getMonth() + 1, 0, 23, 59, 59);
+
+        const snapshot = await db.collection("stock")
+            .where("fecha", ">=", start)
+            .where("fecha", "<=", end)
+            .orderBy("fecha", "desc").get();
+
+        let html = "";
+        snapshot.forEach(doc => {
+            const d = doc.data();
+            const fechaStr = d.fecha ? d.fecha.toDate().toLocaleString() : 'S/F';
+            let badge = "badge-venta";
+            if(d.tipo === "ingreso") badge = "badge-ingreso";
+            if(d.tipo === "consumo_interno") badge = "badge-consumo";
+
+            html += `<tr>
+                <td class="small">${fechaStr}</td>
+                <td class="fw-bold">${d.articulo}</td>
+                <td><span class="badge ${badge}">${d.tipo || 'movimiento'}</span></td>
+                <td class="text-center fw-bold ${d.cantidad < 0 ? 'text-danger':'text-success'}">${d.cantidad.toLocaleString()}</td>
+            </tr>`;
+        });
+        document.getElementById('listaHistorial').innerHTML = html || "<tr><td colspan='4' class='text-center'>Sin movimientos este mes.</td></tr>";
+    }
+
+    // --- CONSUMO ---
     async function registrarConsumo() {
         const art = document.getElementById('consumoArticulo').value;
         const cant = parseInt(document.getElementById('consumoCantidad').value) || 0;
-        if(!art || cant <= 0) return alert("Selecciona artículo y cantidad válida");
-        
-        await db.collection("stock").add({
-            articulo: art,
-            cantidad: -cant,
-            tipo: "consumo_interno",
-            fecha: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        alert(`Se han descontado ${cant} unidades de ${art} por uso interno.`);
+        if(!art || cant <= 0) return alert("Verifique datos");
+        await db.collection("stock").add({ articulo: art, cantidad: -cant, tipo: "consumo_interno", fecha: firebase.firestore.FieldValue.serverTimestamp() });
+        alert("Consumo registrado");
         document.getElementById('consumoCantidad').value = "";
+        cargarHistorial();
     }
 
     // --- CARGA ---
@@ -275,6 +331,7 @@
             alert("Ingreso exitoso");
             document.getElementById('inpCantidad').value = "";
             document.getElementById('txtTotalFinal').innerText = "0";
+            cargarHistorial();
         }
     }
 
@@ -301,14 +358,14 @@
         if (pN.includes("850cc") || pN.includes("900cc")) { caja = "caja de 900cc"; etiqueta = "etiqueta de 900cc"; }
         else if (pN.includes("1.5lts")) { caja = "caja 1.5lts"; etiqueta = "etiqueta 1.5lts"; }
         else if (pN.includes("5lts")) { caja = "caja de 5lts"; etiqueta = "etiqueta de 5lts"; }
-        if (caja !== "") batch.set(db.collection("stock").doc(), { articulo: caja, cantidad: -totalC, tipo: "insumo", fecha: firebase.firestore.FieldValue.serverTimestamp() });
-        if (etiqueta !== "") batch.set(db.collection("stock").doc(), { articulo: etiqueta, cantidad: -totalU, tipo: "insumo", fecha: firebase.firestore.FieldValue.serverTimestamp() });
+        if (caja !== "") batch.set(db.collection("stock").doc(), { articulo: caja, cantidad: -totalC, tipo: "venta", fecha: firebase.firestore.FieldValue.serverTimestamp() });
+        if (etiqueta !== "") batch.set(db.collection("stock").doc(), { articulo: etiqueta, cantidad: -totalU, tipo: "venta", fecha: firebase.firestore.FieldValue.serverTimestamp() });
         await batch.commit();
-        alert("Despacho ok");
+        alert("Despacho registrado");
         actualizarPrevisualizacion();
+        cargarHistorial();
     }
 
-    // --- EXCEL ---
     function exportarExcel() {
         const dataParaExcel = Object.keys(stockActualGlobal).map(artNombre => {
             const artData = articulos.find(a => a.nombre === artNombre);
@@ -320,7 +377,6 @@
         XLSX.writeFile(wb, `Inventario_Prados.xlsx`);
     }
 
-    // --- CONFIG ---
     function guardarArt() { const n = document.getElementById('confNuevoArt').value.toLowerCase().trim(); const m = parseInt(document.getElementById('confMinArt').value) || 0; if(n) db.collection("articulos").add({nombre: n, minimo: m}); }
     function renderMaestro() {
         document.getElementById('listaArts').innerHTML = articulos.map(a => `
@@ -336,7 +392,13 @@
     function renderLista(id, data, coll) { document.getElementById(id).innerHTML = data.map(item => `<div class="list-group-item d-flex justify-content-between p-1">${item.nombre} <i class="fas fa-times text-danger" onclick="db.collection('${coll}').doc('${item.id}').delete()"></i></div>`).join(''); }
     function guardarCliente() { db.collection("clientes").add({nombre: document.getElementById('cliNombre').value, dir: document.getElementById('cliDir').value}); }
     function renderClientes() { document.getElementById('tablaClientes').innerHTML = clientes.map(c => `<tr><td>${c.nombre}</td><td>${c.dir}</td><td><i class="fas fa-trash text-danger" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></td></tr>`).join(''); }
-    function showTab(id) { document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
+    function showTab(id) { 
+        document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden')); 
+        document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+        document.getElementById(id).classList.remove('hidden'); 
+        event.currentTarget.classList.add('active');
+        if(id === 'historial') cargarHistorial();
+    }
     async function limpiarArt(n) { if(confirm("¿Vaciar stock?")) { const snp = await db.collection("stock").where("articulo","==",n).get(); const b = db.batch(); snp.forEach(d => b.delete(d.ref)); await b.commit(); } }
 </script>
 </body>
