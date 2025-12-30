@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Prados del Sol - Filtro Estricto</title>
+    <title>Stock Prados del Sol - Stock Consolidado</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -20,7 +20,7 @@
         .hidden { display: none !important; }
         .card { border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-radius: 12px; }
         .table thead { background-color: #34495e; color: white; }
-        .filtro-activo { border: 2px solid #3498db !important; background-color: #f0f9ff; }
+        .prov-tag { font-size: 0.75rem; background: #e9ecef; border-radius: 4px; padding: 2px 6px; margin-right: 4px; display: inline-block; color: #495057; border: 1px solid #dee2e6; }
     </style>
 </head>
 <body>
@@ -31,7 +31,6 @@
         <input type="email" id="loginEmail" class="form-control mb-3" placeholder="Correo">
         <input type="password" id="loginPass" class="form-control mb-3" placeholder="Contraseña">
         <button onclick="login()" class="btn btn-primary w-100">Ingresar</button>
-        <div id="loginError" class="text-danger mt-2 small"></div>
     </div>
 </div>
 
@@ -40,7 +39,7 @@
         <div class="col-md-2 sidebar">
             <h5 class="text-center mb-4 border-bottom pb-3">SISTEMA STOCK</h5>
             <nav>
-                <a class="nav-link active" id="btn-stock" onclick="showTab('stock')"><i class="fas fa-boxes me-2"></i> Stock</a>
+                <a class="nav-link active" id="btn-stock" onclick="showTab('stock')"><i class="fas fa-boxes me-2"></i> Stock Consolidado</a>
                 <a class="nav-link" id="btn-config" onclick="showTab('config')"><i class="fas fa-cogs me-2"></i> Configuración</a>
                 <a class="nav-link mt-5 text-danger" onclick="logout()"><i class="fas fa-power-off me-2"></i> Salir</a>
             </nav>
@@ -49,23 +48,22 @@
         <div class="col-md-10 p-4">
             <div id="stock" class="content-section">
                 <div class="d-flex justify-content-between mb-4">
-                    <h3>Inventario</h3>
+                    <h3>Inventario General</h3>
                     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalIngreso">
                         <i class="fas fa-plus me-1"></i> Registrar Ingreso
                     </button>
                 </div>
                 <div class="card shadow-sm p-3">
-                    <table class="table table-hover">
+                    <table class="table align-middle">
                         <thead>
                             <tr>
                                 <th>Artículo</th>
-                                <th>Proveedor</th>
-                                <th>Unidades Totales</th>
-                                <th>Fecha</th>
-                                <th>Acción</th>
+                                <th class="text-center">Stock Total</th>
+                                <th>Desglose por Proveedor (Últimas Cargas)</th>
+                                <th class="text-end">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody id="tablaStock"></tbody>
+                        <tbody id="tablaStockConsolidado"></tbody>
                     </table>
                 </div>
             </div>
@@ -75,9 +73,9 @@
                 <div class="row g-4">
                     <div class="col-md-4">
                         <div class="card p-3 border-start border-success border-4">
-                            <h5><i class="fas fa-truck me-2"></i>1. Proveedores</h5>
+                            <h5>1. Proveedores</h5>
                             <input type="text" id="confNombreProv" class="form-control mb-2" placeholder="Nombre Proveedor">
-                            <label class="small fw-bold">Asignar Productos:</label>
+                            <label class="small fw-bold">Productos:</label>
                             <select id="confProductosProv" class="form-select mb-2" multiple style="height: 120px;">
                                 <option value="Botella 850cc">Botella 850cc</option>
                                 <option value="Botella 900cc">Botella 900cc</option>
@@ -87,20 +85,20 @@
                                 <option value="Cajas">Cajas</option>
                             </select>
                             <button class="btn btn-success w-100 mb-3" onclick="guardarProveedorCloud()">Agregar Proveedor</button>
-                            <div id="listaProveedores" class="list-group overflow-auto" style="max-height: 200px;"></div>
+                            <div id="listaProveedores" class="list-group overflow-auto" style="max-height: 150px;"></div>
                         </div>
                     </div>
 
                     <div class="col-md-8">
                         <div class="card p-3 border-start border-primary border-4">
-                            <h5><i class="fas fa-handshake me-2"></i>2. Configurar Cantidades</h5>
+                            <h5>2. Configurar Unidades por Proveedor</h5>
                             <div class="row g-2 mb-3">
                                 <div class="col-md-4">
                                     <label class="small fw-bold">Proveedor</label>
                                     <select id="confSelProv" class="form-select" onchange="filtrarArticulosConfig()"></select>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="small fw-bold">Artículo (Filtrado)</label>
+                                    <label class="small fw-bold">Artículo</label>
                                     <select id="confSelArt" class="form-select"></select>
                                 </div>
                                 <div class="col-md-2">
@@ -108,27 +106,13 @@
                                     <input type="number" id="confUxC" class="form-control" value="1">
                                 </div>
                                 <div class="col-md-2">
-                                    <label class="small fw-bold">Cajas/Pallet</label>
+                                    <label class="small fw-bold">Cajas/P</label>
                                     <input type="number" id="confCxP" class="form-control" value="1">
                                 </div>
                             </div>
                             <button class="btn btn-primary w-100" onclick="guardarAcuerdoEmpaque()">Guardar Configuración</button>
                             <hr>
-                            <div class="table-responsive">
-                                <table class="table table-sm small">
-                                    <thead>
-                                        <tr>
-                                            <th>Proveedor</th>
-                                            <th>Artículo</th>
-                                            <th>u/Caja</th>
-                                            <th>Cajas/P</th>
-                                            <th>u/Pallet</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="listaAcuerdos"></tbody>
-                                </table>
-                            </div>
+                            <div id="listaAcuerdos" class="row"></div>
                         </div>
                     </div>
                 </div>
@@ -145,15 +129,11 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <label class="fw-bold">1. Seleccionar Proveedor</label>
-                <select id="selProveedor" class="form-select mb-3 filtro-activo" onchange="actualizarFiltroArticulos();">
-                    <option value="">-- Seleccione Proveedor --</option>
-                </select>
+                <label class="fw-bold">Proveedor</label>
+                <select id="selProveedor" class="form-select mb-3" onchange="actualizarFiltroArticulos();"></select>
 
-                <label class="fw-bold">2. Seleccionar Artículo (Solo los que vende el prov.)</label>
-                <select id="selArticulo" class="form-select mb-3" onchange="calcularIngreso();">
-                    <option value="">-- Seleccione Artículo --</option>
-                </select>
+                <label class="fw-bold">Artículo</label>
+                <select id="selArticulo" class="form-select mb-3" onchange="calcularIngreso();"></select>
 
                 <div class="row mb-3">
                     <div class="col-6">
@@ -169,7 +149,6 @@
                         </select>
                     </div>
                 </div>
-                
                 <div class="bg-light p-3 rounded text-center border">
                     <span id="txtTotalFinal" class="fs-2 fw-bold text-primary">0</span> <span class="text-primary fw-bold">unidades</span>
                 </div>
@@ -182,6 +161,7 @@
 </div>
 
 <script>
+    // --- CONFIG FIREBASE ---
     const firebaseConfig = {
       apiKey: "AIzaSyCjYp0idCxs32QAofYLVEGcwvmd3HXy-3Y",
       authDomain: "prados-del-sol.firebaseapp.com",
@@ -199,6 +179,7 @@
     let acuerdosLocal = [];
     let provsLocal = [];
 
+    // --- AUTH ---
     function login() { auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPass').value); }
     function logout() { auth.signOut(); }
 
@@ -214,75 +195,92 @@
     });
 
     function inicializarListeners() {
+        // Escuchar Proveedores
         db.collection("proveedores").onSnapshot(snap => {
             provsLocal = snap.docs.map(d => ({id: d.id, ...d.data()}));
             renderizarListaProvs();
-            const htmlProvs = `<option value="">-- Seleccionar --</option>` + provsLocal.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
-            document.getElementById('confSelProv').innerHTML = htmlProvs;
-            document.getElementById('selProveedor').innerHTML = htmlProvs;
-            filtrarArticulosConfig(); 
+            const html = `<option value="">-- Seleccionar --</option>` + provsLocal.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
+            document.getElementById('confSelProv').innerHTML = html;
+            document.getElementById('selProveedor').innerHTML = html;
         });
 
+        // Escuchar Acuerdos
         db.collection("acuerdos_empaque").onSnapshot(snap => {
             acuerdosLocal = snap.docs.map(d => ({id: d.id, ...d.data()}));
             renderizarAcuerdos();
         });
 
-        db.collection("stock").orderBy("fecha", "desc").limit(30).onSnapshot(snap => {
-            document.getElementById('tablaStock').innerHTML = snap.docs.map(doc => {
-                const s = doc.data();
-                return `<tr><td>${s.articulo}</td><td>${s.proveedor}</td><td class="fw-bold">${s.cantidad}</td><td>${s.fecha ? s.fecha.toDate().toLocaleDateString() : ''}</td><td><button class="btn btn-sm text-danger" onclick="db.collection('stock').doc('${doc.id}').delete()">×</button></td></tr>`;
-            }).join('');
+        // Escuchar Stock y CONSOLIDAR
+        db.collection("stock").onSnapshot(snap => {
+            const todosLosMovimientos = snap.docs.map(d => ({id: d.id, ...d.data()}));
+            renderizarConsolidado(todosLosMovimientos);
         });
     }
 
-    // --- FILTROS ESTRICTOS ---
-    function actualizarFiltroArticulos() {
-        const provNombre = document.getElementById('selProveedor').value;
-        const selArt = document.getElementById('selArticulo');
-        
-        if(!provNombre) {
-            selArt.innerHTML = '<option value="">-- Seleccione Proveedor Primero --</option>';
-            return;
-        }
+    // --- LÓGICA DE CONSOLIDACIÓN ---
+    function renderizarConsolidado(movimientos) {
+        const consolidado = {};
 
-        const proveedor = provsLocal.find(p => p.nombre === provNombre);
-        const productosAsignados = proveedor ? proveedor.productos : [];
-        
-        selArt.innerHTML = productosAsignados.map(art => `<option value="${art}">${art}</option>`).join('');
+        // Agrupar por artículo
+        movimientos.forEach(m => {
+            if (!consolidado[m.articulo]) {
+                consolidado[m.articulo] = { total: 0, proveedores: {}, ids: [] };
+            }
+            consolidado[m.articulo].total += m.cantidad;
+            consolidado[m.articulo].ids.push(m.id);
+            
+            // Sumar por cada proveedor individualmente para la descripción
+            if (!consolidado[m.articulo].proveedores[m.proveedor]) {
+                consolidado[m.articulo].proveedores[m.proveedor] = 0;
+            }
+            consolidado[m.articulo].proveedores[m.proveedor] += m.cantidad;
+        });
+
+        let html = "";
+        ARTICULOS_MAESTROS.forEach(art => {
+            const data = consolidado[art] || { total: 0, proveedores: {}, ids: [] };
+            
+            // Crear etiquetas de descripción
+            let descProvs = "";
+            for (const [prov, cant] of Object.entries(data.proveedores)) {
+                descProvs += `<span class="prov-tag"><b>${prov}:</b> ${cant.toLocaleString()} u.</span>`;
+            }
+
+            html += `
+                <tr>
+                    <td class="fw-bold text-secondary">${art}</td>
+                    <td class="text-center fs-5 fw-bold text-primary">${data.total.toLocaleString()}</td>
+                    <td>${descProvs || '<span class="text-muted small">Sin stock</span>'}</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-danger" title="Limpiar Stock de este artículo" 
+                                onclick="borrarStockArticulo('${art}', ${JSON.stringify(data.ids)})">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        document.getElementById('tablaStockConsolidado').innerHTML = html;
+    }
+
+    async function borrarStockArticulo(nombre, ids) {
+        if(confirm(`¿Deseas resetear el stock de ${nombre}? Se borrarán todos los registros asociados.`)) {
+            for (const id of ids) {
+                await db.collection("stock").doc(id).delete();
+            }
+        }
+    }
+
+    // --- FUNCIONES SOPORTE (Idénticas pero estables) ---
+    function actualizarFiltroArticulos() {
+        const prov = provsLocal.find(p => p.nombre === document.getElementById('selProveedor').value);
+        document.getElementById('selArticulo').innerHTML = prov ? prov.productos.map(a => `<option value="${a}">${a}</option>`).join('') : '';
         calcularIngreso();
     }
 
     function filtrarArticulosConfig() {
-        const provNombre = document.getElementById('confSelProv').value;
-        const selArtConfig = document.getElementById('confSelArt');
-        
-        if(!provNombre) {
-            selArtConfig.innerHTML = '<option value="">-- Seleccione Prov --</option>';
-            return;
-        }
-
-        const proveedor = provsLocal.find(p => p.nombre === provNombre);
-        const productosAsignados = proveedor ? proveedor.productos : [];
-        selArtConfig.innerHTML = productosAsignados.map(art => `<option value="${art}">${art}</option>`).join('');
-    }
-
-    // --- RESTO DE FUNCIONES ---
-    function guardarProveedorCloud() {
-        const nombre = document.getElementById('confNombreProv').value.trim();
-        const prods = Array.from(document.getElementById('confProductosProv').selectedOptions).map(o => o.value);
-        if(!nombre || prods.length === 0) return alert("Nombre y productos requeridos");
-        db.collection("proveedores").add({ nombre, productos: prods }).then(() => { document.getElementById('confNombreProv').value = ''; });
-    }
-
-    function guardarAcuerdoEmpaque() {
-        const prov = document.getElementById('confSelProv').value;
-        const art = document.getElementById('confSelArt').value;
-        const uxc = parseInt(document.getElementById('confUxC').value) || 1;
-        const cxp = parseInt(document.getElementById('confCxP').value) || 1;
-        if(!prov || !art) return alert("Seleccione proveedor y artículo");
-        const idUnico = `${prov}_${art}`.replace(/\s+/g, '');
-        db.collection("acuerdos_empaque").doc(idUnico).set({ proveedor: prov, articulo: art, uxc, cxp });
+        const prov = provsLocal.find(p => p.nombre === document.getElementById('confSelProv').value);
+        document.getElementById('confSelArt').innerHTML = prov ? prov.productos.map(a => `<option value="${a}">${a}</option>`).join('') : '';
     }
 
     function calcularIngreso() {
@@ -304,12 +302,37 @@
             .then(() => { bootstrap.Modal.getInstance(document.getElementById('modalIngreso')).hide(); document.getElementById('inpCantidad').value = 0; });
     }
 
+    function guardarProveedorCloud() {
+        const nombre = document.getElementById('confNombreProv').value.trim();
+        const prods = Array.from(document.getElementById('confProductosProv').selectedOptions).map(o => o.value);
+        if(!nombre || prods.length === 0) return alert("Faltan datos");
+        db.collection("proveedores").add({ nombre, productos: prods }).then(() => document.getElementById('confNombreProv').value = '');
+    }
+
+    function guardarAcuerdoEmpaque() {
+        const prov = document.getElementById('confSelProv').value;
+        const art = document.getElementById('confSelArt').value;
+        const uxc = parseInt(document.getElementById('confUxC').value) || 1;
+        const cxp = parseInt(document.getElementById('confCxP').value) || 1;
+        if(!prov || !art) return alert("Seleccione datos");
+        db.collection("acuerdos_empaque").doc(`${prov}_${art}`.replace(/\s+/g, '')).set({ proveedor: prov, articulo: art, uxc, cxp });
+    }
+
     function renderizarListaProvs() {
-        document.getElementById('listaProveedores').innerHTML = provsLocal.map(p => `<div class="list-group-item d-flex justify-content-between p-1"><span>${p.nombre}</span><button class="btn btn-sm text-danger" onclick="db.collection('proveedores').doc('${p.id}').delete()">×</button></div>`).join('');
+        document.getElementById('listaProveedores').innerHTML = provsLocal.map(p => `<div class="list-group-item d-flex justify-content-between p-1 small"><span>${p.nombre}</span><button class="btn btn-sm text-danger" onclick="db.collection('proveedores').doc('${p.id}').delete()">×</button></div>`).join('');
     }
 
     function renderizarAcuerdos() {
-        document.getElementById('listaAcuerdos').innerHTML = acuerdosLocal.map(a => `<tr><td>${a.proveedor}</td><td>${a.articulo}</td><td>${a.uxc}</td><td>${a.cxp}</td><td class="fw-bold">${a.uxc*a.cxp}</td><td><button class="btn btn-sm text-danger" onclick="db.collection('acuerdos_empaque').doc('${a.id}').delete()">×</button></td></tr>`).join('');
+        document.getElementById('listaAcuerdos').innerHTML = acuerdosLocal.map(a => `
+            <div class="col-md-6 mb-2">
+                <div class="card p-2 bg-light border-0 shadow-sm">
+                    <div class="d-flex justify-content-between">
+                        <small class="fw-bold">${a.proveedor} > ${a.articulo}</small>
+                        <button class="btn btn-sm text-danger" onclick="db.collection('acuerdos_empaque').doc('${a.id}').delete()">×</button>
+                    </div>
+                    <div class="small">Caja: ${a.uxc}u. | Pallet: ${a.cxp} cj. (${a.uxc*a.cxp}u)</div>
+                </div>
+            </div>`).join('');
     }
 
     function showTab(id) {
