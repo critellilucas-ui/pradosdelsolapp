@@ -222,96 +222,117 @@
         alert("Despacho Procesado.");
     }
 
-    // --- FUNCIÓN REDISEÑADA PARA EL REMITO ---
+    // --- FUNCIÓN DE PDF REDISEÑADA ESTÉTICAMENTE ---
     function generarPDFOficial(v) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         const cliData = clientes.find(c => c.nombre === v.cliente) || {};
-        const fechaActual = new Date().toLocaleDateString();
+        const f = new Date();
+        const fechaStr = `${String(f.getDate()).padStart(2,'0')}/${String(f.getMonth()+1).padStart(2,'0')}/${f.getFullYear()}`;
 
-        // CABECERA IZQUIERDA
-        doc.setFontSize(18);
-        doc.setFont(undefined, 'bold');
+        // Estilos de línea
+        doc.setDrawColor(0);
+        doc.setLineWidth(0.3);
+
+        // 1. CABECERA IZQUIERDA
+        doc.setFontSize(22);
+        doc.setFont("helvetica", "bold");
         doc.text("MAXIMILIANO MEZA", 12, 18);
         
-        doc.setFontSize(10);
-        doc.text("VENTA AL POR MAYOR DE GRASA Y ACEITE", 12, 25);
+        doc.setFontSize(9);
+        doc.text("VENTA AL POR MAYOR DE GRASA Y ACEITE", 12, 24);
         
         doc.setFontSize(8);
-        doc.setFont(undefined, 'normal');
-        doc.text("RUTA 24 Nº 1233", 12, 32);
-        doc.text("1746 FRANCISCO ALVAREZ - PROV. DE BUENOS AIRES", 12, 36);
-        doc.line(12, 39, 90, 39);
-        doc.text("IVA RESPONSABLE INSCRIPTO", 12, 43);
+        doc.setFont("helvetica", "normal");
+        doc.text("RUTA 24 Nº 1233", 12, 31);
+        doc.text("1746 FRANCISCO ALVAREZ - PROV. DE BUENOS AIRES", 12, 35);
+        doc.text("IVA RESPONSABLE INSCRIPTO", 12, 42);
 
-        // LOGO CENTRAL "R"
+        // 2. LOGO CENTRAL "R" (Cuadrado con letra)
         doc.setLineWidth(0.5);
-        doc.rect(94, 10, 14, 14); // Cuadro de la R
-        doc.setFontSize(22);
-        doc.setFont(undefined, 'bold');
+        doc.rect(94, 10, 16, 16); 
+        doc.setFontSize(26);
+        doc.setFont("helvetica", "bold");
         doc.text("R", 98, 21);
         doc.setFontSize(7);
-        doc.text("COD. 91", 97, 27);
+        doc.text("COD. 91", 97, 24);
 
-        // CABECERA DERECHA
+        // 3. CABECERA DERECHA (Remito y Fecha)
         doc.setFontSize(14);
         doc.text("REMITO", 155, 16);
         doc.setFontSize(11);
         doc.text(`Nº 0001-00000${Math.floor(Math.random() * 900 + 100)}`, 148, 23);
         
-        doc.rect(145, 27, 50, 10); // Cuadro Fecha
-        doc.text(`FECHA: ${fechaActual}`, 148, 34);
+        // Recuadro de Fecha
+        doc.rect(145, 27, 48, 8); 
+        doc.setFontSize(10);
+        doc.text(`FECHA:  ${fechaStr}`, 148, 32.5);
 
         doc.setFontSize(7);
-        doc.setFont(undefined, 'normal');
         doc.text("C.U.I.T.: 20-32546093-9", 145, 42);
         doc.text("Ing. Brutos (C.M.): 20-32546093-9", 145, 46);
         doc.text("Inicio de Actividades: 12/2023", 145, 50);
 
-        // CUADRO DE DESTINATARIO
-        doc.line(10, 55, 200, 55); // Linea divisoria
+        // 4. DATOS DEL CLIENTE
+        doc.setLineWidth(0.3);
+        doc.line(10, 55, 200, 55); 
         
         doc.setFontSize(10);
-        doc.setFont(undefined, 'bold');
-        doc.text(`Señor(es):  ${v.cliente.toUpperCase()}`, 12, 63);
-        doc.setFont(undefined, 'normal');
-        doc.text(`Domicilio:   ____________________________________________________________________`, 12, 71);
-        doc.text(`Localidad:  ${cliData.dir || ''}`, 12, 79);
-        doc.text(`I.V.A.:   ${cliData.iva || 'Resp. Inscripto'}`, 12, 87);
-        doc.text(`C.U.I.T.:  ${cliData.cuit || ''}`, 130, 87);
-        doc.line(10, 92, 200, 92); // Linea divisoria
+        doc.setFont("helvetica", "bold");
+        doc.text(`Sr.(es):`, 12, 63);
+        doc.setFont("helvetica", "normal");
+        doc.text(v.cliente.toUpperCase(), 30, 63);
+        
+        doc.text(`Domicilio:`, 12, 71);
+        doc.text("..............................................................................................................................................", 30, 71);
+        
+        doc.text(`Localidad:`, 12, 79);
+        doc.text(cliData.dir ? cliData.dir.toUpperCase() : "..............................................................................................................................................", 30, 79);
+        
+        doc.text(`I.V.A.:`, 12, 87);
+        doc.text(cliData.iva || "RESPONSABLE INSCRIPTO", 30, 87);
+        doc.text(`C.U.I.T.:`, 110, 87);
+        doc.text(cliData.cuit || "..................................................", 130, 87);
+        
+        doc.line(10, 93, 200, 93); 
 
-        // TABLA DE CONTENIDO
+        // 5. TABLA DE CONTENIDO (Estética limpia)
         doc.autoTable({
-            startY: 95,
+            startY: 96,
             head: [['CANT.', 'DESCRIPCIÓN']],
             body: [
-                [`${v.pallets}`, `PALLETS ACEITE x ${v.producto.toUpperCase()} x ${v.cajas} CAJAS\n\n\nCHOFER: ${v.chofer.toUpperCase()}\nDNI: ${v.dni}\nCAMION: ${v.camion.toUpperCase()}\nSEMI: ${v.semi.toUpperCase()}`]
+                [
+                    { content: `${v.pallets}`, styles: { halign: 'center', fontStyle: 'bold', fontSize: 12 } },
+                    { content: `PALLETS ACEITE x ${v.producto.toUpperCase()}\nTOTAL CAJAS: ${v.cajas}\n\nTRANSPORTE:\nCHOFER: ${v.chofer.toUpperCase()}\nDNI: ${v.dni}\nPATENTE: ${v.camion.toUpperCase()} / ${v.semi.toUpperCase()}`, styles: { cellPadding: 8 } }
+                ]
             ],
             theme: 'grid',
-            headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold', halign: 'center' },
-            styles: { fontSize: 10, cellPadding: 8, minCellHeight: 80 },
-            columnStyles: { 0: { halign: 'center', cellWidth: 25 } }
+            headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold', halign: 'center', lineWidth: 0.3 },
+            styles: { fontSize: 10, lineColor: 0, lineWidth: 0.3, minCellHeight: 90 },
+            columnStyles: { 0: { cellWidth: 25 } }
         });
 
-        // PIE DE PÁGINA / FIRMAS
-        const finalY = doc.lastAutoTable.finalY + 15;
-        
-        doc.line(20, finalY + 15, 80, finalY + 15); // Linea firma izquierda
+        // 6. PIE DE PÁGINA (Firmas)
+        const finalY = doc.lastAutoTable.finalY + 20;
+        doc.line(20, finalY + 15, 80, finalY + 15);
+        doc.setFontSize(9);
         doc.text("Recibí Conforme", 35, finalY + 20);
         
-        doc.line(120, finalY + 15, 180, finalY + 15); // Linea firma derecha
-        doc.text("Aclaración", 140, finalY + 20);
+        doc.line(120, finalY + 15, 180, finalY + 15);
+        doc.text("Aclaración", 142, finalY + 20);
 
-        // DATOS LEGALES FINALES (Borde inferior)
+        // 7. PIE LEGAL (Recuadro inferior)
         doc.setFontSize(7);
         doc.rect(10, 275, 190, 15);
-        doc.text("CAI: 51299213898174  -  Vto: 16/07/2026", 115, 281);
-        doc.text("Prados del Sol - Sistema de Gestión Logística", 15, 285);
+        doc.text("CAI: 51299213898174  -  Vto: 16/07/2026", 135, 281);
+        doc.text("ORIGINAL: Blanco  -  DUPLICADO: Color", 15, 281);
+        doc.setFont("helvetica", "italic");
+        doc.text("Prados del Sol - Sistema de Gestión Logística v2.0", 15, 286);
 
-        doc.save(`Remito_${v.cliente}_${fechaActual}.pdf`);
+        doc.save(`Remito_${v.cliente}_${fechaStr.replace(/\//g,'-')}.pdf`);
     }
 
+    // Funciones de soporte (Sin cambios)
     async function cargarHistorial() {
         const mesSel = document.getElementById('filtroMes').value;
         const start = new Date(mesSel + "-01T00:00:00"); const end = new Date(start.getFullYear(), start.getMonth() + 1, 0, 23, 59, 59);
@@ -321,7 +342,7 @@
         }).join('');
     }
 
-    async function resetTotalMovimientos() { if(confirm("¿RESET TOTAL? Borrará todo el historial.")) { const snp = await db.collection("stock").get(); const b = db.batch(); snp.forEach(d => b.delete(d.ref)); await b.commit(); alert("Historial Limpiado."); cargarHistorial(); } }
+    async function resetTotalMovimientos() { if(confirm("¿BORRAR HISTORIAL?")) { const snp = await db.collection("stock").get(); const b = db.batch(); snp.forEach(d => b.delete(d.ref)); await b.commit(); cargarHistorial(); } }
     function showTab(id) { document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active')); if(id === 'historial') cargarHistorial(); }
     function guardarArt() { const n = document.getElementById('confNuevoArt').value.toLowerCase(); const m = parseInt(document.getElementById('confMinArt').value) || 0; if(n) db.collection("articulos").add({nombre: n, minimo: m}); }
     function renderMaestro() { document.getElementById('listaArts').innerHTML = articulos.map(a => `<div class="list-group-item d-flex justify-content-between p-1 small">${a.nombre} <i class="fas fa-trash text-danger" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join(''); }
@@ -330,7 +351,7 @@
     function guardarCliente() { db.collection("clientes").add({ nombre: document.getElementById('cliNombre').value, cuit: document.getElementById('cliCuit').value, iva: document.getElementById('cliIva').value, dir: document.getElementById('cliDir').value }); alert("Cliente Guardado"); }
     function renderClientes() { document.getElementById('tablaClientes').innerHTML = clientes.map(c => `<tr><td class="small"><b>${c.nombre}</b></td><td class="text-end"><i class="fas fa-trash text-danger" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></td></tr>`).join(''); }
     async function registrarConsumo() { const art = document.getElementById('consumoArticulo').value; const cant = parseInt(document.getElementById('consumoCantidad').value) || 0; if(art && cant > 0) await db.collection("stock").add({ articulo: art, cantidad: -cant, tipo: "Consumo", fecha: firebase.firestore.FieldValue.serverTimestamp() }); }
-    async function limpiarArt(n) { if(confirm("¿Vaciar stock de este artículo?")) { const snp = await db.collection("stock").where("articulo","==",n).get(); const b = db.batch(); snp.forEach(d => b.delete(d.ref)); await b.commit(); } }
+    async function limpiarArt(n) { if(confirm("¿Vaciar stock?")) { const snp = await db.collection("stock").where("articulo","==",n).get(); const b = db.batch(); snp.forEach(d => b.delete(d.ref)); await b.commit(); } }
 </script>
 </body>
 </html>
