@@ -3,13 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prados del Sol - Sistema Integral</title>
+    <title>Prados del Sol - Gestión de Insumos</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -21,7 +19,7 @@
         .nav-link:hover, .nav-link.active { color: white; background-color: #0d6efd; }
         .hidden { display: none !important; }
         .card { border: none; box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); border-radius: 10px; }
-        .resumen-remito { background-color: #fff3cd; border: 1px dashed #ffc107; padding: 15px; border-radius: 8px; }
+        .bg-detalle { background-color: #e9ecef; border-radius: 8px; padding: 10px; }
     </style>
 </head>
 <body>
@@ -58,7 +56,7 @@
                 <div class="card p-3">
                     <table class="table align-middle">
                         <thead class="table-dark">
-                            <tr><th>Producto / Insumo</th><th class="text-center">Cant. Unidades</th><th>Estado</th><th class="text-end">Limpiar</th></tr>
+                            <tr><th>Artículo / Insumo</th><th class="text-center">Cant. Unidades</th><th>Estado</th><th class="text-end">Limpiar</th></tr>
                         </thead>
                         <tbody id="tablaStockConsolidado"></tbody>
                     </table>
@@ -71,29 +69,14 @@
                         <div class="card p-4 border-top border-primary border-4">
                             <h4>Armado de Despacho</h4>
                             <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="fw-bold">Cliente</label>
-                                    <select id="vtaCliente" class="form-select" onchange="calcularVentaFinal()"></select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="fw-bold">Aceite</label>
-                                    <select id="vtaArticulo" class="form-select" onchange="calcularVentaFinal()"></select>
-                                </div>
-                                <div class="col-md-12">
-                                    <label class="fw-bold text-primary">Formato Guardado</label>
-                                    <select id="vtaFormatoSel" class="form-select" onchange="aplicarFormatoVenta()"></select>
-                                </div>
+                                <div class="col-md-6"><label>Cliente</label><select id="vtaCliente" class="form-select" onchange="calcularVentaFinal()"></select></div>
+                                <div class="col-md-6"><label>Aceite</label><select id="vtaArticulo" class="form-select" onchange="calcularVentaFinal()"></select></div>
+                                <div class="col-md-12"><label class="text-primary">Formato Guardado</label><select id="vtaFormatoSel" class="form-select" onchange="aplicarFormatoVenta()"></select></div>
                                 <div class="col-md-4"><label>Pallets</label><input type="number" id="vtaPallets" class="form-control" value="28" oninput="calcularVentaFinal()"></div>
                                 <div class="col-md-4"><label>Cajas x Pallet</label><input type="number" id="vtaCjxP" class="form-control" oninput="calcularVentaFinal()"></div>
                                 <div class="col-md-4"><label>Unid. x Caja</label><input type="number" id="vtaUxC" class="form-control" oninput="calcularVentaFinal()"></div>
-                                <div class="col-md-12"><label class="fw-bold">Transporte</label><input type="text" id="vtaTransporte" class="form-control"></div>
                             </div>
-                            <div class="resumen-remito mt-4">
-                                <div id="remitoDetalle" class="small mb-2"></div>
-                                <div class="d-flex justify-content-between"><span>Total Aceite:</span><span id="resBotellas" class="fw-bold text-danger">0</span></div>
-                                <div class="d-flex justify-content-between"><span>Cajas (Insumo):</span><span id="resCajas" class="fw-bold text-primary">0</span></div>
-                            </div>
-                            <button class="btn btn-primary w-100 mt-3 py-3 fw-bold" onclick="confirmarVentaRemito()">DESCONTAR STOCK Y REMITO</button>
+                            <button class="btn btn-primary w-100 mt-4 py-2 fw-bold" onclick="confirmarVentaRemito()">DESCONTAR STOCK</button>
                         </div>
                     </div>
                 </div>
@@ -109,7 +92,6 @@
                         <div class="col-md-2"><button class="btn btn-dark w-100" onclick="guardarCliente()">Añadir</button></div>
                     </div>
                     <table class="table table-hover">
-                        <thead><tr><th>Razón Social</th><th>CUIT</th><th>Dirección</th><th></th></tr></thead>
                         <tbody id="tablaClientes"></tbody>
                     </table>
                 </div>
@@ -131,16 +113,6 @@
                             <div id="listaArticulosMaster" class="list-group"></div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="card p-3">
-                            <h5>Formatos</h5>
-                            <input type="text" id="fNombre" class="form-control mb-1" placeholder="Nombre">
-                            <input type="number" id="fCajas" class="form-control mb-1" placeholder="Cajas">
-                            <input type="number" id="fUni" class="form-control mb-1" placeholder="u/Caja">
-                            <button class="btn btn-warning w-100 mb-2" onclick="guardarFormato()">Guardar</button>
-                            <div id="listaFormatos"></div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -151,15 +123,41 @@
     <div class="modal-dialog"><div class="modal-content">
         <div class="modal-header bg-primary text-white"><h5>Entrada de Mercadería</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">
-            <label>Proveedor</label><select id="selProveedor" class="form-select mb-2"></select>
-            <label>Artículo</label><select id="selArticulo" class="form-select mb-2"></select>
-            <div class="row g-2">
-                <div class="col-6"><input type="number" id="inpCantidad" class="form-control" oninput="calcularIngreso()"></div>
-                <div class="col-6"><select id="selTipoCarga" class="form-select" onchange="calcularIngreso()"><option value="u">Unid</option><option value="c">Cajas</option><option value="p">Pallets</option></select></div>
+            <label class="fw-bold">Proveedor</label><select id="selProveedor" class="form-select mb-3"></select>
+            <label class="fw-bold">Artículo</label><select id="selArticulo" class="form-select mb-3"></select>
+            
+            <div class="bg-detalle mb-3">
+                <label class="fw-bold">Modo de Carga</label>
+                <select id="selTipoCarga" class="form-select mb-3" onchange="toggleInputsCarga()">
+                    <option value="u">Carga por Unidades Sueltas</option>
+                    <option value="c">Carga por Cajas</option>
+                    <option value="p">Carga por Pallets</option>
+                </select>
+
+                <div class="row g-2">
+                    <div class="col-12" id="divPrincipal">
+                        <label id="lblPrincipal">Cantidad de Unidades</label>
+                        <input type="number" id="inpCantidad" class="form-control" oninput="calcularIngreso()">
+                    </div>
+                    
+                    <div class="col-6 hidden" id="divCajasXPallet">
+                        <label>Cajas x Pallet</label>
+                        <input type="number" id="inpCjxP" class="form-control" value="75" oninput="calcularIngreso()">
+                    </div>
+
+                    <div class="col-6 hidden" id="divUnidXCaja">
+                        <label>Unid. x Caja</label>
+                        <input type="number" id="inpUxC" class="form-control" value="12" oninput="calcularIngreso()">
+                    </div>
+                </div>
             </div>
-            <div class="mt-3 text-center fw-bold fs-5">Total: <span id="txtTotalFinal">0</span></div>
+
+            <div class="text-center p-3 border border-primary rounded">
+                <span class="text-muted d-block small">TOTAL A INGRESAR AL STOCK</span>
+                <span id="txtTotalFinal" class="fs-2 fw-bold text-primary">0</span> <span class="text-primary fw-bold">Unidades</span>
+            </div>
         </div>
-        <div class="modal-footer"><button class="btn btn-success w-100" onclick="guardarIngresoCloud()">INGRESAR</button></div>
+        <div class="modal-footer"><button class="btn btn-success w-100 py-2 fw-bold" onclick="guardarIngresoCloud()">CONFIRMAR ENTRADA</button></div>
     </div></div>
 </div>
 
@@ -186,6 +184,45 @@
         else { document.getElementById('loginScreen').classList.remove('hidden'); document.getElementById('appSystem').classList.add('hidden'); }
     });
 
+    function toggleInputsCarga() {
+        const modo = document.getElementById('selTipoCarga').value;
+        const divPrincipal = document.getElementById('divPrincipal');
+        const lblPrincipal = document.getElementById('lblPrincipal');
+        const divCjxP = document.getElementById('divCajasXPallet');
+        const divUxC = document.getElementById('divUnidXCaja');
+
+        // Resetear campos
+        divCjxP.classList.add('hidden');
+        divUxC.classList.add('hidden');
+
+        if (modo === 'u') {
+            lblPrincipal.innerText = "Cantidad de Unidades";
+        } else if (modo === 'c') {
+            lblPrincipal.innerText = "Cantidad de Cajas";
+            divUxC.classList.remove('hidden');
+        } else if (modo === 'p') {
+            lblPrincipal.innerText = "Cantidad de Pallets";
+            divCjxP.classList.remove('hidden');
+            divUxC.classList.remove('hidden');
+        }
+        calcularIngreso();
+    }
+
+    function calcularIngreso() {
+        const cant = parseInt(document.getElementById('inpCantidad').value) || 0;
+        const modo = document.getElementById('selTipoCarga').value;
+        const uxc = parseInt(document.getElementById('inpUxC').value) || 0;
+        const cjxp = parseInt(document.getElementById('inpCjxP').value) || 0;
+
+        let total = 0;
+        if (modo === 'u') total = cant;
+        if (modo === 'c') total = cant * uxc;
+        if (modo === 'p') total = cant * cjxp * uxc;
+
+        document.getElementById('txtTotalFinal').innerText = total.toLocaleString();
+    }
+
+    // Funciones de Inicialización
     function iniciarApp() {
         db.collection("articulos").orderBy("nombre").onSnapshot(s => {
             articulosLocal = s.docs.map(d => ({id:d.id, ...d.data()}));
@@ -204,72 +241,29 @@
             document.getElementById('vtaCliente').innerHTML = '<option value="">-- Cliente --</option>' + clientesLocal.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
             renderClientes();
         });
-        db.collection("formatos").onSnapshot(s => {
-            formatosLocal = s.docs.map(d => ({id:d.id, ...d.data()}));
-            document.getElementById('vtaFormatoSel').innerHTML = '<option value="">-- Formatos --</option>' + formatosLocal.map(f => `<option value="${f.id}">${f.nombre}</option>`).join('');
-            renderFormatos();
-        });
         db.collection("stock").onSnapshot(s => {
             const res = {}; s.docs.forEach(d => res[d.data().articulo] = (res[d.data().articulo] || 0) + d.data().cantidad);
-            document.getElementById('tablaStockConsolidado').innerHTML = articulosLocal.map(a => `<tr><td>${a.nombre}</td><td class="text-center fw-bold">${(res[a.nombre] || 0).toLocaleString()}</td><td><span class="badge bg-success">OK</span></td><td class="text-end"><button class="btn btn-sm btn-outline-danger" onclick="limpiarArt('${a.nombre}')">×</button></td></tr>`).join('');
+            document.getElementById('tablaStockConsolidado').innerHTML = articulosLocal.map(a => `<tr><td>${a.nombre}</td><td class="text-center fw-bold">${(res[a.nombre] || 0).toLocaleString()}</td><td><span class="badge bg-success">STOCK</span></td><td class="text-end"><button class="btn btn-sm btn-outline-danger" onclick="limpiarArt('${a.nombre}')">×</button></td></tr>`).join('');
         });
-    }
-
-    function calcularIngreso() {
-        const cant = parseInt(document.getElementById('inpCantidad').value) || 0;
-        const tipo = document.getElementById('selTipoCarga').value;
-        let total = cant;
-        if(tipo === 'c') total = cant * 12;
-        if(tipo === 'p') total = cant * 75 * 12;
-        document.getElementById('txtTotalFinal').innerText = total.toLocaleString();
-    }
-
-    function calcularVentaFinal() {
-        const p = parseInt(document.getElementById('vtaPallets').value) || 0;
-        const c = parseInt(document.getElementById('vtaCjxP').value) || 0;
-        const u = parseInt(document.getElementById('vtaUxC').value) || 0;
-        const art = document.getElementById('vtaArticulo').value;
-        const cli = clientesLocal.find(x => x.nombre === document.getElementById('vtaCliente').value);
-        const totCajas = p * c;
-        const totBots = totCajas * u;
-        document.getElementById('resBotellas').innerText = totBots.toLocaleString();
-        document.getElementById('resCajas').innerText = (art.includes("850") || art.includes("900")) ? totCajas.toLocaleString() : 0;
-        if(cli) document.getElementById('remitoDetalle').innerText = cli.dir;
-    }
-
-    function aplicarFormatoVenta() {
-        const f = formatosLocal.find(x => x.id === document.getElementById('vtaFormatoSel').value);
-        if(f) { document.getElementById('vtaCjxP').value = f.cajas; document.getElementById('vtaUxC').value = f.unidades; calcularVentaFinal(); }
     }
 
     async function guardarIngresoCloud() {
         const art = document.getElementById('selArticulo').value;
+        const prov = document.getElementById('selProveedor').value;
         const cant = parseInt(document.getElementById('txtTotalFinal').innerText.replace(/\./g,''));
-        if(art && cant > 0) { await db.collection("stock").add({ articulo: art, cantidad: cant, fecha: firebase.firestore.FieldValue.serverTimestamp() }); alert("Ingresado"); }
+        if(!art || !prov || cant <= 0) return alert("Faltan datos");
+        await db.collection("stock").add({ articulo: art, proveedor: prov, cantidad: cant, fecha: firebase.firestore.FieldValue.serverTimestamp() });
+        alert("¡Ingreso Exitoso!");
+        document.getElementById('inpCantidad').value = "";
     }
 
-    async function confirmarVentaRemito() {
-        const art = document.getElementById('vtaArticulo').value, cliN = document.getElementById('vtaCliente').value;
-        const bots = parseInt(document.getElementById('resBotellas').innerText.replace(/\./g,'')), cjs = parseInt(document.getElementById('resCajas').innerText.replace(/\./g,''));
-        if(!art || !cliN || bots <= 0) return alert("Faltan datos");
-        const batch = db.batch();
-        batch.set(db.collection("stock").doc(), { articulo: art, cantidad: -bots, fecha: firebase.firestore.FieldValue.serverTimestamp() });
-        if(cjs > 0) batch.set(db.collection("stock").doc(), { articulo: "Cajas de 900cc", cantidad: -cjs, fecha: firebase.firestore.FieldValue.serverTimestamp() });
-        await batch.commit(); alert("Venta procesada");
-    }
-
+    // Restauración de auxiliares
     function guardarProveedor() { const n = document.getElementById('confNuevoProv').value; if(n) db.collection("proveedores").add({nombre:n}); }
     function guardarArticuloCloud() { const n = document.getElementById('confNuevoArt').value; if(n) db.collection("articulos").add({nombre:n}); }
-    function guardarCliente() { const n = document.getElementById('cliNombre').value, i = document.getElementById('cliID').value, d = document.getElementById('cliDir').value; if(n) db.collection("clientes").add({nombre:n, idCli:i, dir:d}); }
-    function guardarFormato() { const n = document.getElementById('fNombre').value, c = parseInt(document.getElementById('fCajas').value), u = parseInt(document.getElementById('fUni').value); if(n) db.collection("formatos").add({nombre:n, cajas:c, unidades:u}); }
-    
-    function renderArticulosMaster() { document.getElementById('listaArticulosMaster').innerHTML = articulosLocal.map(a => `<div class="list-group-item d-flex justify-content-between p-1">${a.nombre} <i class="fas fa-times text-danger" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join(''); }
     function renderProveedores() { document.getElementById('listaProveedores').innerHTML = provsLocal.map(p => `<div class="list-group-item d-flex justify-content-between p-1">${p.nombre} <i class="fas fa-times text-danger" onclick="db.collection('proveedores').doc('${p.id}').delete()"></i></div>`).join(''); }
-    function renderClientes() { document.getElementById('tablaClientes').innerHTML = clientesLocal.map(c => `<tr><td>${c.nombre}</td><td>${c.idCli}</td><td>${c.dir}</td><td><i class="fas fa-trash text-danger" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></td></tr>`).join(''); }
-    function renderFormatos() { document.getElementById('listaFormatos').innerHTML = formatosLocal.map(f => `<div class="card p-2 mb-1 small d-flex justify-content-between flex-row">${f.nombre} <i class="fas fa-times text-danger" onclick="db.collection('formatos').doc('${f.id}').delete()"></i></div>`).join(''); }
-    
+    function renderArticulosMaster() { document.getElementById('listaArticulosMaster').innerHTML = articulosLocal.map(a => `<div class="list-group-item d-flex justify-content-between p-1">${a.nombre} <i class="fas fa-times text-danger" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join(''); }
     function showTab(id) { document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
-    async function limpiarArt(n) { if(confirm("Vaciar stock?")) { const snp = await db.collection("stock").where("articulo","==",n).get(); const b = db.batch(); snp.forEach(d => b.delete(d.ref)); await b.commit(); } }
+    async function limpiarArt(n) { if(confirm("¿Vaciar stock?")) { const snp = await db.collection("stock").where("articulo","==",n).get(); const b = db.batch(); snp.forEach(d => b.delete(d.ref)); await b.commit(); } }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
