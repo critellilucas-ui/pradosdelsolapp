@@ -110,6 +110,51 @@
                 </div>
             </div>
 
+            <div id="clientes" class="content-section hidden">
+                <div class="card p-3">
+                    <h5 class="fw-bold">Directorio de Clientes</h5>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6"><label>Razón Social</label><input type="text" id="cliNombre" class="form-control"></div>
+                        <div class="col-md-3"><label>CUIT</label><input type="text" id="cliCuit" class="form-control"></div>
+                        <div class="col-md-3"><label>I.V.A.</label><select id="cliIva" class="form-select"><option>Responsable Inscripto</option><option>Monotributo</option><option>Exento</option></select></div>
+                        
+                        <div class="col-md-6"><label>Domicilio (Calle y N°)</label><input type="text" id="cliCalle" class="form-control"></div>
+                        <div class="col-md-3"><label>Localidad</label><input type="text" id="cliLocalidad" class="form-control"></div>
+                        <div class="col-md-3">
+                            <label>Provincia</label>
+                            <select id="cliProvincia" class="form-select">
+                                <option value="Buenos Aires">Buenos Aires</option>
+                                <option value="CABA">CABA</option>
+                                <option value="Catamarca">Catamarca</option>
+                                <option value="Chaco">Chaco</option>
+                                <option value="Chubut">Chubut</option>
+                                <option value="Córdoba">Córdoba</option>
+                                <option value="Corrientes">Corrientes</option>
+                                <option value="Entre Ríos">Entre Ríos</option>
+                                <option value="Formosa">Formosa</option>
+                                <option value="Jujuy">Jujuy</option>
+                                <option value="La Pampa">La Pampa</option>
+                                <option value="La Rioja">La Rioja</option>
+                                <option value="Mendoza">Mendoza</option>
+                                <option value="Misiones">Misiones</option>
+                                <option value="Neuquén">Neuquén</option>
+                                <option value="Río Negro">Río Negro</option>
+                                <option value="Salta">Salta</option>
+                                <option value="San Juan">San Juan</option>
+                                <option value="San Luis">San Luis</option>
+                                <option value="Santa Cruz">Santa Cruz</option>
+                                <option value="Santa Fe">Santa Fe</option>
+                                <option value="Santiago del Estero">Santiago del Estero</option>
+                                <option value="Tierra del Fuego">Tierra del Fuego</option>
+                                <option value="Tucumán">Tucumán</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-dark w-100 mt-2" onclick="guardarCliente()">REGISTRAR CLIENTE</button>
+                    </div>
+                    <div class="table-responsive"><table class="table table-sm"><thead class="table-light"><tr><th>Nombre</th><th>Localidad</th><th>Provincia</th><th></th></tr></thead><tbody id="tablaClientes"></tbody></table></div>
+                </div>
+            </div>
+
             <div id="historial" class="content-section hidden">
                 <div class="card p-3 border-top border-info border-4">
                     <div class="d-flex justify-content-between mb-3 align-items-center">
@@ -120,20 +165,6 @@
                         </div>
                     </div>
                     <div class="table-responsive"><table class="table table-sm"><tbody id="listaHistorial"></tbody></table></div>
-                </div>
-            </div>
-
-            <div id="clientes" class="content-section hidden">
-                <div class="card p-3">
-                    <h5 class="fw-bold">Directorio de Clientes</h5>
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-6"><input type="text" id="cliNombre" class="form-control" placeholder="Razón Social"></div>
-                        <div class="col-md-3"><input type="text" id="cliCuit" class="form-control" placeholder="CUIT"></div>
-                        <div class="col-md-3"><select id="cliIva" class="form-select"><option>Responsable Inscripto</option><option>Monotributo</option></select></div>
-                        <div class="col-12"><input type="text" id="cliDir" class="form-control" placeholder="Dirección Completa"></div>
-                        <button class="btn btn-dark w-100" onclick="guardarCliente()">REGISTRAR CLIENTE</button>
-                    </div>
-                    <div class="table-responsive"><table class="table table-sm"><tbody id="tablaClientes"></tbody></table></div>
                 </div>
             </div>
 
@@ -222,117 +253,90 @@
         alert("Despacho Procesado.");
     }
 
-    // --- FUNCIÓN DE PDF REDISEÑADA ESTÉTICAMENTE ---
     function generarPDFOficial(v) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         const cliData = clientes.find(c => c.nombre === v.cliente) || {};
-        const f = new Date();
-        const fechaStr = `${String(f.getDate()).padStart(2,'0')}/${String(f.getMonth()+1).padStart(2,'0')}/${f.getFullYear()}`;
+        const fecha = new Date();
+        const dia = String(fecha.getDate()).padStart(2, '0');
+        const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+        const anio = fecha.getFullYear();
 
-        // Estilos de línea
-        doc.setDrawColor(0);
-        doc.setLineWidth(0.3);
+        // LOGICA DE DIRECCION UNIFICADA PARA EL REMITO
+        // Une calle, localidad y provincia en una sola línea
+        const dirRemito = `${cliData.calle || ''} - ${cliData.localidad || ''} (${cliData.provincia || ''})`;
 
-        // 1. CABECERA IZQUIERDA
         doc.setFontSize(22);
-        doc.setFont("helvetica", "bold");
-        doc.text("MAXIMILIANO MEZA", 12, 18);
-        
-        doc.setFontSize(9);
-        doc.text("VENTA AL POR MAYOR DE GRASA Y ACEITE", 12, 24);
-        
+        doc.setFont(undefined, 'bold');
+        doc.text("MAXIMILIANO MEZA", 10, 15);
+        doc.setFontSize(10);
+        doc.text("VENTA AL POR MAYOR DE GRASA Y ACEITE", 10, 21);
         doc.setFontSize(8);
-        doc.setFont("helvetica", "normal");
-        doc.text("RUTA 24 Nº 1233", 12, 31);
-        doc.text("1746 FRANCISCO ALVAREZ - PROV. DE BUENOS AIRES", 12, 35);
-        doc.text("IVA RESPONSABLE INSCRIPTO", 12, 42);
+        doc.setFont(undefined, 'normal');
+        doc.text("RUTA 24 Nº 1233", 10, 27);
+        doc.text("1746 FRANCISCO ALVAREZ - PROV. DE BUENOS AIRES", 10, 31);
+        doc.text("I.V.A. RESPONSABLE INSCRIPTO", 10, 36);
 
-        // 2. LOGO CENTRAL "R" (Cuadrado con letra)
-        doc.setLineWidth(0.5);
-        doc.rect(94, 10, 16, 16); 
+        doc.setLineWidth(0.4);
+        doc.rect(92, 8, 16, 16);
         doc.setFontSize(26);
-        doc.setFont("helvetica", "bold");
-        doc.text("R", 98, 21);
+        doc.setFont(undefined, 'bold');
+        doc.text("R", 96, 20);
         doc.setFontSize(7);
-        doc.text("COD. 91", 97, 24);
+        doc.text("COD. 91", 95, 23);
 
-        // 3. CABECERA DERECHA (Remito y Fecha)
-        doc.setFontSize(14);
-        doc.text("REMITO", 155, 16);
+        doc.setFontSize(16);
+        doc.text("REMITO", 155, 14);
+        doc.setFontSize(12);
+        const nroRemito = "0001-00000" + Math.floor(Math.random() * 900 + 100);
+        doc.text("Nº " + nroRemito, 145, 21);
+        doc.rect(142, 26, 50, 8); 
+        doc.setFontSize(10);
+        doc.text(`FECHA:   ${dia}  /  ${mes}  /  ${anio}`, 145, 32);
+
+        doc.setFontSize(7);
+        doc.text("C.U.I.T.: 20-32546093-9", 142, 40);
+        doc.text("Ing. Brutos (C.M.): 20-32546093-9", 142, 44);
+        doc.text("Inicio de Actividades: 12/2023", 142, 48);
+
+        doc.line(10, 52, 200, 52);
         doc.setFontSize(11);
-        doc.text(`Nº 0001-00000${Math.floor(Math.random() * 900 + 100)}`, 148, 23);
+        doc.setFont(undefined, 'bold');
+        doc.text(`Señor(es):  ${v.cliente.toUpperCase()}`, 12, 60);
         
-        // Recuadro de Fecha
-        doc.rect(145, 27, 48, 8); 
+        doc.setFont(undefined, 'normal');
         doc.setFontSize(10);
-        doc.text(`FECHA:  ${fechaStr}`, 148, 32.5);
+        doc.text(`Domicilio / Loc:  ${dirRemito}`, 12, 68);
+        doc.text(`I.V.A.:   ${cliData.iva || 'Resp. Inscripto'}`, 12, 84);
+        doc.text(`C.U.I.T.:  ${cliData.cuit || '...........................................'}`, 110, 84);
+        doc.line(10, 90, 200, 90);
 
-        doc.setFontSize(7);
-        doc.text("C.U.I.T.: 20-32546093-9", 145, 42);
-        doc.text("Ing. Brutos (C.M.): 20-32546093-9", 145, 46);
-        doc.text("Inicio de Actividades: 12/2023", 145, 50);
-
-        // 4. DATOS DEL CLIENTE
-        doc.setLineWidth(0.3);
-        doc.line(10, 55, 200, 55); 
-        
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "bold");
-        doc.text(`Sr.(es):`, 12, 63);
-        doc.setFont("helvetica", "normal");
-        doc.text(v.cliente.toUpperCase(), 30, 63);
-        
-        doc.text(`Domicilio:`, 12, 71);
-        doc.text("..............................................................................................................................................", 30, 71);
-        
-        doc.text(`Localidad:`, 12, 79);
-        doc.text(cliData.dir ? cliData.dir.toUpperCase() : "..............................................................................................................................................", 30, 79);
-        
-        doc.text(`I.V.A.:`, 12, 87);
-        doc.text(cliData.iva || "RESPONSABLE INSCRIPTO", 30, 87);
-        doc.text(`C.U.I.T.:`, 110, 87);
-        doc.text(cliData.cuit || "..................................................", 130, 87);
-        
-        doc.line(10, 93, 200, 93); 
-
-        // 5. TABLA DE CONTENIDO (Estética limpia)
         doc.autoTable({
-            startY: 96,
+            startY: 92,
             head: [['CANT.', 'DESCRIPCIÓN']],
             body: [
-                [
-                    { content: `${v.pallets}`, styles: { halign: 'center', fontStyle: 'bold', fontSize: 12 } },
-                    { content: `PALLETS ACEITE x ${v.producto.toUpperCase()}\nTOTAL CAJAS: ${v.cajas}\n\nTRANSPORTE:\nCHOFER: ${v.chofer.toUpperCase()}\nDNI: ${v.dni}\nPATENTE: ${v.camion.toUpperCase()} / ${v.semi.toUpperCase()}`, styles: { cellPadding: 8 } }
-                ]
+                [`${v.pallets}`, `PALLETS ${v.producto.toUpperCase()}\nTOTAL CAJAS: ${v.cajas}\n\nDATOS DEL TRANSPORTE:\nCHOFER: ${v.chofer.toUpperCase()}\nDNI: ${v.dni}\nPATENTE: ${v.camion.toUpperCase()} / ${v.semi.toUpperCase()}`]
             ],
             theme: 'grid',
-            headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold', halign: 'center', lineWidth: 0.3 },
-            styles: { fontSize: 10, lineColor: 0, lineWidth: 0.3, minCellHeight: 90 },
-            columnStyles: { 0: { cellWidth: 25 } }
+            styles: { fontSize: 11, cellPadding: 6, minCellHeight: 90 },
+            headStyles: { fillColor: [245, 245, 245], textColor: 0, fontStyle: 'bold', halign: 'center' },
+            columnStyles: { 0: { cellWidth: 25, halign: 'center' } }
         });
 
-        // 6. PIE DE PÁGINA (Firmas)
-        const finalY = doc.lastAutoTable.finalY + 20;
-        doc.line(20, finalY + 15, 80, finalY + 15);
-        doc.setFontSize(9);
+        const finalY = doc.lastAutoTable.finalY + 15;
+        doc.line(25, finalY + 15, 80, finalY + 15);
         doc.text("Recibí Conforme", 35, finalY + 20);
-        
-        doc.line(120, finalY + 15, 180, finalY + 15);
-        doc.text("Aclaración", 142, finalY + 20);
+        doc.line(125, finalY + 15, 180, finalY + 15);
+        doc.text("Aclaración", 145, finalY + 20);
 
-        // 7. PIE LEGAL (Recuadro inferior)
         doc.setFontSize(7);
-        doc.rect(10, 275, 190, 15);
-        doc.text("CAI: 51299213898174  -  Vto: 16/07/2026", 135, 281);
-        doc.text("ORIGINAL: Blanco  -  DUPLICADO: Color", 15, 281);
-        doc.setFont("helvetica", "italic");
-        doc.text("Prados del Sol - Sistema de Gestión Logística v2.0", 15, 286);
+        doc.rect(10, 278, 190, 10);
+        doc.text("CAI: 51299213898174  -  Fecha Vto: 16/07/2026", 130, 284);
+        doc.text("ORIGINAL", 100, 284);
 
-        doc.save(`Remito_${v.cliente}_${fechaStr.replace(/\//g,'-')}.pdf`);
+        doc.save(`Remito_${v.cliente}.pdf`);
     }
 
-    // Funciones de soporte (Sin cambios)
     async function cargarHistorial() {
         const mesSel = document.getElementById('filtroMes').value;
         const start = new Date(mesSel + "-01T00:00:00"); const end = new Date(start.getFullYear(), start.getMonth() + 1, 0, 23, 59, 59);
@@ -342,16 +346,42 @@
         }).join('');
     }
 
-    async function resetTotalMovimientos() { if(confirm("¿BORRAR HISTORIAL?")) { const snp = await db.collection("stock").get(); const b = db.batch(); snp.forEach(d => b.delete(d.ref)); await b.commit(); cargarHistorial(); } }
+    async function resetTotalMovimientos() { if(confirm("¿RESET TOTAL? Borrará todo el historial.")) { const snp = await db.collection("stock").get(); const b = db.batch(); snp.forEach(d => b.delete(d.ref)); await b.commit(); alert("Historial Limpiado."); cargarHistorial(); } }
     function showTab(id) { document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active')); if(id === 'historial') cargarHistorial(); }
     function guardarArt() { const n = document.getElementById('confNuevoArt').value.toLowerCase(); const m = parseInt(document.getElementById('confMinArt').value) || 0; if(n) db.collection("articulos").add({nombre: n, minimo: m}); }
     function renderMaestro() { document.getElementById('listaArts').innerHTML = articulos.map(a => `<div class="list-group-item d-flex justify-content-between p-1 small">${a.nombre} <i class="fas fa-trash text-danger" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join(''); }
     function guardarAcuerdo() { db.collection("acuerdos").add({proveedor: document.getElementById('acProv').value, articulo: document.getElementById('acArt').value, uxc: parseInt(document.getElementById('acUxC').value), cxp: parseInt(document.getElementById('acCxP').value)}); }
     function renderAcuerdos() { document.getElementById('listaAcuerdos').innerHTML = acuerdos.map(ac => `<div class="border-bottom py-1 small">${ac.proveedor} ➔ ${ac.articulo} <i class="fas fa-times text-danger" onclick="db.collection('acuerdos').doc('${ac.id}').delete()"></i></div>`).join(''); }
-    function guardarCliente() { db.collection("clientes").add({ nombre: document.getElementById('cliNombre').value, cuit: document.getElementById('cliCuit').value, iva: document.getElementById('cliIva').value, dir: document.getElementById('cliDir').value }); alert("Cliente Guardado"); }
-    function renderClientes() { document.getElementById('tablaClientes').innerHTML = clientes.map(c => `<tr><td class="small"><b>${c.nombre}</b></td><td class="text-end"><i class="fas fa-trash text-danger" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></td></tr>`).join(''); }
+    
+    // GUARDAR CLIENTE CON CAMPOS NORMALIZADOS
+    function guardarCliente() { 
+        db.collection("clientes").add({ 
+            nombre: document.getElementById('cliNombre').value, 
+            cuit: document.getElementById('cliCuit').value, 
+            iva: document.getElementById('cliIva').value, 
+            calle: document.getElementById('cliCalle').value,
+            localidad: document.getElementById('cliLocalidad').value,
+            provincia: document.getElementById('cliProvincia').value
+        }); 
+        alert("Cliente Guardado"); 
+        document.getElementById('cliNombre').value = "";
+        document.getElementById('cliCuit').value = "";
+        document.getElementById('cliCalle').value = "";
+        document.getElementById('cliLocalidad').value = "";
+    }
+
+    function renderClientes() { 
+        document.getElementById('tablaClientes').innerHTML = clientes.map(c => `
+            <tr>
+                <td class="small"><b>${c.nombre}</b></td>
+                <td class="small text-muted">${c.localidad || '-'}</td>
+                <td class="small text-muted">${c.provincia || '-'}</td>
+                <td class="text-end"><i class="fas fa-trash text-danger" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></td>
+            </tr>`).join(''); 
+    }
+
     async function registrarConsumo() { const art = document.getElementById('consumoArticulo').value; const cant = parseInt(document.getElementById('consumoCantidad').value) || 0; if(art && cant > 0) await db.collection("stock").add({ articulo: art, cantidad: -cant, tipo: "Consumo", fecha: firebase.firestore.FieldValue.serverTimestamp() }); }
-    async function limpiarArt(n) { if(confirm("¿Vaciar stock?")) { const snp = await db.collection("stock").where("articulo","==",n).get(); const b = db.batch(); snp.forEach(d => b.delete(d.ref)); await b.commit(); } }
+    async function limpiarArt(n) { if(confirm("¿Vaciar stock de este artículo?")) { const snp = await db.collection("stock").where("articulo","==",n).get(); const b = db.batch(); snp.forEach(d => b.delete(d.ref)); await b.commit(); } }
 </script>
 </body>
 </html>
