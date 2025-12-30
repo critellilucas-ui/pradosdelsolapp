@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Prados del Sol - Control de Salidas</title>
+    <title>Stock Prados del Sol - Sistema Integral</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -14,14 +14,14 @@
     
     <style>
         body { background-color: #f4f7f6; font-family: 'Segoe UI', sans-serif; }
-        .sidebar { min-height: 100vh; background-color: #2c3e50; color: white; padding: 20px; position: sticky; top: 0; }
+        .sidebar { min-height: 100vh; background-color: #2c3e50; color: white; padding: 20px; position: sticky; top: 0; z-index: 1000; }
         .nav-link { color: #bdc3c7; cursor: pointer; padding: 12px; border-radius: 5px; margin-bottom: 5px; display: block; text-decoration: none; }
         .nav-link:hover, .nav-link.active { color: white; background-color: #3498db; }
         .hidden { display: none !important; }
         .card { border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-radius: 12px; }
+        .stock-critico { background-color: #ffd7d7 !important; color: #c0392b !important; }
+        .badge-alerta { font-size: 0.8rem; padding: 5px 10px; border-radius: 20px; }
         .table thead { background-color: #34495e; color: white; }
-        .prov-tag { font-size: 0.75rem; background: #e9ecef; border-radius: 4px; padding: 2px 6px; margin-right: 4px; display: inline-block; color: #495057; border: 1px solid #dee2e6; }
-        .text-venta { color: #e74c3c; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -38,10 +38,10 @@
 <div id="appSystem" class="container-fluid hidden">
     <div class="row">
         <div class="col-md-2 sidebar">
-            <h5 class="text-center mb-4 border-bottom pb-3">SISTEMA STOCK</h5>
+            <h5 class="text-center mb-4 border-bottom pb-3">PRADOS STOCK</h5>
             <nav>
                 <a class="nav-link active" id="btn-stock" onclick="showTab('stock')"><i class="fas fa-boxes me-2"></i> Inventario</a>
-                <a class="nav-link" id="btn-ventas" onclick="showTab('ventas')"><i class="fas fa-truck-loading me-2"></i> Salidas/Ventas</a>
+                <a class="nav-link" id="btn-ventas" onclick="showTab('ventas')"><i class="fas fa-truck-loading me-2"></i> Ventas/Salidas</a>
                 <a class="nav-link" id="btn-config" onclick="showTab('config')"><i class="fas fa-cogs me-2"></i> Configuración</a>
                 <a class="nav-link mt-5 text-danger" onclick="logout()"><i class="fas fa-power-off me-2"></i> Salir</a>
             </nav>
@@ -51,9 +51,9 @@
             
             <div id="stock" class="content-section">
                 <div class="d-flex justify-content-between mb-4">
-                    <h3>Stock Real Disponible</h3>
+                    <h3>Estado del Inventario</h3>
                     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalIngreso">
-                        <i class="fas fa-plus me-1"></i> Registrar Ingreso
+                        <i class="fas fa-plus me-1"></i> Cargar Ingreso
                     </button>
                 </div>
                 <div class="card shadow-sm p-3">
@@ -61,9 +61,9 @@
                         <thead>
                             <tr>
                                 <th>Artículo</th>
-                                <th class="text-center">Stock Actual</th>
-                                <th>Composición (Ingresos - Ventas)</th>
-                                <th class="text-end">Opciones</th>
+                                <th class="text-center">Stock Total</th>
+                                <th>Estado</th>
+                                <th class="text-end">Acción</th>
                             </tr>
                         </thead>
                         <tbody id="tablaStockConsolidado"></tbody>
@@ -75,95 +75,90 @@
                 <div class="row">
                     <div class="col-md-5">
                         <div class="card p-4 border-top border-danger border-4">
-                            <h4><i class="fas fa-cart-arrow-down me-2 text-danger"></i>Cargar Venta</h4>
-                            <p class="text-muted small">El sistema calculará automáticamente las botellas/unidades a descontar según el empaque configurado.</p>
-                            <hr>
+                            <h4>Registrar Salida</h4>
+                            <p class="text-muted small">Regla: Ventas de 850cc/900cc descuentan <b>Cajas de 900cc</b>.</p>
                             
-                            <label class="fw-bold">1. Seleccionar Artículo</label>
-                            <select id="vtaArticulo" class="form-select mb-3" onchange="calcularVenta()"></select>
+                            <label class="fw-bold">Producto</label>
+                            <select id="vtaArticulo" class="form-select mb-3" onchange="calcularVentaCompuesta()"></select>
 
                             <div class="row mb-3">
                                 <div class="col-6">
                                     <label class="fw-bold">Cantidad</label>
-                                    <input type="number" id="vtaCantidad" class="form-control" value="0" oninput="calcularVenta()">
+                                    <input type="number" id="vtaCantidad" class="form-control" value="0" oninput="calcularVentaCompuesta()">
                                 </div>
                                 <div class="col-6">
                                     <label class="fw-bold">Formato</label>
-                                    <select id="vtaTipoCarga" class="form-select" onchange="calcularVenta()">
-                                        <option value="u">Unidades sueltas</option>
-                                        <option value="c">Cajas completas</option>
-                                        <option value="p">Pallets cerrados</option>
+                                    <select id="vtaTipoCarga" class="form-select" onchange="calcularVentaCompuesta()">
+                                        <option value="u">Unidades</option>
+                                        <option value="c">Cajas</option>
+                                        <option value="p">Pallets</option>
                                     </select>
                                 </div>
                             </div>
 
-                            <div class="bg-light p-3 rounded text-center border mb-3">
-                                <div class="small text-uppercase text-muted">Total a descontar del Stock:</div>
-                                <span id="vtaTotalFinal" class="fs-1 fw-bold text-danger">0</span> <span class="text-danger fw-bold">UNIDADES</span>
-                                <div id="vtaInfoEmpaque" class="small text-primary mt-1"></div>
+                            <div class="p-3 rounded border bg-light mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Baja Botellas:</span>
+                                    <span id="resVtaArt" class="fw-bold text-danger">0</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Baja Cajas de 900cc:</span>
+                                    <span id="resVtaCajas" class="fw-bold text-primary">0</span>
+                                </div>
                             </div>
 
-                            <button class="btn btn-danger w-100 py-3 fw-bold" onclick="registrarVenta()">
-                                CONFIRMAR SALIDA DE MERCADERÍA
+                            <button class="btn btn-danger w-100 py-3 fw-bold" onclick="ejecutarSalidaValidada()">
+                                <i class="fas fa-check-circle me-2"></i>CONFIRMAR Y DESCONTAR
                             </button>
                         </div>
                     </div>
                     
                     <div class="col-md-7">
                         <div class="card p-3">
-                            <h5>Historial de Salidas Recientes</h5>
-                            <div class="table-responsive">
-                                <table class="table table-hover table-sm">
-                                    <thead class="table-dark">
-                                        <tr>
-                                            <th>Fecha</th>
-                                            <th>Artículo</th>
-                                            <th>Unidades</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="listaUltimasVentas"></tbody>
-                                </table>
-                            </div>
+                            <h5>Últimos Movimientos de Salida</h5>
+                            <table class="table table-sm small">
+                                <thead>
+                                    <tr><th>Fecha</th><th>Artículo</th><th>Cant.</th><th></th></tr>
+                                </thead>
+                                <tbody id="listaUltimasVentas"></tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div id="config" class="content-section hidden">
-                <h3 class="mb-4">Configuración de Parámetros</h3>
+                <h3 class="mb-4">Configuración de Matriz</h3>
                 <div class="row g-3">
                     <div class="col-md-3">
                         <div class="card p-3 border-start border-info border-4">
                             <h5>1. Artículos</h5>
                             <div class="input-group mb-2">
-                                <input type="text" id="confNuevoArt" class="form-control" placeholder="Ej: Aceite 1.5L">
+                                <input type="text" id="confNuevoArt" class="form-control" placeholder="Nombre...">
                                 <button class="btn btn-info text-white" onclick="guardarArticuloCloud()">+</button>
                             </div>
                             <div id="listaArticulosMaster" class="list-group overflow-auto" style="max-height: 250px;"></div>
                         </div>
                     </div>
-
                     <div class="col-md-3">
                         <div class="card p-3 border-start border-success border-4">
                             <h5>2. Proveedores</h5>
-                            <input type="text" id="confNombreProv" class="form-control mb-2" placeholder="Nombre Prov.">
+                            <input type="text" id="confNombreProv" class="form-control mb-2" placeholder="Nombre">
                             <select id="confProductosProv" class="form-select mb-2" multiple style="height: 100px;"></select>
                             <button class="btn btn-success w-100" onclick="guardarProveedorCloud()">Agregar</button>
-                            <div id="listaProveedores" class="list-group mt-2 overflow-auto" style="max-height: 120px;"></div>
+                            <div id="listaProveedores" class="list-group mt-2"></div>
                         </div>
                     </div>
-
                     <div class="col-md-6">
                         <div class="card p-3 border-start border-primary border-4">
-                            <h5>3. Matriz de Empaque (Unidades por caja/pallet)</h5>
-                            <div class="row g-2 mb-3">
+                            <h5>3. Matriz (u/Caja y Cajas/Pallet)</h5>
+                            <div class="row g-2 mb-2">
                                 <div class="col-6"><select id="confSelProv" class="form-select" onchange="filtrarArticulosConfig()"></select></div>
                                 <div class="col-6"><select id="confSelArt" class="form-select"></select></div>
-                                <div class="col-6"><input type="number" id="confUxC" class="form-control" placeholder="Unidades por caja"></div>
-                                <div class="col-6"><input type="number" id="confCxP" class="form-control" placeholder="Cajas por pallet"></div>
+                                <div class="col-6"><input type="number" id="confUxC" class="form-control" placeholder="u/Caja"></div>
+                                <div class="col-6"><input type="number" id="confCxP" class="form-control" placeholder="Cajas/P"></div>
                             </div>
-                            <button class="btn btn-primary w-100" onclick="guardarAcuerdoEmpaque()">Guardar Relación</button>
+                            <button class="btn btn-primary w-100" onclick="guardarAcuerdoEmpaque()">Guardar Vínculo</button>
                             <hr>
                             <div id="listaAcuerdos" class="row overflow-auto" style="max-height: 150px;"></div>
                         </div>
@@ -177,15 +172,15 @@
 <div class="modal fade" id="modalIngreso" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white"><h5>Entrada de Mercadería</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <div class="modal-header bg-primary text-white"><h5>Entrada de Stock</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
             <div class="modal-body">
-                <label class="fw-bold">Proveedor</label><select id="selProveedor" class="form-select mb-3" onchange="actualizarFiltroArticulos();"></select>
-                <label class="fw-bold">Artículo</label><select id="selArticulo" class="form-select mb-3" onchange="calcularIngreso();"></select>
+                <label>Proveedor</label><select id="selProveedor" class="form-select mb-3" onchange="actualizarFiltroArticulos();"></select>
+                <label>Artículo</label><select id="selArticulo" class="form-select mb-3" onchange="calcularIngreso();"></select>
                 <div class="row mb-3">
-                    <div class="col-6"><label class="fw-bold">Cantidad</label><input type="number" id="inpCantidad" class="form-control" value="0" oninput="calcularIngreso()"></div>
-                    <div class="col-6"><label class="fw-bold">Formato</label><select id="selTipoCarga" class="form-select" onchange="calcularIngreso()"><option value="u">Unidades</option><option value="c">Cajas</option><option value="p">Pallets</option></select></div>
+                    <div class="col-6"><label>Cantidad</label><input type="number" id="inpCantidad" class="form-control" value="0" oninput="calcularIngreso()"></div>
+                    <div class="col-6"><label>Formato</label><select id="selTipoCarga" class="form-select" onchange="calcularIngreso()"><option value="u">Unidades</option><option value="c">Cajas</option><option value="p">Pallets</option></select></div>
                 </div>
-                <div class="bg-light p-3 rounded text-center border text-primary"><span id="txtTotalFinal" class="fs-2 fw-bold">0</span> <b>unidades</b></div>
+                <div class="text-center p-2 bg-light border fw-bold">Total: <span id="txtTotalFinal">0</span> botellas</div>
             </div>
             <div class="modal-footer"><button class="btn btn-success w-100" onclick="guardarIngresoCloud()">CONFIRMAR INGRESO</button></div>
         </div>
@@ -209,6 +204,9 @@
     let articulosLocal = [];
     let provsLocal = [];
     let acuerdosLocal = [];
+    let stockActualData = {};
+
+    const NOMBRE_CAJA_900 = "Cajas de 900cc";
 
     function login() { auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPass').value); }
     function logout() { auth.signOut(); }
@@ -230,7 +228,7 @@
             renderizarArticulosMaster();
             const selects = ['confProductosProv', 'vtaArticulo'];
             selects.forEach(id => {
-                document.getElementById(id).innerHTML = (id==='vtaArticulo' ? '<option value="">-- Seleccionar --</option>':'') + articulosLocal.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
+                document.getElementById(id).innerHTML = (id==='vtaArticulo'?'<option value="">-- Seleccionar --</option>':'') + articulosLocal.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
             });
         });
 
@@ -254,99 +252,104 @@
         });
     }
 
-    // --- LÓGICA DE VENTA CON DESCUENTO DE UNIDADES ---
-    function calcularVenta() {
+    // --- LÓGICA DE VENTAS CON VALIDACIÓN ---
+    function calcularVentaCompuesta() {
         const art = document.getElementById('vtaArticulo').value;
         const cant = parseFloat(document.getElementById('vtaCantidad').value) || 0;
         const tipo = document.getElementById('vtaTipoCarga').value;
-
-        // Buscamos el acuerdo de empaque para ese artículo (usamos el primero que aparezca)
         const acuerdo = acuerdosLocal.find(a => a.articulo === art) || {uxc:1, cxp:1};
         
-        let totalUnidades = 0;
-        let info = "";
+        let botellas = 0; let cajas = 0;
+        if(tipo === 'u') botellas = cant;
+        else if (tipo === 'c') { botellas = cant * acuerdo.uxc; cajas = cant; }
+        else if (tipo === 'p') { cajas = cant * acuerdo.cxp; botellas = cajas * acuerdo.uxc; }
 
-        if(tipo === 'u') {
-            totalUnidades = cant;
-            info = "Venta por unidad suelta";
-        } else if (tipo === 'c') {
-            totalUnidades = cant * acuerdo.uxc;
-            info = `Cada caja tiene ${acuerdo.uxc} unidades`;
-        } else if (tipo === 'p') {
-            totalUnidades = cant * (acuerdo.uxc * acuerdo.cxp);
-            info = `Cada pallet tiene ${acuerdo.cxp} cajas de ${acuerdo.uxc} un.`;
+        document.getElementById('resVtaArt').innerText = Math.round(botellas);
+        document.getElementById('resVtaCajas').innerText = Math.round(cajas);
+    }
+
+    async function ejecutarSalidaValidada() {
+        const artVendido = document.getElementById('vtaArticulo').value;
+        const botellasADescontar = parseInt(document.getElementById('resVtaArt').innerText);
+        const cajasADescontar = parseInt(document.getElementById('resVtaCajas').innerText);
+
+        if(!artVendido || (botellasADescontar <= 0 && cajasADescontar <= 0)) return alert("Datos inválidos.");
+
+        // Determinar si aplica la regla de cajas de 900cc
+        let nombreCajaEspecífica = "";
+        if (artVendido.includes("850") || artVendido.includes("900")) {
+            nombreCajaEspecífica = NOMBRE_CAJA_900;
         }
 
-        document.getElementById('vtaTotalFinal').innerText = Math.round(totalUnidades).toLocaleString();
-        document.getElementById('vtaInfoEmpaque').innerText = info;
-    }
+        // Validaciones de stock
+        if(botellasADescontar > (stockActualData[artVendido] || 0)) {
+            return alert(`Stock insuficiente de ${artVendido}.`);
+        }
+        if(cajasADescontar > 0 && nombreCajaEspecífica !== "") {
+            if(cajasADescontar > (stockActualData[nombreCajaEspecífica] || 0)) {
+                return alert(`Faltan ${nombreCajaEspecífica}. No se puede completar el empaque.`);
+            }
+        }
 
-    function registrarVenta() {
-        const art = document.getElementById('vtaArticulo').value;
-        const total = parseInt(document.getElementById('vtaTotalFinal').innerText.replace(/\./g, ''));
-        
-        if(!art || total <= 0) return alert("Cargue un artículo y cantidad válida");
-
-        db.collection("stock").add({
-            articulo: art,
-            proveedor: "VENTA",
-            cantidad: -total, // El valor negativo resta del stock consolidado
-            fecha: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(() => {
+        try {
+            await db.collection("stock").add({
+                articulo: artVendido, proveedor: "VENTA", cantidad: -botellasADescontar,
+                fecha: firebase.firestore.FieldValue.serverTimestamp(), motivo: "Venta"
+            });
+            if(cajasADescontar > 0 && nombreCajaEspecífica !== "") {
+                await db.collection("stock").add({
+                    articulo: nombreCajaEspecífica, proveedor: "VENTA", cantidad: -cajasADescontar,
+                    fecha: firebase.firestore.FieldValue.serverTimestamp(), motivo: `Empaque ${artVendido}`
+                });
+            }
+            alert("Salida registrada.");
             document.getElementById('vtaCantidad').value = 0;
-            document.getElementById('vtaTotalFinal').innerText = "0";
-            alert("Salida registrada. El stock se ha actualizado.");
-        });
-    }
-
-    function renderizarUltimasVentas(movs) {
-        const ventas = movs.filter(m => m.cantidad < 0).sort((a,b) => b.fecha - a.fecha).slice(0, 15);
-        document.getElementById('listaUltimasVentas').innerHTML = ventas.map(v => `
-            <tr>
-                <td><small>${v.fecha ? v.fecha.toDate().toLocaleTimeString() : ''}</small></td>
-                <td><b>${v.articulo}</b></td>
-                <td class="text-danger fw-bold">${v.cantidad}</td>
-                <td class="text-end"><button class="btn btn-sm text-muted" onclick="db.collection('stock').doc('${v.id}').delete()">×</button></td>
-            </tr>
-        `).join('');
+            calcularVentaCompuesta();
+        } catch (e) { alert("Error: " + e.message); }
     }
 
     // --- CONSOLIDACIÓN ---
     function renderizarConsolidado(movimientos) {
         const consolidado = {};
+        stockActualData = {};
         movimientos.forEach(m => {
-            if (!consolidado[m.articulo]) consolidado[m.articulo] = { total: 0, proveedores: {}, ids: [] };
+            if (!consolidado[m.articulo]) consolidado[m.articulo] = { total: 0, ids: [] };
             consolidado[m.articulo].total += m.cantidad;
             consolidado[m.articulo].ids.push(m.id);
-            if(m.proveedor !== "VENTA") {
-                consolidado[m.articulo].proveedores[m.proveedor] = (consolidado[m.articulo].proveedores[m.proveedor] || 0) + m.cantidad;
-            }
         });
 
         let html = "";
         articulosLocal.forEach(artObj => {
             const art = artObj.nombre;
-            const data = consolidado[art] || { total: 0, proveedores: {}, ids: [] };
-            let desc = "";
-            for (const [p, c] of Object.entries(data.proveedores)) {
-                desc += `<span class="prov-tag"><b>${p}:</b> ${c.toLocaleString()}</span>`;
-            }
+            const data = consolidado[art] || { total: 0, ids: [] };
+            stockActualData[art] = data.total;
+            const esCritico = data.total <= 0;
 
-            html += `<tr>
-                <td class="fw-bold">${art}</td>
-                <td class="text-center fs-5 fw-bold ${data.total < 0 ? 'text-danger' : 'text-primary'}">${data.total.toLocaleString()}</td>
-                <td>${desc || '<small class="text-muted italic">Sin ingresos registrados</small>'}</td>
+            html += `<tr class="${esCritico ? 'stock-critico' : ''}">
+                <td><b>${art}</b></td>
+                <td class="text-center fw-bold fs-5">${data.total.toLocaleString()}</td>
+                <td>${esCritico ? '<span class="badge bg-danger badge-alerta">SIN STOCK</span>' : '<span class="badge bg-success badge-alerta">OK</span>'}</td>
                 <td class="text-end"><button class="btn btn-sm btn-outline-danger" onclick="borrarStockArticulo('${art}', ${JSON.stringify(data.ids)})"><i class="fas fa-undo"></i></button></td>
             </tr>`;
         });
         document.getElementById('tablaStockConsolidado').innerHTML = html;
     }
 
-    // --- FUNCIONES SOPORTE ---
+    // --- SOPORTE ---
+    function renderizarUltimasVentas(movs) {
+        const ventas = movs.filter(m => m.cantidad < 0).sort((a,b) => b.fecha - a.fecha).slice(0, 10);
+        document.getElementById('listaUltimasVentas').innerHTML = ventas.map(v => `
+            <tr>
+                <td><small>${v.fecha ? v.fecha.toDate().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : ''}</small></td>
+                <td>${v.articulo}</td>
+                <td class="text-danger fw-bold">${v.cantidad}</td>
+                <td><button class="btn btn-sm text-muted" onclick="db.collection('stock').doc('${v.id}').delete()">×</button></td>
+            </tr>`).join('');
+    }
+
     function guardarArticuloCloud() {
         const nombre = document.getElementById('confNuevoArt').value.trim();
-        if(!nombre) return;
-        db.collection("articulos").add({ nombre }).then(() => { document.getElementById('confNuevoArt').value = ''; });
+        if(nombre) db.collection("articulos").add({ nombre }).then(() => document.getElementById('confNuevoArt').value = '');
     }
 
     function renderizarArticulosMaster() {
@@ -378,7 +381,7 @@
         const art = document.getElementById('selArticulo').value;
         const prov = document.getElementById('selProveedor').value;
         const total = parseInt(document.getElementById('txtTotalFinal').innerText.replace(/\./g, ''));
-        if(!art || !prov || total <= 0) return alert("Carga incompleta");
+        if(!art || !prov || total <= 0) return;
         db.collection("stock").add({ articulo: art, proveedor: prov, cantidad: total, fecha: firebase.firestore.FieldValue.serverTimestamp() })
             .then(() => { bootstrap.Modal.getInstance(document.getElementById('modalIngreso')).hide(); document.getElementById('inpCantidad').value = 0; });
     }
@@ -386,8 +389,7 @@
     function guardarProveedorCloud() {
         const nombre = document.getElementById('confNombreProv').value.trim();
         const prods = Array.from(document.getElementById('confProductosProv').selectedOptions).map(o => o.value);
-        if(!nombre || prods.length === 0) return alert("Faltan datos");
-        db.collection("proveedores").add({ nombre, productos: prods }).then(() => document.getElementById('confNombreProv').value = '');
+        if(nombre && prods.length > 0) db.collection("proveedores").add({ nombre, productos: prods }).then(() => document.getElementById('confNombreProv').value = '');
     }
 
     function guardarAcuerdoEmpaque() {
@@ -395,14 +397,11 @@
         const art = document.getElementById('confSelArt').value;
         const uxc = parseInt(document.getElementById('confUxC').value) || 1;
         const cxp = parseInt(document.getElementById('confCxP').value) || 1;
-        if(!prov || !art) return alert("Seleccione datos");
-        db.collection("acuerdos_empaque").doc(`${prov}_${art}`.replace(/\s+/g, '')).set({ proveedor: prov, articulo: art, uxc, cxp });
+        if(prov && art) db.collection("acuerdos_empaque").doc(`${prov}_${art}`.replace(/\s+/g, '')).set({ proveedor: prov, articulo: art, uxc, cxp });
     }
 
     async function borrarStockArticulo(nombre, ids) {
-        if(confirm(`¿Deseas resetear el historial de ${nombre}?`)) {
-            for (const id of ids) await db.collection("stock").doc(id).delete();
-        }
+        if(confirm(`¿Resetear stock de ${nombre}?`)) { for (const id of ids) await db.collection("stock").doc(id).delete(); }
     }
 
     function renderizarListaProvs() {
@@ -410,7 +409,7 @@
     }
 
     function renderizarAcuerdos() {
-        document.getElementById('listaAcuerdos').innerHTML = acuerdosLocal.map(a => `<div class="col-12 mb-1"><div class="p-2 bg-light border rounded d-flex justify-content-between align-items-center" style="font-size:0.75rem"><div><b>${a.proveedor}</b>: ${a.articulo} (${a.uxc}u/cj · ${a.cxp}cj/p)</div><button class="btn btn-sm text-danger border-0" onclick="db.collection('acuerdos_empaque').doc('${a.id}').delete()">×</button></div></div>`).join('');
+        document.getElementById('listaAcuerdos').innerHTML = acuerdosLocal.map(a => `<div class="col-12 mb-1"><div class="p-2 bg-light border rounded d-flex justify-content-between align-items-center" style="font-size:0.7rem"><div><b>${a.proveedor}</b>: ${a.articulo} (${a.uxc}u/cj · ${a.cxp}cj/p)</div><button class="btn btn-sm text-danger border-0" onclick="db.collection('acuerdos_empaque').doc('${a.id}').delete()">×</button></div></div>`).join('');
     }
 
     function showTab(id) {
