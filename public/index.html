@@ -225,16 +225,23 @@
     async function procesarDespachoMasivo() {
         const cli = document.getElementById('vtaCliente').value; if (!cli || itemsVentaActual.length === 0) return alert("Faltan datos");
         const batch = db.batch();
-        const grupoId = "VTA-" + Date.now(); // ID para agrupar los items de una misma venta
+        const despachoId = "DESP-" + Date.now(); 
+        
         itemsVentaActual.forEach(it => {
-            batch.set(db.collection("stock").doc(), { articulo: it.producto, cantidad: -it.unidades, tipo: "Venta", grupoId: grupoId, fecha: firebase.firestore.FieldValue.serverTimestamp() });
+            const itemId = "ITEM-" + Math.random().toString(36).substr(2, 9);
+            // 1. Descuento Producto Principal
+            batch.set(db.collection("stock").doc(), { articulo: it.producto, cantidad: -it.unidades, tipo: "Venta", despachoId: despachoId, itemId: itemId, fecha: firebase.firestore.FieldValue.serverTimestamp() });
+            
+            // 2. Descuento Insumos vinculados a este ITEM específico
             let pN = it.producto.toLowerCase(), cja = "", eti = "";
             if (pN.includes("850cc") || pN.includes("900cc")) { cja = "caja de 900cc"; eti = "etiqueta de 900cc"; }
             else if (pN.includes("1.5lts")) { cja = "caja de 1.5lts"; eti = "etiqueta de 1.5lts"; }
             else if (pN.includes("5lts")) { cja = "caja de 5lts"; eti = "etiqueta de 5lts"; }
-            if(cja) batch.set(db.collection("stock").doc(), { articulo: cja, cantidad: -it.cajas, tipo: "Insumo", grupoId: grupoId, fecha: firebase.firestore.FieldValue.serverTimestamp() });
-            if(eti) batch.set(db.collection("stock").doc(), { articulo: eti, cantidad: -it.unidades, tipo: "Insumo", grupoId: grupoId, fecha: firebase.firestore.FieldValue.serverTimestamp() });
+            
+            if(cja) batch.set(db.collection("stock").doc(), { articulo: cja, cantidad: -it.cajas, tipo: "Insumo", despachoId: despachoId, itemId: itemId, fecha: firebase.firestore.FieldValue.serverTimestamp() });
+            if(eti) batch.set(db.collection("stock").doc(), { articulo: eti, cantidad: -it.unidades, tipo: "Insumo", despachoId: despachoId, itemId: itemId, fecha: firebase.firestore.FieldValue.serverTimestamp() });
         });
+        
         await batch.commit();
         generarPDFOficial({ cliente: cli, items: itemsVentaActual, chofer: document.getElementById('vtaChofer').value, dni: document.getElementById('vtaDni').value, camion: document.getElementById('vtaCamion').value, semi: document.getElementById('vtaSemi').value });
         itemsVentaActual = []; renderTablaTemporal(); alert("Venta procesada");
@@ -259,7 +266,7 @@
         doc.save(`Remito_${v.cliente}.pdf`);
     }
 
-    // HISTORIAL Y REPORTES
+    // HISTORIAL
     async function cargarHistorial() {
         const cont = document.getElementById('listaHistorial'), mes = document.getElementById('filtroMes').value; if (!mes) return;
         cont.innerHTML = '<tr><td colspan="5" class="text-center">Cargando...</td></tr>';
@@ -267,35 +274,34 @@
         const snp = await db.collection("stock").where("fecha", ">=", s).where("fecha", "<=", e).get();
         const movs = snp.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => (b.fecha?.seconds||0) - (a.fecha?.seconds||0));
         cont.innerHTML = movs.map(m => {
-            const btnAnular = m.tipo === 'Venta' ? `<button class="btn btn-xs btn-outline-danger py-0" style="font-size: 0.7rem" onclick="anularMovimiento('${m.id}')">Anular</button>` : '';
+            // Solo mostramos botón anular en las ventas principales (no en los insumos para no confundir)
+            const btnAnular = m.tipo === 'Venta' ? `<button class="btn btn-xs btn-outline-danger py-0" style="font-size: 0.7rem" onclick="anularMovimiento('${m.id}')">Anular Todo</button>` : '';
             return `<tr><td>${m.fecha?m.fecha.toDate().toLocaleDateString():'S/F'}</td><td class="fw-bold">${m.articulo}</td><td><span class="badge ${m.tipo==='Venta'?'bg-primary':m.tipo==='ANULACIÓN'?'bg-danger':'bg-success'}">${m.tipo}</span></td><td class="text-end fw-bold ${m.cantidad<0?'text-danger':'text-success'}">${m.cantidad}</td><td class="text-end">${btnAnular}</td></tr>`;
         }).join('');
     }
 
     async function anularMovimiento(id) {
-        if(!confirm("¿Desea anular esta venta? El stock se devolverá automáticamente.")) return;
+        if(!confirm("¿Desea anular esta venta? Se devolverá el stock de productos, cajas y etiquetas asociados.")) return;
         const docRef = db.collection("stock").doc(id);
         const docVenta = await docRef.get();
         if(!docVenta.exists) return;
-        
         const data = docVenta.data();
         const batch = db.batch();
-        
-        // Si tiene grupoId, anular todo el despacho (artículo + insumos)
-        if(data.grupoId) {
-            const snp = await db.collection("stock").where("grupoId", "==", data.grupoId).get();
+
+        // Si la venta tiene un itemId (vínculo con insumos)
+        if(data.itemId) {
+            const snp = await db.collection("stock").where("itemId", "==", data.itemId).get();
             snp.forEach(d => {
                 const item = d.data();
                 batch.set(db.collection("stock").doc(), {
                     articulo: item.articulo,
-                    cantidad: Math.abs(item.cantidad), // Devuelve el stock (vuelve a sumar)
+                    cantidad: Math.abs(item.cantidad), // Devuelve el stock
                     tipo: "ANULACIÓN",
                     fecha: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                batch.delete(d.ref); // Opcional: eliminar el original o marcarlo como anulado. Aquí lo borramos para limpiar stock real.
+                batch.delete(d.ref); // Eliminamos los registros negativos originales
             });
         } else {
-            // Anulación simple
             batch.set(db.collection("stock").doc(), {
                 articulo: data.articulo,
                 cantidad: Math.abs(data.cantidad),
@@ -306,11 +312,11 @@
         }
         
         await batch.commit();
-        alert("Venta anulada y stock devuelto.");
+        alert("Anulación completa: Stock de producto e insumos restablecido.");
         cargarHistorial();
     }
 
-    // RESETS Y OTROS
+    // CONFIG Y OTROS
     async function resetStock(art) {
         if(!confirm(`¿Desea poner en CERO el stock de ${art}?`)) return;
         const snp = await db.collection("stock").where("articulo", "==", art).get();
@@ -332,7 +338,6 @@
         doc.save(`Reporte_${mes}.pdf`);
     }
 
-    // CONFIG
     function guardarArt() { const n = document.getElementById('confNuevoArt').value; if(n) db.collection("articulos").add({nombre: n.toLowerCase(), minimo: parseInt(document.getElementById('confMinArt').value)||0}); }
     function renderMaestro() { document.getElementById('listaArts').innerHTML = articulos.map(a => `<div class="p-1 border-bottom small d-flex justify-content-between"><span>${a.nombre}</span><i class="fas fa-trash text-danger cursor-pointer" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join(''); }
     function guardarProv() { const n = document.getElementById('confNuevoProv').value; if(n) db.collection("proveedores").add({nombre: n.toUpperCase()}); document.getElementById('confNuevoProv').value=""; }
