@@ -15,35 +15,25 @@
     
     <style>
         body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; overflow-x: hidden; }
-        
-        /* Sidebar Responsiva */
         .sidebar { background-color: #212529; color: white; padding: 15px; z-index: 1000; }
-        
         @media (min-width: 768px) {
             .sidebar { min-height: 100vh; position: sticky; top: 0; }
             .nav-link { margin-bottom: 5px; }
         }
-
         @media (max-width: 767px) {
             .sidebar { position: relative; min-height: auto; padding: 10px; }
             .nav-custom { display: flex; overflow-x: auto; white-space: nowrap; gap: 5px; padding-bottom: 5px; }
             .nav-link { font-size: 0.85rem; padding: 8px 12px !important; flex: 0 0 auto; border: 1px solid #444; }
             h5.sidebar-title { font-size: 1rem; margin-bottom: 10px !important; text-align: left !important; }
         }
-
         .nav-link { color: #adb5bd; cursor: pointer; padding: 12px; border-radius: 8px; text-decoration: none; transition: 0.3s; }
         .nav-link:hover, .nav-link.active { color: white; background-color: #0d6efd; }
         .hidden { display: none !important; }
-        
-        /* Cards y Tablas */
         .card { border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-radius: 12px; margin-bottom: 15px; }
         .table-responsive { border-radius: 8px; }
         .stock-peligro { background-color: #fff5f5 !important; color: #dc3545 !important; border-left: 5px solid #dc3545 !important; }
-        
-        /* Botones grandes para móviles */
         .btn { padding: 10px 15px; border-radius: 8px; font-weight: 600; }
-        input, select { height: 45px !important; } /* Más fácil de tocar */
-        
+        input, select { height: 45px !important; }
         .resumen-vta h4 { font-size: 1.2rem; }
     </style>
 </head>
@@ -73,7 +63,6 @@
         </div>
 
         <div class="col-md-10 p-2 p-md-4">
-            
             <div id="stock" class="content-section">
                 <div class="row">
                     <div class="col-lg-8">
@@ -104,7 +93,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="card p-2 shadow-sm">
                     <div class="d-flex justify-content-between align-items-center p-2">
                         <h6 class="mb-0 fw-bold">Inventario Actual</h6>
@@ -142,7 +130,10 @@
                 <div class="card p-3 border-top border-info border-4">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="fw-bold mb-0">Historial</h5>
-                        <input type="month" id="filtroMes" class="form-control form-control-sm w-50" onchange="cargarHistorial()">
+                        <div class="d-flex gap-2 w-75 justify-content-end">
+                            <input type="month" id="filtroMes" class="form-control form-control-sm w-50" onchange="cargarHistorial()">
+                            <button class="btn btn-danger btn-sm" onclick="resetTotalMovimientos()"><i class="fas fa-sync"></i> RESET</button>
+                        </div>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-sm" style="font-size: 0.8rem;">
@@ -236,23 +227,18 @@
             document.getElementById('vtaArticulo').innerHTML = '<option value="">-- Prod --</option>' + html;
             document.getElementById('consumoArticulo').innerHTML = '<option value="">-- Uso --</option>' + html;
         });
-
         db.collection("proveedores").orderBy("nombre").onSnapshot(s => {
             proveedores = s.docs.map(d => ({id:d.id, ...d.data()}));
             const provHtml = '<option value="">-- Prov --</option>' + proveedores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
             document.getElementById('selProveedor').innerHTML = provHtml;
             document.getElementById('acProv').innerHTML = provHtml;
-            renderLista('listaProvs', proveedores, 'proveedores');
         });
-
         db.collection("clientes").orderBy("nombre").onSnapshot(s => {
             clientes = s.docs.map(d => ({id:d.id, ...d.data()}));
             document.getElementById('vtaCliente').innerHTML = '<option value="">-- Cliente --</option>' + clientes.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
             renderClientes();
         });
-
         db.collection("acuerdos").onSnapshot(s => { acuerdos = s.docs.map(d => ({id:d.id, ...d.data()})); renderAcuerdos(); });
-
         db.collection("stock").onSnapshot(s => {
             const res = {}; s.docs.forEach(d => { res[d.data().articulo] = (res[d.data().articulo] || 0) + d.data().cantidad; });
             stockActualGlobal = res;
@@ -270,7 +256,7 @@
         });
     }
 
-    // --- LÓGICA DE CARGA Y RESTA ---
+    // --- LÓGICA DE CARGA ---
     function filtrarArticulosAcuerdo() {
         const prov = document.getElementById('selProveedor').value;
         const filtrados = acuerdos.filter(a => a.proveedor === prov);
@@ -331,7 +317,7 @@
         actualizarPrevisualizacion();
     }
 
-    // --- HISTORIAL ---
+    // --- HISTORIAL Y RESET ---
     async function cargarHistorial() {
         const mesSel = document.getElementById('filtroMes').value;
         const start = new Date(mesSel + "-01T00:00:00");
@@ -345,6 +331,17 @@
         document.getElementById('listaHistorial').innerHTML = h;
     }
 
+    async function resetTotalMovimientos() {
+        if(confirm("¿Estás seguro de ELIMINAR TODOS los movimientos y resetear el stock a cero? Esta acción no se puede deshacer.")) {
+            const snp = await db.collection("stock").get();
+            const batch = db.batch();
+            snp.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+            alert("Sistema reseteado correctamente.");
+            cargarHistorial();
+        }
+    }
+
     // --- OTROS ---
     function showTab(id) {
         document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
@@ -355,10 +352,8 @@
     }
     function guardarArt() { const n = document.getElementById('confNuevoArt').value.toLowerCase(); const m = parseInt(document.getElementById('confMinArt').value) || 0; if(n) db.collection("articulos").add({nombre: n, minimo: m}); }
     function renderMaestro() { document.getElementById('listaArts').innerHTML = articulos.map(a => `<div class="list-group-item d-flex justify-content-between p-1 small">${a.nombre} <i class="fas fa-trash text-danger" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join(''); }
-    function guardarProv() { db.collection("proveedores").add({nombre: prompt("Nombre del proveedor:")}); }
     function guardarAcuerdo() { db.collection("acuerdos").add({proveedor: document.getElementById('acProv').value, articulo: document.getElementById('acArt').value, uxc: parseInt(document.getElementById('acUxC').value), cxp: parseInt(document.getElementById('acCxP').value)}); }
     function renderAcuerdos() { document.getElementById('listaAcuerdos').innerHTML = acuerdos.map(ac => `<div class="border-bottom py-1 small">${ac.proveedor} ➔ ${ac.articulo} <i class="fas fa-times text-danger" onclick="db.collection('acuerdos').doc('${ac.id}').delete()"></i></div>`).join(''); }
-    function renderLista(id, data, coll) { document.getElementById(id).innerHTML = data.map(item => `<div class="list-group-item d-flex justify-content-between p-1 small">${item.nombre} <i class="fas fa-times text-danger" onclick="db.collection('${coll}').doc('${item.id}').delete()"></i></div>`).join(''); }
     function guardarCliente() { db.collection("clientes").add({nombre: document.getElementById('cliNombre').value, dir: document.getElementById('cliDir').value}); }
     function renderClientes() { document.getElementById('tablaClientes').innerHTML = clientes.map(c => `<tr><td class="small">${c.nombre}</td><td class="text-end"><i class="fas fa-trash text-danger" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></td></tr>`).join(''); }
     async function limpiarArt(n) { if(confirm("Vaciar stock?")) { const snp = await db.collection("stock").where("articulo","==",n).get(); const b = db.batch(); snp.forEach(d => b.delete(d.ref)); await b.commit(); } }
