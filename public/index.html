@@ -180,7 +180,6 @@
         });
     }
 
-    // LÓGICA DE CARGA FILTRADA
     function filtrarArticulosAcuerdo() {
         const p = document.getElementById('selProveedor').value;
         const filtrados = acuerdos.filter(a => a.proveedor === p);
@@ -205,8 +204,7 @@
         const ac = acuerdos.find(x => x.proveedor === p && x.articulo === art);
 
         let total = 0;
-        if(!ac) { total = cant; } 
-        else {
+        if(ac) {
             if(tipo === 'u') total = cant;
             if(tipo === 'c') total = cant * ac.uxc;
             if(tipo === 'p') total = cant * ac.cxp * ac.uxc;
@@ -223,7 +221,6 @@
         document.getElementById('inpCantidad').value = "";
     }
 
-    // GESTIÓN DE ACUERDOS
     function guardarAcuerdo() {
         const p = document.getElementById('acProv').value, a = document.getElementById('acArt').value;
         const u = parseInt(document.getElementById('acUxC').value), c = parseInt(document.getElementById('acCxP').value);
@@ -234,7 +231,6 @@
         document.getElementById('listaAcuerdos').innerHTML = acuerdos.map(ac => `<div class="border-bottom py-1 d-flex justify-content-between"><span>${ac.proveedor} ➔ ${ac.articulo} (${ac.uxc} u/c, ${ac.cxp} c/p)</span><i class="fas fa-trash text-danger" onclick="db.collection('acuerdos').doc('${ac.id}').delete()"></i></div>`).join('');
     }
 
-    // AUXILIARES
     function guardarProv() { const n = document.getElementById('confNuevoProv').value; if(n) db.collection("proveedores").add({nombre:n}); }
     function guardarArt() { const n = document.getElementById('confNuevoArt').value; if(n) db.collection("articulos").add({nombre:n}); }
     function renderLista(id, data, coll) { document.getElementById(id).innerHTML = data.map(item => `<div class="list-group-item d-flex justify-content-between p-1 small">${item.nombre} <i class="fas fa-times text-danger" onclick="db.collection('${coll}').doc('${item.id}').delete()"></i></div>`).join(''); }
