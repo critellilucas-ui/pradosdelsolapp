@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prados del Sol - Gestión Integral v6</title>
+    <title>Prados del Sol - Gestión Integral v7</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -87,9 +88,15 @@
                     </div>
                     <button class="btn btn-success w-100 mt-3 fw-bold" onclick="guardarIngreso()">CONFIRMAR ENTRADA</button>
                 </div>
+                
                 <div class="card p-3 shadow-sm">
-                    <h5>Estado del Inventario Real</h5>
-                    <table class="table table-hover align-middle">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">Estado del Inventario Real</h5>
+                        <button class="btn btn-outline-success fw-bold" onclick="exportarExcel()">
+                            <i class="fas fa-file-excel me-2"></i>Exportar a Excel
+                        </button>
+                    </div>
+                    <table class="table table-hover align-middle" id="tablaStockExcel">
                         <thead class="table-dark"><tr><th>Artículo</th><th class="text-center">Existencia</th><th class="text-center">Mínimo</th><th class="text-end">Acción</th></tr></thead>
                         <tbody id="tablaStock"></tbody>
                     </table>
@@ -146,6 +153,7 @@
 </div>
 
 <script>
+    // --- CONFIGURACIÓN FIREBASE ---
     const firebaseConfig = {
       apiKey: "AIzaSyCjYp0idCxs32QAofYLVEGcwvmd3HXy-3Y",
       authDomain: "prados-del-sol.firebaseapp.com",
@@ -158,8 +166,9 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    let articulos = [], proveedores = [], acuerdos = [], clientes = [];
+    let articulos = [], proveedores = [], acuerdos = [], clientes = [], stockActualGlobal = {};
 
+    // --- AUTH ---
     function login() { auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPass').value); }
     function logout() { auth.signOut(); }
     auth.onAuthStateChanged(user => {
@@ -168,7 +177,6 @@
     });
 
     async function iniciarApp() {
-        // Artículos Maestros
         const base = [
             {n: "botella 850cc", m: 5000}, {n: "botella 900cc", m: 5000}, {n: "botella 1.5lts", m: 3000}, {n: "bidon de 5lts", m: 1000},
             {n: "caja de 900cc", m: 1000}, {n: "caja 1.5lts", m: 500}, {n: "caja de 5lts", m: 300},
@@ -204,6 +212,7 @@
 
         db.collection("stock").onSnapshot(s => {
             const res = {}; s.docs.forEach(d => { res[d.data().articulo] = (res[d.data().articulo] || 0) + d.data().cantidad; });
+            stockActualGlobal = res;
             document.getElementById('tablaStock').innerHTML = Object.keys(res).map(artNombre => {
                 const artData = articulos.find(a => a.nombre === artNombre);
                 const min = artData ? (artData.minimo || 0) : 0;
@@ -217,6 +226,29 @@
                 </tr>`;
             }).join('');
         });
+    }
+
+    // --- FUNCIÓN EXPORTAR EXCEL ---
+    function exportarExcel() {
+        const dataParaExcel = Object.keys(stockActualGlobal).map(artNombre => {
+            const artData = articulos.find(a => a.nombre === artNombre);
+            const min = artData ? (artData.minimo || 0) : 0;
+            const actual = stockActualGlobal[artNombre];
+            return {
+                "Artículo": artNombre,
+                "Stock Actual": actual,
+                "Stock Mínimo": min,
+                "Estado": actual <= min ? "REPOSICIÓN" : "OK"
+            };
+        });
+
+        const ws = XLSX.utils.json_to_sheet(dataParaExcel);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Inventario");
+        
+        // Generar nombre con fecha
+        const fecha = new Date().toLocaleDateString().replace(/\//g, '-');
+        XLSX.writeFile(wb, `Stock_Prados_${fecha}.xlsx`);
     }
 
     // --- LÓGICA DE CARGA (PROVEEDORES) ---
@@ -233,15 +265,12 @@
         const cant = parseInt(document.getElementById('inpCantidad').value) || 0;
         const tipo = document.getElementById('selTipoCarga').value;
         const ac = acuerdos.find(x => x.proveedor === prov && x.articulo === art);
-        
         let total = 0;
         if(ac) {
             if(tipo === 'u') total = cant;
             if(tipo === 'c') total = cant * (ac.uxc || 0);
             if(tipo === 'p') total = cant * (ac.cxp || 0) * (ac.uxc || 0);
-        } else {
-            total = cant; // Si no hay acuerdo, carga unidad por unidad
-        }
+        } else { total = cant; }
         document.getElementById('txtTotalFinal').innerText = total.toLocaleString();
     }
 
@@ -250,13 +279,13 @@
         const totalU = parseInt(document.getElementById('txtTotalFinal').innerText.replace(/\./g,''));
         if(art && totalU > 0) {
             await db.collection("stock").add({ articulo: art, cantidad: totalU, fecha: firebase.firestore.FieldValue.serverTimestamp() });
-            alert("Ingreso cargado exitosamente");
+            alert("Stock actualizado");
             document.getElementById('inpCantidad').value = "";
             document.getElementById('txtTotalFinal').innerText = "0";
         }
     }
 
-    // --- LÓGICA DE VENTAS (DESCUENTO TRIPLE) ---
+    // --- LÓGICA DE VENTAS ---
     function actualizarPrevisualizacion() {
         const p = parseInt(document.getElementById('vtaPallets').value) || 0;
         const c = parseInt(document.getElementById('vtaCxP').value) || 0;
@@ -287,11 +316,11 @@
         if (etiqueta !== "") batch.set(db.collection("stock").doc(), { articulo: etiqueta, cantidad: -totalU, fecha: firebase.firestore.FieldValue.serverTimestamp() });
 
         await batch.commit();
-        alert("Despacho completado con éxito.");
+        alert("Despacho completado");
         actualizarPrevisualizacion();
     }
 
-    // --- CONFIGURACIÓN ---
+    // --- CONFIG ---
     function guardarArt() { 
         const n = document.getElementById('confNuevoArt').value.toLowerCase().trim();
         const m = parseInt(document.getElementById('confMinArt').value) || 0;
@@ -312,7 +341,7 @@
         const nuevo = prompt("Nuevo stock mínimo:", actual);
         if(nuevo !== null) db.collection("articulos").doc(id).update({minimo: parseInt(nuevo)});
     }
-    function guardarProv() { db.collection("proveedores").add({nombre: document.getElementById('confNuevoProv').value}); document.getElementById('confNuevoProv').value = ""; }
+    function guardarProv() { db.collection("proveedores").add({nombre: document.getElementById('confNuevoProv').value}); }
     function guardarAcuerdo() { 
         db.collection("acuerdos").add({
             proveedor: document.getElementById('acProv').value, 
@@ -328,7 +357,7 @@
         </div>`).join('');
     }
     function renderLista(id, data, coll) { document.getElementById(id).innerHTML = data.map(item => `<div class="list-group-item d-flex justify-content-between p-1">${item.nombre} <i class="fas fa-times text-danger" style="cursor:pointer" onclick="db.collection('${coll}').doc('${item.id}').delete()"></i></div>`).join(''); }
-    function guardarCliente() { db.collection("clientes").add({nombre: document.getElementById('cliNombre').value, dir: document.getElementById('cliDir').value}); document.getElementById('cliNombre').value = ""; }
+    function guardarCliente() { db.collection("clientes").add({nombre: document.getElementById('cliNombre').value, dir: document.getElementById('cliDir').value}); }
     function renderClientes() { document.getElementById('tablaClientes').innerHTML = clientes.map(c => `<tr><td>${c.nombre}</td><td>${c.dir}</td><td class="text-end"><i class="fas fa-trash text-danger" style="cursor:pointer" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></td></tr>`).join(''); }
     function showTab(id) { document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden')); document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active')); document.getElementById(id).classList.remove('hidden'); event.currentTarget.classList.add('active'); }
     async function limpiarArt(n) { if(confirm("¿Vaciar stock de "+n+"?")) { const snp = await db.collection("stock").where("articulo","==",n).get(); const b = db.batch(); snp.forEach(d => b.delete(d.ref)); await b.commit(); } }
