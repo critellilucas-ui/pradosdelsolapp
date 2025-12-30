@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sistema Prados del Sol - Logística Multi-Producto</title>
+    <title>Sistema Prados del Sol - Oficial</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -24,7 +24,6 @@
         .card { border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-radius: 12px; margin-bottom: 15px; }
         .stock-peligro { background-color: #fff5f5 !important; color: #dc3545 !important; border-left: 5px solid #dc3545 !important; }
         label { font-size: 0.8rem; font-weight: bold; }
-        .tabla-previa { font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -90,13 +89,10 @@
             <div id="ventas" class="content-section hidden">
                 <div class="card p-3 border-top border-primary border-4 shadow-sm">
                     <h5 class="text-primary fw-bold mb-3">Nuevo Despacho</h5>
-                    
                     <div class="row g-2 mb-3">
                         <div class="col-12"><label>Cliente</label><select id="vtaCliente" class="form-select"></select></div>
                     </div>
-
                     <div class="bg-light p-3 rounded border mb-3">
-                        <h6 class="small fw-bold text-muted">AÑADIR PRODUCTOS AL REMITO</h6>
                         <div class="row g-2">
                             <div class="col-md-5"><label>Producto</label><select id="vtaArticulo" class="form-select"></select></div>
                             <div class="col-4 col-md-2"><label>Pallets</label><input type="number" id="vtaPallets" class="form-control" value="1"></div>
@@ -107,54 +103,45 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="table-responsive mb-3">
-                        <table class="table table-sm table-bordered tabla-previa">
+                        <table class="table table-sm table-bordered">
                             <thead class="table-dark">
-                                <tr>
-                                    <th>Producto</th>
-                                    <th class="text-center">Pallets</th>
-                                    <th class="text-center">Cajas</th>
-                                    <th class="text-center">Unidades</th>
-                                    <th class="text-end">Acción</th>
-                                </tr>
+                                <tr><th>Producto</th><th class="text-center">Pallets</th><th class="text-center">Cajas</th><th class="text-center">Unidades</th><th class="text-end"></th></tr>
                             </thead>
                             <tbody id="listaVentaTemporal"></tbody>
                         </table>
                     </div>
-                    
-                    <h6 class="mt-4 border-bottom pb-1 small text-muted">DATOS LOGÍSTICOS</h6>
+                    <h6 class="mt-4 border-bottom pb-1 small text-muted">LOGÍSTICA</h6>
                     <div class="row g-2">
-                        <div class="col-md-3"><label>Chofer</label><input type="text" id="vtaChofer" class="form-control" placeholder="Nombre"></div>
-                        <div class="col-md-3"><label>DNI</label><input type="text" id="vtaDni" class="form-control" placeholder="DNI"></div>
-                        <div class="col-md-3"><label>Camión</label><input type="text" id="vtaCamion" class="form-control" placeholder="Patente"></div>
-                        <div class="col-md-3"><label>Semi</label><input type="text" id="vtaSemi" class="form-control" placeholder="Patente"></div>
+                        <div class="col-md-3"><label>Chofer</label><input type="text" id="vtaChofer" class="form-control"></div>
+                        <div class="col-md-3"><label>DNI</label><input type="text" id="vtaDni" class="form-control"></div>
+                        <div class="col-md-3"><label>Camión</label><input type="text" id="vtaCamion" class="form-control"></div>
+                        <div class="col-md-3"><label>Semi</label><input type="text" id="vtaSemi" class="form-control"></div>
                     </div>
-
-                    <button class="btn btn-primary w-100 mt-4 fw-bold py-3" onclick="procesarDespachoMasivo()">GENERAR REMITO PDF Y DESCONTAR STOCK</button>
+                    <button class="btn btn-primary w-100 mt-4 fw-bold" onclick="procesarDespachoMasivo()">GENERAR DESPACHO Y PDF</button>
                 </div>
             </div>
 
             <div id="clientes" class="content-section hidden">
                 <div class="card p-3">
-                    <h5 class="fw-bold">Directorio de Clientes</h5>
+                    <h5 class="fw-bold">Clientes</h5>
                     <div class="row g-2 mb-3">
-                        <div class="col-md-6"><label>Razón Social</label><input type="text" id="cliNombre" class="form-control"></div>
+                        <div class="col-md-6"><label>Nombre</label><input type="text" id="cliNombre" class="form-control"></div>
                         <div class="col-md-3"><label>CUIT</label><input type="text" id="cliCuit" class="form-control"></div>
-                        <div class="col-md-3"><label>I.V.A.</label><select id="cliIva" class="form-select"><option>Responsable Inscripto</option><option>Monotributo</option><option>Exento</option></select></div>
-                        <div class="col-md-6"><label>Domicilio</label><input type="text" id="cliCalle" class="form-control"></div>
-                        <div class="col-md-3"><label>Localidad</label><input type="text" id="cliLocalidad" class="form-control"></div>
-                        <div class="col-md-3"><label>Provincia</label><input type="text" id="cliProvincia" class="form-control" value="Buenos Aires"></div>
-                        <button class="btn btn-dark w-100 mt-2" onclick="guardarCliente()">REGISTRAR CLIENTE</button>
+                        <div class="col-md-3"><label>IVA</label><select id="cliIva" class="form-select"><option>Responsable Inscripto</option><option>Monotributo</option></select></div>
+                        <div class="col-md-4"><label>Calle</label><input type="text" id="cliCalle" class="form-control"></div>
+                        <div class="col-md-4"><label>Localidad</label><input type="text" id="cliLocalidad" class="form-control"></div>
+                        <div class="col-md-4"><label>Provincia</label><input type="text" id="cliProvincia" class="form-control"></div>
+                        <button class="btn btn-dark w-100 mt-2" onclick="guardarCliente()">GUARDAR CLIENTE</button>
                     </div>
-                    <div class="table-responsive"><table class="table table-sm"><thead class="table-light"><tr><th>Nombre</th><th>Localidad</th><th></th></tr></thead><tbody id="tablaClientes"></tbody></table></div>
+                    <div id="tablaClientes"></div>
                 </div>
             </div>
 
             <div id="historial" class="content-section hidden">
                 <div class="card p-3 border-top border-info border-4">
-                    <div class="d-flex justify-content-between mb-3 align-items-center">
-                        <h5 class="fw-bold m-0">Historial</h5>
+                    <div class="d-flex justify-content-between mb-3">
+                        <h5 class="fw-bold">Historial</h5>
                         <input type="month" id="filtroMes" class="form-control w-auto" onchange="cargarHistorial()">
                     </div>
                     <div class="table-responsive"><table class="table table-sm"><tbody id="listaHistorial"></tbody></table></div>
@@ -163,8 +150,8 @@
 
             <div id="config" class="content-section hidden">
                 <div class="row">
-                    <div class="col-md-6"><div class="card p-3"><h6>Maestro de Artículos</h6><div class="input-group mb-2"><input type="text" id="confNuevoArt" class="form-control" placeholder="Nombre"><input type="number" id="confMinArt" class="form-control" placeholder="Mín"><button class="btn btn-primary" onclick="guardarArt()">+</button></div><div id="listaArts"></div></div></div>
-                    <div class="col-md-6"><div class="card p-3"><h6>Vínculos de Carga</h6><div class="row g-1"><div class="col-6"><select id="acProv" class="form-select"></select></div><div class="col-6"><select id="acArt" class="form-select"></select></div><div class="col-6"><input type="number" id="acUxC" class="form-control" placeholder="U/C"></div><div class="col-6"><input type="number" id="acCxP" class="form-control" placeholder="C/P"></div><button class="btn btn-warning w-100" onclick="guardarAcuerdo()">VINCULAR</button></div><div id="listaAcuerdos" class="mt-2 small"></div></div></div>
+                    <div class="col-md-6"><div class="card p-3"><h6>Artículos</h6><div class="input-group mb-2"><input type="text" id="confNuevoArt" class="form-control"><input type="number" id="confMinArt" class="form-control" placeholder="Mín"><button class="btn btn-primary" onclick="guardarArt()">+</button></div><div id="listaArts"></div></div></div>
+                    <div class="col-md-6"><div class="card p-3"><h6>Vínculos</h6><div class="row g-1"><div class="col-6"><select id="acProv" class="form-select"></select></div><div class="col-6"><select id="acArt" class="form-select"></select></div><div class="col-6"><input type="number" id="acUxC" class="form-control" placeholder="U/C"></div><div class="col-6"><input type="number" id="acCxP" class="form-control" placeholder="C/P"></div><button class="btn btn-warning w-100" onclick="guardarAcuerdo()">VINCULAR</button></div><div id="listaAcuerdos" class="mt-2"></div></div></div>
                 </div>
             </div>
         </div>
@@ -172,7 +159,7 @@
 </div>
 
 <script>
-    // CONFIGURACIÓN FIREBASE
+    // FIREBASE
     const firebaseConfig = { apiKey: "AIzaSyCjYp0idCxs32QAofYLVEGcwvmd3HXy-3Y", authDomain: "prados-del-sol.firebaseapp.com", projectId: "prados-del-sol", storageBucket: "prados-del-sol.firebasestorage.app", messagingSenderId: "30316921952", appId: "1:30316921952:web:b0f88b9c35f270d548ef05" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
@@ -184,21 +171,20 @@
     function logout() { auth.signOut(); }
     auth.onAuthStateChanged(user => { if (user) { document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('appSystem').classList.remove('hidden'); iniciarApp(); } else { document.getElementById('loginScreen').classList.remove('hidden'); document.getElementById('appSystem').classList.add('hidden'); } });
 
-    // INICIO
+    // APP
     async function iniciarApp() {
         const hoy = new Date(); document.getElementById('filtroMes').value = hoy.getFullYear() + "-" + String(hoy.getMonth()+1).padStart(2, '0');
         db.collection("articulos").orderBy("nombre").onSnapshot(s => {
             articulos = s.docs.map(d => ({id:d.id, ...d.data()}));
             const h = articulos.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
-            document.getElementById('acArt').innerHTML = h; 
-            document.getElementById('vtaArticulo').innerHTML = h; 
-            document.getElementById('consumoArticulo').innerHTML = h; 
+            document.getElementById('acArt').innerHTML = h; document.getElementById('vtaArticulo').innerHTML = h; document.getElementById('consumoArticulo').innerHTML = h;
             renderMaestro();
         });
         db.collection("proveedores").orderBy("nombre").onSnapshot(s => {
             proveedores = s.docs.map(d => ({id:d.id, ...d.data()}));
-            document.getElementById('selProveedor').innerHTML = '<option value="">-- Proveedor --</option>' + proveedores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
-            document.getElementById('acProv').innerHTML = proveedores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
+            const h = proveedores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
+            document.getElementById('selProveedor').innerHTML = '<option value="">-- Proveedor --</option>' + h;
+            document.getElementById('acProv').innerHTML = h;
         });
         db.collection("acuerdos").onSnapshot(s => { acuerdos = s.docs.map(d => ({id:d.id, ...d.data()})); renderAcuerdos(); });
         db.collection("clientes").orderBy("nombre").onSnapshot(s => {
@@ -209,37 +195,29 @@
         db.collection("stock").onSnapshot(s => {
             const res = {}; s.docs.forEach(d => { res[d.data().articulo] = (res[d.data().articulo] || 0) + d.data().cantidad; });
             document.getElementById('tablaStock').innerHTML = Object.keys(res).map(k => {
-                const art = articulos.find(a => a.nombre === k);
-                const min = art ? art.minimo : 0;
-                return `<tr class="${res[k] <= min ? 'stock-peligro' : ''}"><td>${k}</td><td class="text-center fw-bold">${res[k].toLocaleString()}</td><td class="text-center">${min}</td><td class="text-end"><i class="fas fa-trash text-muted" onclick="limpiarArt('${k}')"></i></td></tr>`;
+                const a = articulos.find(x => x.nombre === k); return `<tr><td>${k}</td><td class="text-center fw-bold">${res[k].toLocaleString()}</td><td class="text-center">${a?a.minimo:0}</td><td class="text-end"><i class="fas fa-trash text-muted" onclick="limpiarArt('${k}')"></i></td></tr>`;
             }).join('');
         });
     }
 
-    // LOGICA STOCK
-    function filtrarArticulosAcuerdo() { const prov = document.getElementById('selProveedor').value; const filtrados = acuerdos.filter(a => a.proveedor === prov); document.getElementById('selArticulo').innerHTML = '<option value="">-- Seleccionar --</option>' + filtrados.map(a => `<option value="${a.articulo}">${a.articulo}</option>`).join(''); }
-    function calcularCarga() { const prov = document.getElementById('selProveedor').value; const art = document.getElementById('selArticulo').value; const cant = parseInt(document.getElementById('inpCantidad').value) || 0; const tipo = document.getElementById('selTipoCarga').value; const ac = acuerdos.find(x => x.proveedor === prov && x.articulo === art); let total = (ac && tipo === 'p') ? cant * ac.cxp * ac.uxc : (ac && tipo === 'c') ? cant * ac.uxc : cant; document.getElementById('txtTotalFinal').innerText = total.toLocaleString(); }
-    async function guardarIngreso() { const art = document.getElementById('selArticulo').value; const totalU = parseInt(document.getElementById('txtTotalFinal').innerText.replace(/\./g,'')); if(art && totalU > 0) { await db.collection("stock").add({ articulo: art, cantidad: totalU, tipo: "Ingreso", fecha: firebase.firestore.FieldValue.serverTimestamp() }); alert("Stock actualizado"); document.getElementById('inpCantidad').value = ""; } }
-
-    // LOGICA VENTA MULTI-PRODUCTO
+    // LOGICA VENTA
     function agregarItemALista() {
         const prod = document.getElementById('vtaArticulo').value;
         const pal = parseInt(document.getElementById('vtaPallets').value) || 0;
         const cxp = parseInt(document.getElementById('vtaCxP').value) || 0;
         const uxc = parseInt(document.getElementById('vtaUxC').value) || 0;
-        if (!prod || pal <= 0) return alert("Complete cantidad");
+        if (!prod || pal <= 0) return alert("Error en datos");
         itemsVentaActual.push({ producto: prod, pallets: pal, cajas: pal * cxp, unidades: pal * cxp * uxc });
         renderTablaTemporal();
     }
 
     function renderTablaTemporal() {
-        document.getElementById('listaVentaTemporal').innerHTML = itemsVentaActual.map((it, idx) => `<tr><td>${it.producto}</td><td class="text-center">${it.pallets}</td><td class="text-center">${it.cajas}</td><td class="text-center">${it.unidades}</td><td class="text-end"><button class="btn btn-sm btn-outline-danger" onclick="itemsVentaActual.splice(${idx},1);renderTablaTemporal();"><i class="fas fa-times"></i></button></td></tr>`).join('');
+        document.getElementById('listaVentaTemporal').innerHTML = itemsVentaActual.map((it, idx) => `<tr><td>${it.producto}</td><td class="text-center">${it.pallets}</td><td class="text-center">${it.cajas}</td><td class="text-center">${it.unidades}</td><td class="text-end"><button class="btn btn-sm btn-danger" onclick="itemsVentaActual.splice(${idx},1);renderTablaTemporal();">X</button></td></tr>`).join('');
     }
 
     async function procesarDespachoMasivo() {
         const cli = document.getElementById('vtaCliente').value;
         if (!cli || itemsVentaActual.length === 0) return alert("Faltan datos");
-        
         const batch = db.batch();
         itemsVentaActual.forEach(it => {
             batch.set(db.collection("stock").doc(), { articulo: it.producto, cantidad: -it.unidades, tipo: "Venta", fecha: firebase.firestore.FieldValue.serverTimestamp() });
@@ -250,68 +228,105 @@
             if(cja) batch.set(db.collection("stock").doc(), { articulo: cja, cantidad: -it.cajas, tipo: "Insumo", fecha: firebase.firestore.FieldValue.serverTimestamp() });
             if(eti) batch.set(db.collection("stock").doc(), { articulo: eti, cantidad: -it.unidades, tipo: "Insumo", fecha: firebase.firestore.FieldValue.serverTimestamp() });
         });
-
         await batch.commit();
         generarPDFOficial({ 
             cliente: cli, items: itemsVentaActual, 
             chofer: document.getElementById('vtaChofer').value, dni: document.getElementById('vtaDni').value,
             camion: document.getElementById('vtaCamion').value, semi: document.getElementById('vtaSemi').value 
         });
-        itemsVentaActual = []; renderTablaTemporal(); alert("Venta Exitosa");
+        itemsVentaActual = []; renderTablaTemporal(); alert("Procesado");
     }
 
-    // PDF OFICIAL (Optimizado para múltiples productos)
     function generarPDFOficial(v) {
-        const { jsPDF } = window.jspdf; const doc = new jsPDF();
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
         const cliData = clientes.find(c => c.nombre === v.cliente) || {};
         const f = new Date();
-        
-        // Cabecera Estilo Remito R
-        doc.setFontSize(22); doc.setFont(undefined, 'bold'); doc.text("MAXIMILIANO MEZA", 10, 15);
-        doc.setFontSize(9); doc.setFont(undefined, 'normal'); doc.text("VENTA AL POR MAYOR DE GRASA Y ACEITE", 10, 20);
-        doc.rect(92, 8, 16, 16); doc.setFontSize(26); doc.text("R", 96, 20); doc.setFontSize(7); doc.text("COD. 91", 95, 23);
-        doc.setFontSize(16); doc.text("REMITO", 155, 14); doc.setFontSize(10); doc.text("Nº 0001-00000" + Math.floor(Math.random()*999), 145, 21);
-        doc.rect(142, 26, 50, 8); doc.text(`FECHA: ${f.getDate()}/${f.getMonth()+1}/${f.getFullYear()}`, 145, 31.5);
+        const nroRemito = "0001-00000" + Math.floor(Math.random() * 900 + 100);
 
-        // Bloque Cliente
-        doc.line(10, 52, 200, 52); doc.setFontSize(11); doc.setFont(undefined, 'bold');
-        doc.text(`Señor(es): ${v.cliente.toUpperCase()}`, 12, 60); doc.setFont(undefined, 'normal');
-        doc.text(`Domicilio / Loc: ${cliData.calle || ''} - ${cliData.localidad || ''} (${cliData.provincia || ''})`, 12, 68);
-        doc.text(`C.U.I.T.: ${cliData.cuit || '-'}`, 12, 76);
+        // CABECERA FIJA
+        doc.setFontSize(22); doc.setFont(undefined, 'bold');
+        doc.text("MAXIMILIANO MEZA", 10, 15);
+        
+        doc.setFontSize(10); doc.setFont(undefined, 'normal');
+        doc.text("C.U.I.T.: 20-31692195-2", 10, 21); // CUIT AGREGADO AQUÍ
+        doc.text("VENTA AL POR MAYOR DE GRASA Y ACEITE", 10, 26);
+        
+        doc.setFontSize(8);
+        doc.text("RUTA 24 Nº 1233", 10, 32);
+        doc.text("1746 FRANCISCO ALVAREZ - PROV. DE BUENOS AIRES", 10, 36);
+        doc.text("I.V.A. RESPONSABLE INSCRIPTO", 10, 41);
+
+        // LOGO "R"
+        doc.setLineWidth(0.4);
+        doc.rect(92, 8, 16, 16);
+        doc.setFontSize(26); doc.setFont(undefined, 'bold');
+        doc.text("R", 96, 20);
+        doc.setFontSize(7); doc.text("COD. 91", 95, 23);
+
+        // TITULO REMITO
+        doc.setFontSize(16); doc.text("REMITO", 155, 14);
+        doc.setFontSize(12); doc.text("Nº " + nroRemito, 145, 21);
+        doc.rect(142, 26, 50, 8);
+        doc.setFontSize(10); doc.text(`FECHA: ${f.getDate()}/${f.getMonth()+1}/${f.getFullYear()}`, 145, 32);
+
+        // DATOS CLIENTE
+        doc.line(10, 52, 200, 52);
+        doc.setFontSize(11); doc.setFont(undefined, 'bold');
+        doc.text(`Señor(es):  ${v.cliente.toUpperCase()}`, 12, 60);
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(10);
+        doc.text(`Domicilio:  ${cliData.calle || ''} - ${cliData.localidad || ''}`, 12, 68);
+        doc.text(`I.V.A.:   ${cliData.iva || 'Resp. Inscripto'}`, 12, 84);
+        doc.text(`C.U.I.T.:  ${cliData.cuit || '-'}`, 110, 84);
         doc.line(10, 90, 200, 90);
 
-        // Tabla de Productos
-        const body = v.items.map(it => [it.pallets, `PALLETS ${it.producto.toUpperCase()} (Total Cajas: ${it.cajas})`]);
-        body.push(["", `TRANSPORTE:\nCHOFER: ${v.chofer.toUpperCase()} - DNI: ${v.dni}\nPATENTE: ${v.camion.toUpperCase()} / ${v.semi.toUpperCase()}`]);
+        // TABLA DE PRODUCTOS
+        const tableBody = v.items.map(it => [
+            it.pallets, 
+            `PALLETS ${it.producto.toUpperCase()}\nTOTAL CAJAS: ${it.cajas}`
+        ]);
+        
+        tableBody.push([
+            "", 
+            `DATOS DEL TRANSPORTE:\nCHOFER: ${v.chofer.toUpperCase()} - DNI: ${v.dni}\nCAMIÓN: ${v.camion.toUpperCase()} / SEMI: ${v.semi.toUpperCase()}`
+        ]);
 
         doc.autoTable({
-            startY: 92, head: [['CANT.', 'DESCRIPCIÓN']], body: body, theme: 'grid',
-            styles: { fontSize: 10, cellPadding: 3 }, headStyles: { fillColor: [240, 240, 240], textColor: 0 },
-            columnStyles: { 0: { cellWidth: 20, halign: 'center' } }
+            startY: 92,
+            head: [['CANT.', 'DESCRIPCIÓN']],
+            body: tableBody,
+            theme: 'grid',
+            styles: { fontSize: 10, cellPadding: 4 },
+            headStyles: { fillColor: [240, 240, 240], textColor: 0, fontStyle: 'bold' },
+            columnStyles: { 0: { cellWidth: 25, halign: 'center' } }
         });
 
-        doc.text("Recibí Conforme: ____________________", 15, doc.lastAutoTable.finalY + 20);
+        const finalY = doc.lastAutoTable.finalY + 15;
+        doc.text("Recibí Conforme: ________________________", 15, finalY);
         doc.save(`Remito_${v.cliente}.pdf`);
     }
 
-    // OTROS
-    async function cargarHistorial() {
-        const m = document.getElementById('filtroMes').value;
-        const s = new Date(m + "-01T00:00:00"); const e = new Date(s.getFullYear(), s.getMonth()+1, 0, 23, 59, 59);
-        const snp = await db.collection("stock").where("fecha", ">=", s).where("fecha", "<=", e).orderBy("fecha", "desc").get();
-        document.getElementById('listaHistorial').innerHTML = snp.docs.map(doc => {
-            const d = doc.data(); return `<tr><td>${d.fecha ? d.fecha.toDate().toLocaleDateString() : 'S/F'}</td><td class="fw-bold">${d.articulo}</td><td>${d.tipo}</td><td class="${d.cantidad<0?'text-danger':'text-success'}">${d.cantidad}</td></tr>`;
-        }).join('');
+    function filtrarArticulosAcuerdo() { const p = document.getElementById('selProveedor').value; const f = acuerdos.filter(a => a.proveedor === p); document.getElementById('selArticulo').innerHTML = f.map(a => `<option value="${a.articulo}">${a.articulo}</option>`).join(''); }
+    function calcularCarga() { 
+        const p = document.getElementById('selProveedor').value, a = document.getElementById('selArticulo').value, c = parseInt(document.getElementById('inpCantidad').value)||0, t = document.getElementById('selTipoCarga').value;
+        const ac = acuerdos.find(x => x.proveedor === p && x.articulo === a);
+        let tot = (ac && t==='p') ? c*ac.cxp*ac.uxc : (ac && t==='c') ? c*ac.uxc : c;
+        document.getElementById('txtTotalFinal').innerText = tot.toLocaleString();
     }
-    function showTab(id) { document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active')); if(id === 'historial') cargarHistorial(); }
-    function guardarArt() { const n = document.getElementById('confNuevoArt').value.toLowerCase(); const m = parseInt(document.getElementById('confMinArt').value) || 0; if(n) db.collection("articulos").add({nombre: n, minimo: m}); }
-    function renderMaestro() { document.getElementById('listaArts').innerHTML = articulos.map(a => `<div class="list-group-item d-flex justify-content-between p-1 small">${a.nombre} <i class="fas fa-trash text-danger" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join(''); }
+    async function guardarIngreso() { const a = document.getElementById('selArticulo').value, t = parseInt(document.getElementById('txtTotalFinal').innerText.replace(/\./g,'')); if(a && t > 0) await db.collection("stock").add({ articulo: a, cantidad: t, tipo: "Ingreso", fecha: firebase.firestore.FieldValue.serverTimestamp() }); }
+    function showTab(id) { document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
+    function guardarArt() { db.collection("articulos").add({nombre: document.getElementById('confNuevoArt').value.toLowerCase(), minimo: parseInt(document.getElementById('confMinArt').value)||0}); }
+    function renderMaestro() { document.getElementById('listaArts').innerHTML = articulos.map(a => `<div class="p-1 border-bottom small">${a.nombre}</div>`).join(''); }
     function guardarAcuerdo() { db.collection("acuerdos").add({proveedor: document.getElementById('acProv').value, articulo: document.getElementById('acArt').value, uxc: parseInt(document.getElementById('acUxC').value), cxp: parseInt(document.getElementById('acCxP').value)}); }
-    function renderAcuerdos() { document.getElementById('listaAcuerdos').innerHTML = acuerdos.map(ac => `<div class="border-bottom py-1 small">${ac.proveedor} ➔ ${ac.articulo} <i class="fas fa-times text-danger" onclick="db.collection('acuerdos').doc('${ac.id}').delete()"></i></div>`).join(''); }
-    function guardarCliente() { db.collection("clientes").add({ nombre: document.getElementById('cliNombre').value, cuit: document.getElementById('cliCuit').value, iva: document.getElementById('cliIva').value, calle: document.getElementById('cliCalle').value, localidad: document.getElementById('cliLocalidad').value, provincia: document.getElementById('cliProvincia').value }); alert("Guardado"); }
-    function renderClientes() { document.getElementById('tablaClientes').innerHTML = clientes.map(c => `<tr><td class="small"><b>${c.nombre}</b></td><td class="small">${c.localidad || '-'}</td><td class="text-end"><i class="fas fa-trash text-danger" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></td></tr>`).join(''); }
-    async function registrarConsumo() { const art = document.getElementById('consumoArticulo').value; const cant = parseInt(document.getElementById('consumoCantidad').value) || 0; if(art && cant > 0) await db.collection("stock").add({ articulo: art, cantidad: -cant, tipo: "Consumo", fecha: firebase.firestore.FieldValue.serverTimestamp() }); }
-    async function limpiarArt(n) { if(confirm("¿Vaciar stock?")) { const snp = await db.collection("stock").where("articulo","==",n).get(); const b = db.batch(); snp.forEach(d => b.delete(d.ref)); await b.commit(); } }
+    function renderAcuerdos() { document.getElementById('listaAcuerdos').innerHTML = acuerdos.map(a => `<div class="small">${a.proveedor} -> ${a.articulo}</div>`).join(''); }
+    function guardarCliente() { db.collection("clientes").add({ nombre: document.getElementById('cliNombre').value, cuit: document.getElementById('cliCuit').value, iva: document.getElementById('cliIva').value, calle: document.getElementById('cliCalle').value, localidad: document.getElementById('cliLocalidad').value, provincia: document.getElementById('cliProvincia').value }); }
+    function renderClientes() { document.getElementById('tablaClientes').innerHTML = clientes.map(c => `<div class="p-1 border-bottom">${c.nombre}</div>`).join(''); }
+    async function cargarHistorial() {
+        const m = document.getElementById('filtroMes').value; const s = new Date(m + "-01T00:00:00"), e = new Date(s.getFullYear(), s.getMonth()+1, 0, 23, 59, 59);
+        const snp = await db.collection("stock").where("fecha", ">=", s).where("fecha", "<=", e).orderBy("fecha", "desc").get();
+        document.getElementById('listaHistorial').innerHTML = snp.docs.map(doc => `<tr><td>${doc.data().articulo}</td><td>${doc.data().cantidad}</td></tr>`).join('');
+    }
 </script>
 </body>
 </html>
