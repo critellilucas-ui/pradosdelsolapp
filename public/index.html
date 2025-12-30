@@ -117,7 +117,6 @@
                         <div class="col-md-6"><label>Razón Social</label><input type="text" id="cliNombre" class="form-control"></div>
                         <div class="col-md-3"><label>CUIT</label><input type="text" id="cliCuit" class="form-control"></div>
                         <div class="col-md-3"><label>I.V.A.</label><select id="cliIva" class="form-select"><option>Responsable Inscripto</option><option>Monotributo</option><option>Exento</option></select></div>
-                        
                         <div class="col-md-6"><label>Domicilio (Calle y N°)</label><input type="text" id="cliCalle" class="form-control"></div>
                         <div class="col-md-3"><label>Localidad</label><input type="text" id="cliLocalidad" class="form-control"></div>
                         <div class="col-md-3">
@@ -125,29 +124,10 @@
                             <select id="cliProvincia" class="form-select">
                                 <option value="Buenos Aires">Buenos Aires</option>
                                 <option value="CABA">CABA</option>
-                                <option value="Catamarca">Catamarca</option>
-                                <option value="Chaco">Chaco</option>
-                                <option value="Chubut">Chubut</option>
                                 <option value="Córdoba">Córdoba</option>
-                                <option value="Corrientes">Corrientes</option>
-                                <option value="Entre Ríos">Entre Ríos</option>
-                                <option value="Formosa">Formosa</option>
-                                <option value="Jujuy">Jujuy</option>
-                                <option value="La Pampa">La Pampa</option>
-                                <option value="La Rioja">La Rioja</option>
-                                <option value="Mendoza">Mendoza</option>
-                                <option value="Misiones">Misiones</option>
-                                <option value="Neuquén">Neuquén</option>
-                                <option value="Río Negro">Río Negro</option>
-                                <option value="Salta">Salta</option>
-                                <option value="San Juan">San Juan</option>
-                                <option value="San Luis">San Luis</option>
-                                <option value="Santa Cruz">Santa Cruz</option>
                                 <option value="Santa Fe">Santa Fe</option>
-                                <option value="Santiago del Estero">Santiago del Estero</option>
-                                <option value="Tierra del Fuego">Tierra del Fuego</option>
                                 <option value="Tucumán">Tucumán</option>
-                            </select>
+                                </select>
                         </div>
                         <button class="btn btn-dark w-100 mt-2" onclick="guardarCliente()">REGISTRAR CLIENTE</button>
                     </div>
@@ -179,16 +159,19 @@
 </div>
 
 <script>
+    // Configuración Firebase
     const firebaseConfig = { apiKey: "AIzaSyCjYp0idCxs32QAofYLVEGcwvmd3HXy-3Y", authDomain: "prados-del-sol.firebaseapp.com", projectId: "prados-del-sol", storageBucket: "prados-del-sol.firebasestorage.app", messagingSenderId: "30316921952", appId: "1:30316921952:web:b0f88b9c35f270d548ef05" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
     let articulos = [], proveedores = [], acuerdos = [], clientes = [];
 
+    // Funciones de Autenticación
     function login() { auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPass').value); }
     function logout() { auth.signOut(); }
     auth.onAuthStateChanged(user => { if (user) { document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('appSystem').classList.remove('hidden'); iniciarApp(); } else { document.getElementById('loginScreen').classList.remove('hidden'); document.getElementById('appSystem').classList.add('hidden'); } });
 
+    // Inicialización
     async function iniciarApp() {
         const hoy = new Date(); document.getElementById('filtroMes').value = hoy.getFullYear() + "-" + String(hoy.getMonth()+1).padStart(2, '0');
         db.collection("articulos").orderBy("nombre").onSnapshot(s => {
@@ -217,10 +200,12 @@
         });
     }
 
+    // Lógica de Stock
     function filtrarArticulosAcuerdo() { const prov = document.getElementById('selProveedor').value; const filtrados = acuerdos.filter(a => a.proveedor === prov); document.getElementById('selArticulo').innerHTML = '<option value="">-- Seleccionar --</option>' + filtrados.map(a => `<option value="${a.articulo}">${a.articulo}</option>`).join(''); }
     function calcularCarga() { const prov = document.getElementById('selProveedor').value; const art = document.getElementById('selArticulo').value; const cant = parseInt(document.getElementById('inpCantidad').value) || 0; const tipo = document.getElementById('selTipoCarga').value; const ac = acuerdos.find(x => x.proveedor === prov && x.articulo === art); let total = (ac && tipo === 'p') ? cant * ac.cxp * ac.uxc : (ac && tipo === 'c') ? cant * ac.uxc : cant; document.getElementById('txtTotalFinal').innerText = total.toLocaleString(); }
     async function guardarIngreso() { const art = document.getElementById('selArticulo').value; const totalU = parseInt(document.getElementById('txtTotalFinal').innerText.replace(/\./g,'')); if(art && totalU > 0) { await db.collection("stock").add({ articulo: art, cantidad: totalU, tipo: "Ingreso", fecha: firebase.firestore.FieldValue.serverTimestamp() }); alert("Stock actualizado"); document.getElementById('inpCantidad').value = ""; } }
 
+    // Lógica de Despacho
     function actualizarPrevisualizacion() {
         const p = parseInt(document.getElementById('vtaPallets').value) || 0;
         const c = parseInt(document.getElementById('vtaCxP').value) || 0;
@@ -249,10 +234,20 @@
         if(eti) batch.set(db.collection("stock").doc(), { articulo: eti, cantidad: -totalU, tipo: "Insumo (Etiqueta)", fecha: firebase.firestore.FieldValue.serverTimestamp() });
 
         await batch.commit();
-        generarPDFOficial({ cliente: cli, producto: prod, pallets: document.getElementById('vtaPallets').value, cajas: totalC, chofer: document.getElementById('vtaChofer').value, dni: document.getElementById('vtaDni').value, camion: document.getElementById('vtaCamion').value, semi: document.getElementById('vtaSemi').value });
+        generarPDFOficial({ 
+            cliente: cli, 
+            producto: prod, 
+            pallets: document.getElementById('vtaPallets').value, 
+            cajas: totalC, 
+            chofer: document.getElementById('vtaChofer').value, 
+            dni: document.getElementById('vtaDni').value, 
+            camion: document.getElementById('vtaCamion').value, 
+            semi: document.getElementById('vtaSemi').value 
+        });
         alert("Despacho Procesado.");
     }
 
+    // --- GENERACIÓN DE PDF MEJORADA (Sin espacio sobrante) ---
     function generarPDFOficial(v) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
@@ -262,10 +257,9 @@
         const mes = String(fecha.getMonth() + 1).padStart(2, '0');
         const anio = fecha.getFullYear();
 
-        // LOGICA DE DIRECCION UNIFICADA PARA EL REMITO
-        // Une calle, localidad y provincia en una sola línea
         const dirRemito = `${cliData.calle || ''} - ${cliData.localidad || ''} (${cliData.provincia || ''})`;
 
+        // Cabecera
         doc.setFontSize(22);
         doc.setFont(undefined, 'bold');
         doc.text("MAXIMILIANO MEZA", 10, 15);
@@ -277,6 +271,7 @@
         doc.text("1746 FRANCISCO ALVAREZ - PROV. DE BUENOS AIRES", 10, 31);
         doc.text("I.V.A. RESPONSABLE INSCRIPTO", 10, 36);
 
+        // Logo "R"
         doc.setLineWidth(0.4);
         doc.rect(92, 8, 16, 16);
         doc.setFontSize(26);
@@ -285,6 +280,7 @@
         doc.setFontSize(7);
         doc.text("COD. 91", 95, 23);
 
+        // Datos Remito
         doc.setFontSize(16);
         doc.text("REMITO", 155, 14);
         doc.setFontSize(12);
@@ -299,6 +295,7 @@
         doc.text("Ing. Brutos (C.M.): 20-32546093-9", 142, 44);
         doc.text("Inicio de Actividades: 12/2023", 142, 48);
 
+        // Datos Cliente
         doc.line(10, 52, 200, 52);
         doc.setFontSize(11);
         doc.setFont(undefined, 'bold');
@@ -311,6 +308,7 @@
         doc.text(`C.U.I.T.:  ${cliData.cuit || '...........................................'}`, 110, 84);
         doc.line(10, 90, 200, 90);
 
+        // Tabla de Productos - AJUSTADA PARA QUITAR ESPACIOS
         doc.autoTable({
             startY: 92,
             head: [['CANT.', 'DESCRIPCIÓN']],
@@ -318,9 +316,10 @@
                 [`${v.pallets}`, `PALLETS ${v.producto.toUpperCase()}\nTOTAL CAJAS: ${v.cajas}\n\nDATOS DEL TRANSPORTE:\nCHOFER: ${v.chofer.toUpperCase()}\nDNI: ${v.dni}\nPATENTE: ${v.camion.toUpperCase()} / ${v.semi.toUpperCase()}`]
             ],
             theme: 'grid',
-            styles: { fontSize: 11, cellPadding: 6, minCellHeight: 90 },
+            styles: { fontSize: 11, cellPadding: 4 }, // Menos padding para mayor limpieza
             headStyles: { fillColor: [245, 245, 245], textColor: 0, fontStyle: 'bold', halign: 'center' },
             columnStyles: { 0: { cellWidth: 25, halign: 'center' } }
+            // Se eliminó minCellHeight: 90 para quitar el espacio en blanco
         });
 
         const finalY = doc.lastAutoTable.finalY + 15;
@@ -337,6 +336,7 @@
         doc.save(`Remito_${v.cliente}.pdf`);
     }
 
+    // Funciones de Historial y Auxiliares
     async function cargarHistorial() {
         const mesSel = document.getElementById('filtroMes').value;
         const start = new Date(mesSel + "-01T00:00:00"); const end = new Date(start.getFullYear(), start.getMonth() + 1, 0, 23, 59, 59);
@@ -352,34 +352,15 @@
     function renderMaestro() { document.getElementById('listaArts').innerHTML = articulos.map(a => `<div class="list-group-item d-flex justify-content-between p-1 small">${a.nombre} <i class="fas fa-trash text-danger" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join(''); }
     function guardarAcuerdo() { db.collection("acuerdos").add({proveedor: document.getElementById('acProv').value, articulo: document.getElementById('acArt').value, uxc: parseInt(document.getElementById('acUxC').value), cxp: parseInt(document.getElementById('acCxP').value)}); }
     function renderAcuerdos() { document.getElementById('listaAcuerdos').innerHTML = acuerdos.map(ac => `<div class="border-bottom py-1 small">${ac.proveedor} ➔ ${ac.articulo} <i class="fas fa-times text-danger" onclick="db.collection('acuerdos').doc('${ac.id}').delete()"></i></div>`).join(''); }
-    
-    // GUARDAR CLIENTE CON CAMPOS NORMALIZADOS
     function guardarCliente() { 
         db.collection("clientes").add({ 
-            nombre: document.getElementById('cliNombre').value, 
-            cuit: document.getElementById('cliCuit').value, 
-            iva: document.getElementById('cliIva').value, 
-            calle: document.getElementById('cliCalle').value,
-            localidad: document.getElementById('cliLocalidad').value,
-            provincia: document.getElementById('cliProvincia').value
-        }); 
-        alert("Cliente Guardado"); 
-        document.getElementById('cliNombre').value = "";
-        document.getElementById('cliCuit').value = "";
-        document.getElementById('cliCalle').value = "";
-        document.getElementById('cliLocalidad').value = "";
+            nombre: document.getElementById('cliNombre').value, cuit: document.getElementById('cliCuit').value, iva: document.getElementById('cliIva').value, 
+            calle: document.getElementById('cliCalle').value, localidad: document.getElementById('cliLocalidad').value, provincia: document.getElementById('cliProvincia').value
+        }); alert("Cliente Guardado"); 
     }
-
     function renderClientes() { 
-        document.getElementById('tablaClientes').innerHTML = clientes.map(c => `
-            <tr>
-                <td class="small"><b>${c.nombre}</b></td>
-                <td class="small text-muted">${c.localidad || '-'}</td>
-                <td class="small text-muted">${c.provincia || '-'}</td>
-                <td class="text-end"><i class="fas fa-trash text-danger" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></td>
-            </tr>`).join(''); 
+        document.getElementById('tablaClientes').innerHTML = clientes.map(c => `<tr><td class="small"><b>${c.nombre}</b></td><td class="small text-muted">${c.localidad || '-'}</td><td class="small text-muted">${c.provincia || '-'}</td><td class="text-end"><i class="fas fa-trash text-danger" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></td></tr>`).join(''); 
     }
-
     async function registrarConsumo() { const art = document.getElementById('consumoArticulo').value; const cant = parseInt(document.getElementById('consumoCantidad').value) || 0; if(art && cant > 0) await db.collection("stock").add({ articulo: art, cantidad: -cant, tipo: "Consumo", fecha: firebase.firestore.FieldValue.serverTimestamp() }); }
     async function limpiarArt(n) { if(confirm("¿Vaciar stock de este artículo?")) { const snp = await db.collection("stock").where("articulo","==",n).get(); const b = db.batch(); snp.forEach(d => b.delete(d.ref)); await b.commit(); } }
 </script>
