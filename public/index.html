@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Prados del Sol - Gestión Móvil v10</title>
+    <title>Prados del Sol - Gestión Móvil v12</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -16,52 +16,77 @@
     <style>
         body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; overflow-x: hidden; }
         
-        /* Sidebar Responsiva */
-        .sidebar { background-color: #212529; color: white; padding: 15px; z-index: 1000; }
-        
-        @media (min-width: 768px) {
-            .sidebar { min-height: 100vh; position: sticky; top: 0; }
-            .nav-link { margin-bottom: 5px; }
+        /* --- ESTILO PORTADA ACORDADA --- */
+        #loginScreen {
+            background: url('https://r.jina.ai/i/05e24f469399436181b51e44f8f9467d') no-repeat center center fixed;
+            background-size: cover;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 25px;
+            padding: 40px 30px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .login-card .logo-container i { color: #f9bc15; font-size: 3rem; }
+        .login-card h2 { color: #0b4a8d; font-weight: 800; margin-top: 10px; letter-spacing: 1px; }
+
+        .btn-ingresar {
+            background-color: #2b78d2;
+            color: white;
+            border-radius: 12px;
+            height: 50px;
+            font-weight: bold;
+            width: 100%;
+            border: none;
+            margin-top: 10px;
+        }
+
+        /* --- ESTILO SISTEMA (Basado en tu v10) --- */
+        .sidebar { background-color: #212529; color: white; padding: 15px; z-index: 1000; }
+        @media (min-width: 768px) {
+            .sidebar { min-height: 100vh; position: sticky; top: 0; }
+        }
         @media (max-width: 767px) {
             .sidebar { position: relative; min-height: auto; padding: 10px; }
             .nav-custom { display: flex; overflow-x: auto; white-space: nowrap; gap: 5px; padding-bottom: 5px; }
             .nav-link { font-size: 0.85rem; padding: 8px 12px !important; flex: 0 0 auto; border: 1px solid #444; }
-            h5.sidebar-title { font-size: 1rem; margin-bottom: 10px !important; text-align: left !important; }
         }
 
-        .nav-link { color: #adb5bd; cursor: pointer; padding: 12px; border-radius: 8px; text-decoration: none; transition: 0.3s; }
+        .nav-link { color: #adb5bd; cursor: pointer; padding: 12px; border-radius: 8px; transition: 0.3s; }
         .nav-link:hover, .nav-link.active { color: white; background-color: #0d6efd; }
         .hidden { display: none !important; }
-        
-        /* Cards y Tablas */
         .card { border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-radius: 12px; margin-bottom: 15px; }
-        .table-responsive { border-radius: 8px; }
         .stock-peligro { background-color: #fff5f5 !important; color: #dc3545 !important; border-left: 5px solid #dc3545 !important; }
-        
-        /* Botones grandes para móviles */
-        .btn { padding: 10px 15px; border-radius: 8px; font-weight: 600; }
-        input, select { height: 45px !important; } /* Más fácil de tocar */
-        
-        .resumen-vta h4 { font-size: 1.2rem; }
+        input, select { height: 45px !important; border-radius: 8px !important; }
     </style>
 </head>
 <body>
 
-<div id="loginScreen" class="container d-flex justify-content-center align-items-center vh-100 p-3">
-    <div class="card p-4 shadow-lg w-100" style="max-width: 400px;">
-        <h4 class="text-center mb-4 text-primary fw-bold">PRADOS DEL SOL</h4>
+<div id="loginScreen">
+    <div class="login-card mx-3">
+        <div class="logo-container mb-4">
+            <i class="fas fa-sun"></i>
+            <h2>PRADOS DEL SOL</h2>
+        </div>
         <input type="email" id="loginEmail" class="form-control mb-3" placeholder="Correo">
         <input type="password" id="loginPass" class="form-control mb-3" placeholder="Contraseña">
-        <button onclick="login()" class="btn btn-primary w-100">INGRESAR</button>
+        <button onclick="login()" class="btn-ingresar shadow-sm">INGRESAR</button>
     </div>
 </div>
 
 <div id="appSystem" class="container-fluid hidden">
     <div class="row">
         <div class="col-md-2 sidebar">
-            <h5 class="text-center mb-4 border-bottom pb-2 text-info sidebar-title">SISTEMA PRADOS</h5>
+            <h5 class="text-center mb-4 border-bottom pb-2 text-info">SISTEMA PRADOS</h5>
             <nav class="nav-custom">
                 <a class="nav-link active" onclick="showTab('stock')"><i class="fas fa-boxes me-1"></i> Stock</a>
                 <a class="nav-link" onclick="showTab('ventas')"><i class="fas fa-truck me-1"></i> Ventas</a>
@@ -73,7 +98,6 @@
         </div>
 
         <div class="col-md-10 p-2 p-md-4">
-            
             <div id="stock" class="content-section">
                 <div class="row">
                     <div class="col-lg-8">
@@ -99,7 +123,7 @@
                             <select id="consumoArticulo" class="form-select mb-2"></select>
                             <div class="input-group">
                                 <input type="number" id="consumoCantidad" class="form-control" placeholder="Cant.">
-                                <button class="btn btn-warning text-white" onclick="registrarConsumo()">RESTAL</button>
+                                <button class="btn btn-warning text-white" onclick="registrarConsumo()">RESTAR</button>
                             </div>
                         </div>
                     </div>
@@ -192,12 +216,12 @@
                     <div class="table-responsive"><table class="table table-sm"><tbody id="tablaClientes"></tbody></table></div>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
 
 <script>
+    // Tu lógica original de la v10 se mantiene idéntica para asegurar el funcionamiento
     const firebaseConfig = {
       apiKey: "AIzaSyCjYp0idCxs32QAofYLVEGcwvmd3HXy-3Y",
       authDomain: "prados-del-sol.firebaseapp.com",
@@ -214,6 +238,7 @@
 
     function login() { auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPass').value); }
     function logout() { auth.signOut(); }
+    
     auth.onAuthStateChanged(user => {
         if (user) { 
             document.getElementById('loginScreen').classList.add('hidden'); 
@@ -270,13 +295,13 @@
         });
     }
 
-    // --- LÓGICA DE CARGA Y RESTA ---
     function filtrarArticulosAcuerdo() {
         const prov = document.getElementById('selProveedor').value;
         const filtrados = acuerdos.filter(a => a.proveedor === prov);
         document.getElementById('selArticulo').innerHTML = '<option value="">-- Art --</option>' + filtrados.map(a => `<option value="${a.articulo}">${a.articulo}</option>`).join('');
         calcularCarga();
     }
+    
     function calcularCarga() {
         const prov = document.getElementById('selProveedor').value;
         const art = document.getElementById('selArticulo').value;
@@ -286,6 +311,7 @@
         let total = (ac && tipo === 'p') ? cant * ac.cxp * ac.uxc : (ac && tipo === 'c') ? cant * ac.uxc : cant;
         document.getElementById('txtTotalFinal').innerText = total.toLocaleString();
     }
+
     async function guardarIngreso() {
         const art = document.getElementById('selArticulo').value;
         const totalU = parseInt(document.getElementById('txtTotalFinal').innerText.replace(/\./g,''));
@@ -296,6 +322,7 @@
             document.getElementById('txtTotalFinal').innerText = "0";
         }
     }
+
     async function registrarConsumo() {
         const art = document.getElementById('consumoArticulo').value;
         const cant = parseInt(document.getElementById('consumoCantidad').value) || 0;
@@ -305,7 +332,6 @@
         document.getElementById('consumoCantidad').value = "";
     }
 
-    // --- VENTAS ---
     function actualizarPrevisualizacion() {
         const p = parseInt(document.getElementById('vtaPallets').value) || 0;
         const c = parseInt(document.getElementById('vtaCxP').value) || 0;
@@ -314,6 +340,7 @@
         document.getElementById('resTotalCajas').innerText = (p * c).toLocaleString();
         document.getElementById('resTotalEtiquetas').innerText = (p * c * u).toLocaleString();
     }
+
     async function procesarDespacho() {
         const prod = document.getElementById('vtaArticulo').value;
         const totalU = parseInt(document.getElementById('resTotalAceite').innerText.replace(/\./g,''));
@@ -331,7 +358,6 @@
         actualizarPrevisualizacion();
     }
 
-    // --- HISTORIAL ---
     async function cargarHistorial() {
         const mesSel = document.getElementById('filtroMes').value;
         const start = new Date(mesSel + "-01T00:00:00");
@@ -345,7 +371,6 @@
         document.getElementById('listaHistorial').innerHTML = h;
     }
 
-    // --- OTROS ---
     function showTab(id) {
         document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
         document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
@@ -353,12 +378,13 @@
         if(event) event.currentTarget.classList.add('active');
         if(id === 'historial') cargarHistorial();
     }
+
     function guardarArt() { const n = document.getElementById('confNuevoArt').value.toLowerCase(); const m = parseInt(document.getElementById('confMinArt').value) || 0; if(n) db.collection("articulos").add({nombre: n, minimo: m}); }
     function renderMaestro() { document.getElementById('listaArts').innerHTML = articulos.map(a => `<div class="list-group-item d-flex justify-content-between p-1 small">${a.nombre} <i class="fas fa-trash text-danger" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join(''); }
     function guardarProv() { db.collection("proveedores").add({nombre: prompt("Nombre del proveedor:")}); }
     function guardarAcuerdo() { db.collection("acuerdos").add({proveedor: document.getElementById('acProv').value, articulo: document.getElementById('acArt').value, uxc: parseInt(document.getElementById('acUxC').value), cxp: parseInt(document.getElementById('acCxP').value)}); }
     function renderAcuerdos() { document.getElementById('listaAcuerdos').innerHTML = acuerdos.map(ac => `<div class="border-bottom py-1 small">${ac.proveedor} ➔ ${ac.articulo} <i class="fas fa-times text-danger" onclick="db.collection('acuerdos').doc('${ac.id}').delete()"></i></div>`).join(''); }
-    function renderLista(id, data, coll) { document.getElementById(id).innerHTML = data.map(item => `<div class="list-group-item d-flex justify-content-between p-1 small">${item.nombre} <i class="fas fa-times text-danger" onclick="db.collection('${coll}').doc('${item.id}').delete()"></i></div>`).join(''); }
+    function renderLista(id, data, coll) { document.getElementById(id).innerHTML = data.map(item => `<div class="list-group-item d-flex justify-content-between p-1 small">${item.nombre} <i class="fas fa-trash text-danger" onclick="db.collection('${coll}').doc('${item.id}').delete()"></i></div>`).join(''); }
     function guardarCliente() { db.collection("clientes").add({nombre: document.getElementById('cliNombre').value, dir: document.getElementById('cliDir').value}); }
     function renderClientes() { document.getElementById('tablaClientes').innerHTML = clientes.map(c => `<tr><td class="small">${c.nombre}</td><td class="text-end"><i class="fas fa-trash text-danger" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></td></tr>`).join(''); }
     async function limpiarArt(n) { if(confirm("Vaciar stock?")) { const snp = await db.collection("stock").where("articulo","==",n).get(); const b = db.batch(); snp.forEach(d => b.delete(d.ref)); await b.commit(); } }
