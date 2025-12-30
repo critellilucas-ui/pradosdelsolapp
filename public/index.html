@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Prados del Sol - Gestión Logística v11</title>
+    <title>Prados del Sol - Gestión Logística v12</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -205,7 +205,6 @@
 </div>
 
 <script>
-    // CONFIGURACIÓN FIREBASE
     const firebaseConfig = {
       apiKey: "AIzaSyCjYp0idCxs32QAofYLVEGcwvmd3HXy-3Y",
       authDomain: "prados-del-sol.firebaseapp.com",
@@ -220,7 +219,6 @@
 
     let articulos = [], proveedores = [], acuerdos = [], clientes = [], stockActualGlobal = {};
 
-    // AUTH
     function login() { auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPass').value); }
     function logout() { auth.signOut(); }
     auth.onAuthStateChanged(user => {
@@ -234,7 +232,6 @@
         }
     });
 
-    // INICIO
     async function iniciarApp() {
         const hoy = new Date();
         document.getElementById('filtroMes').value = hoy.getFullYear() + "-" + String(hoy.getMonth()+1).padStart(2, '0');
@@ -247,22 +244,18 @@
             document.getElementById('vtaArticulo').innerHTML = '<option value="">-- Prod --</option>' + html;
             document.getElementById('consumoArticulo').innerHTML = '<option value="">-- Uso --</option>' + html;
         });
-
         db.collection("proveedores").orderBy("nombre").onSnapshot(s => {
             proveedores = s.docs.map(d => ({id:d.id, ...d.data()}));
             const provHtml = '<option value="">-- Prov --</option>' + proveedores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
             document.getElementById('selProveedor').innerHTML = provHtml;
             document.getElementById('acProv').innerHTML = provHtml;
         });
-
         db.collection("clientes").orderBy("nombre").onSnapshot(s => {
             clientes = s.docs.map(d => ({id:d.id, ...d.data()}));
             document.getElementById('vtaCliente').innerHTML = '<option value="">-- Cliente --</option>' + clientes.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
             renderClientes();
         });
-
         db.collection("acuerdos").onSnapshot(s => { acuerdos = s.docs.map(d => ({id:d.id, ...d.data()})); renderAcuerdos(); });
-
         db.collection("stock").onSnapshot(s => {
             const res = {}; s.docs.forEach(d => { res[d.data().articulo] = (res[d.data().articulo] || 0) + d.data().cantidad; });
             stockActualGlobal = res;
@@ -280,13 +273,12 @@
         });
     }
 
-    // CARGA DE STOCK
+    // --- CARGA ---
     function filtrarArticulosAcuerdo() {
         const prov = document.getElementById('selProveedor').value;
         const filtrados = acuerdos.filter(a => a.proveedor === prov);
         document.getElementById('selArticulo').innerHTML = '<option value="">-- Art --</option>' + filtrados.map(a => `<option value="${a.articulo}">${a.articulo}</option>`).join('');
     }
-
     function calcularCarga() {
         const prov = document.getElementById('selProveedor').value;
         const art = document.getElementById('selArticulo').value;
@@ -296,7 +288,6 @@
         let total = (ac && tipo === 'p') ? cant * ac.cxp * ac.uxc : (ac && tipo === 'c') ? cant * ac.uxc : cant;
         document.getElementById('txtTotalFinal').innerText = total.toLocaleString();
     }
-
     async function guardarIngreso() {
         const art = document.getElementById('selArticulo').value;
         const totalU = parseInt(document.getElementById('txtTotalFinal').innerText.replace(/\./g,''));
@@ -308,7 +299,7 @@
         }
     }
 
-    // VENTAS Y PDF
+    // --- VENTAS Y REMITO ---
     function actualizarPrevisualizacion() {
         const p = parseInt(document.getElementById('vtaPallets').value) || 0;
         const c = parseInt(document.getElementById('vtaCxP').value) || 0;
@@ -324,7 +315,7 @@
         const totalU = parseInt(document.getElementById('resTotalAceite').innerText.replace(/\./g,''));
         const totalC = parseInt(document.getElementById('resTotalCajas').innerText.replace(/\./g,''));
         
-        if(!clienteNombre || !prod || totalU <= 0) return alert("Complete los datos de la venta");
+        if(!clienteNombre || !prod || totalU <= 0) return alert("Faltan datos de la venta");
 
         const batch = db.batch();
         batch.set(db.collection("stock").doc(), { articulo: prod, cantidad: -totalU, tipo: "venta", fecha: firebase.firestore.FieldValue.serverTimestamp() });
@@ -338,18 +329,17 @@
 
         await batch.commit();
 
-        // Generar Remito
         const datosRemito = {
             cliente: clienteNombre,
             producto: prod,
-            unidades: totalU,
+            pallets: document.getElementById('vtaPallets').value,
             cajas: totalC,
+            unidades: totalU,
             transporte: document.getElementById('vtaTransporte').value || "A DESIGNAR",
             patente: document.getElementById('vtaPatente').value || "N/A"
         };
         generarPDFRemito(datosRemito);
-        
-        alert("Venta registrada y Remito generado.");
+        alert("Despacho Exitoso.");
     }
 
     function generarPDFRemito(v) {
@@ -357,39 +347,46 @@
         const doc = new jsPDF();
         const clienteData = clientes.find(c => c.nombre === v.cliente) || {};
 
-        doc.setFontSize(18); doc.text("PRADOS DEL SOL", 105, 15, { align: "center" });
-        doc.setFontSize(10); doc.text("Fábrica de Aceites Vegetales", 105, 20, { align: "center" });
-        doc.line(10, 25, 200, 25);
-        
-        doc.setFontSize(14); doc.text("REMITO DE SALIDA", 10, 35);
-        doc.setFontSize(10); doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 150, 35);
+        doc.setFontSize(22); doc.setTextColor(40);
+        doc.text("PRADOS DEL SOL", 105, 18, { align: "center" });
+        doc.setFontSize(10); doc.setTextColor(100);
+        doc.text("Fábrica de Aceites Vegetales", 105, 23, { align: "center" });
+        doc.line(10, 28, 200, 28);
 
-        doc.setFont(undefined, 'bold'); doc.text("DESTINATARIO:", 10, 50);
+        doc.setFontSize(14); doc.setTextColor(0); doc.setFont(undefined, 'bold');
+        doc.text("REMITO DE SALIDA", 10, 40);
+        doc.setFontSize(10); doc.setFont(undefined, 'normal');
+        doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 190, 40, { align: "right" });
+
+        doc.setFont(undefined, 'bold'); doc.text("DESTINATARIO:", 10, 52);
         doc.setFont(undefined, 'normal');
-        doc.text(`Razón Social: ${v.cliente}`, 10, 55);
-        doc.text(`Dirección: ${clienteData.dir || 'N/A'}`, 10, 60);
-        doc.text(`CUIT: ${clienteData.cuit || 'N/A'} - IVA: ${clienteData.iva || 'N/A'}`, 10, 65);
+        doc.text(`Razón Social:  ${v.cliente.toUpperCase()}`, 10, 60);
+        doc.text(`Dirección:     ${clienteData.dir || 'N/A'}`, 10, 67);
+        doc.text(`Identificación: CUIT: ${clienteData.cuit || 'N/A'} - IVA: ${clienteData.iva || 'N/A'}`, 10, 74);
 
-        doc.rect(140, 48, 60, 20);
-        doc.text("LOGÍSTICA:", 142, 53);
-        doc.text(`Transporte: ${v.transporte}`, 142, 58);
-        doc.text(`Patente: ${v.patente}`, 142, 63);
+        doc.rect(130, 50, 70, 28);
+        doc.setFont(undefined, 'bold'); doc.text("LOGÍSTICA:", 135, 56);
+        doc.setFont(undefined, 'normal'); doc.setFontSize(9);
+        doc.text(`Transporte:`, 135, 63);
+        doc.text(`${v.transporte.substring(0, 35)}`, 135, 68);
+        doc.text(`Patente:     ${v.patente.toUpperCase()}`, 135, 74);
 
         doc.autoTable({
-            startY: 75,
-            head: [['Cant. Cajas', 'Descripción', 'Unidades']],
-            body: [[v.cajas.toLocaleString(), v.producto, v.unidades.toLocaleString()]],
-            headStyles: { fillColor: [33, 37, 41] }
+            startY: 85,
+            head: [['Pallets', 'Cant. Cajas', 'Descripción del Producto', 'Total Unidades']],
+            body: [[v.pallets + " PLTS", v.cajas.toLocaleString() + " CJ", v.producto.toUpperCase(), v.unidades.toLocaleString() + " UN"]],
+            headStyles: { fillColor: [40, 40, 40], fontSize: 10, halign: 'center' },
+            theme: 'grid'
         });
 
-        const fY = doc.lastAutoTable.finalY + 40;
-        doc.line(20, fY, 80, fY); doc.text("Firma Despacho", 35, fY + 5);
-        doc.line(120, fY, 180, fY); doc.text("Firma Recibido", 135, fY + 5);
+        const finalY = doc.lastAutoTable.finalY + 45;
+        doc.line(20, finalY, 85, finalY); doc.text("Firma Despacho", 52, finalY + 5, { align: "center" });
+        doc.line(125, finalY, 190, finalY); doc.text("Firma Recibido", 157, finalY + 5, { align: "center" });
 
         doc.save(`Remito_${v.cliente}.pdf`);
     }
 
-    // HISTORIAL Y RESET
+    // --- HISTORIAL ---
     async function cargarHistorial() {
         const mesSel = document.getElementById('filtroMes').value;
         const start = new Date(mesSel + "-01T00:00:00");
@@ -404,17 +401,17 @@
     }
 
     async function resetTotalMovimientos() {
-        if(confirm("ATENCIÓN: Se borrarán TODOS los movimientos de stock para empezar de cero. ¿Continuar?")) {
+        if(confirm("¿Borrar todos los movimientos? El stock volverá a cero.")) {
             const snp = await db.collection("stock").get();
             const batch = db.batch();
             snp.forEach(d => batch.delete(d.ref));
             await batch.commit();
-            alert("Sistema en cero.");
+            alert("Sistema reseteado.");
             cargarHistorial();
         }
     }
 
-    // CLIENTES
+    // --- CLIENTES ---
     function guardarCliente() {
         db.collection("clientes").add({
             nombre: document.getElementById('cliNombre').value,
@@ -425,14 +422,13 @@
         alert("Cliente guardado");
         document.getElementById('cliNombre').value = "";
     }
-
     function renderClientes() {
         document.getElementById('tablaClientes').innerHTML = clientes.map(c => 
             `<tr><td class="small"><b>${c.nombre}</b><br>${c.dir || ''}</td><td class="text-end"><i class="fas fa-trash text-danger" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></td></tr>`
         ).join('');
     }
 
-    // OTROS
+    // --- GENERAL ---
     function showTab(id) {
         document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
         document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
@@ -440,7 +436,6 @@
         if(event) event.currentTarget.classList.add('active');
         if(id === 'historial') cargarHistorial();
     }
-    
     function guardarArt() { const n = document.getElementById('confNuevoArt').value.toLowerCase(); const m = parseInt(document.getElementById('confMinArt').value) || 0; if(n) db.collection("articulos").add({nombre: n, minimo: m}); }
     function renderMaestro() { document.getElementById('listaArts').innerHTML = articulos.map(a => `<div class="list-group-item d-flex justify-content-between p-1 small">${a.nombre} <i class="fas fa-trash text-danger" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join(''); }
     function guardarAcuerdo() { db.collection("acuerdos").add({proveedor: document.getElementById('acProv').value, articulo: document.getElementById('acArt').value, uxc: parseInt(document.getElementById('acUxC').value), cxp: parseInt(document.getElementById('acCxP').value)}); }
