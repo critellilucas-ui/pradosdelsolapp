@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sistema Prados del Sol - Logística Profesional</title>
+    <title>Sistema Prados del Sol - Producción</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -42,8 +42,9 @@
     <div class="row">
         <div class="col-md-2 sidebar">
             <h5 class="text-center mb-4 border-bottom pb-2 text-info">LOGÍSTICA</h5>
-            <nav class="nav-custom">
+            <nav class="nav-custom flex-column">
                 <a class="nav-link active" onclick="showTab('stock')"><i class="fas fa-boxes me-1"></i> Stock</a>
+                <a class="nav-link" onclick="showTab('produccion')"><i class="fas fa-industry me-1"></i> Producción</a>
                 <a class="nav-link" onclick="showTab('ventas')"><i class="fas fa-truck me-1"></i> Ventas</a>
                 <a class="nav-link" onclick="showTab('historial')"><i class="fas fa-history me-1"></i> Historial</a>
                 <a class="nav-link" onclick="showTab('clientes')"><i class="fas fa-users me-1"></i> Clientes</a>
@@ -53,6 +54,7 @@
         </div>
 
         <div class="col-md-10 p-4">
+            
             <div id="stock" class="content-section">
                 <div class="row">
                     <div class="col-lg-8">
@@ -81,15 +83,61 @@
                         </div>
                     </div>
                 </div>
-                <div class="card p-2 shadow-sm">
+                <div class="card p-2 shadow-sm mt-3">
                     <h6 class="p-2 fw-bold">Inventario Actual</h6>
                     <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead class="table-dark"><tr><th>Artículo</th><th class="text-center">Stock</th><th class="text-center">Mín.</th><th class="text-end">Acción</th></tr></thead><tbody id="tablaStock"></tbody></table></div>
                 </div>
             </div>
 
+            <div id="produccion" class="content-section hidden">
+                <div class="card p-4 border-top border-info border-4 shadow-sm">
+                    <h5 class="text-info fw-bold mb-3"><i class="fas fa-industry"></i> Registrar Producción</h5>
+                    <p class="text-muted small">Este proceso sumará stock al producto terminado y descontará: Botellas, Etiquetas y Cajas.</p>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label>Producto a Fabricar</label>
+                            <select id="prodArticulo" class="form-select"></select>
+                        </div>
+                        <div class="col-md-3">
+                            <label>Turno</label>
+                            <select id="prodTurno" class="form-select">
+                                <option value="Mañana">Mañana</option>
+                                <option value="Tarde">Tarde</option>
+                                <option value="Noche">Noche</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label>Nº de Lote</label>
+                            <input type="text" id="prodLote" class="form-control" placeholder="Ej: L-202301">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-1 bg-light p-3 rounded border">
+                        <div class="col-4 col-md-2">
+                            <label>Pallets</label>
+                            <input type="number" id="prodPallets" class="form-control" value="1" oninput="calcProdTotal()">
+                        </div>
+                        <div class="col-4 col-md-2">
+                            <label>Cajas x Pallet</label>
+                            <input type="number" id="prodCxP" class="form-control" value="75" oninput="calcProdTotal()">
+                        </div>
+                        <div class="col-4 col-md-2">
+                            <label>Unid. x Caja</label>
+                            <input type="number" id="prodUxC" class="form-control" value="12" oninput="calcProdTotal()">
+                        </div>
+                        <div class="col-md-6 d-flex align-items-center justify-content-end">
+                            <h5 class="m-0 text-muted">Total a Producir: <span id="prodTotalCalc" class="text-info fw-bold">900</span> un.</h5>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-info text-white fw-bold w-100 py-3 mt-4" onclick="finalizarProduccion()">CONFIRMAR PRODUCCIÓN</button>
+                </div>
+            </div>
+
             <div id="ventas" class="content-section hidden">
                 <div class="card p-3 border-top border-primary border-4 shadow-sm">
-                    <h5 class="text-primary fw-bold mb-3">Nuevo Despacho Multi-Producto</h5>
+                    <h5 class="text-primary fw-bold mb-3">Nuevo Despacho / Venta</h5>
                     <div class="row g-2 mb-3">
                         <div class="col-12"><label>Cliente</label><select id="vtaCliente" class="form-select"></select></div>
                     </div>
@@ -134,7 +182,7 @@
                     </div>
                     <div class="table-responsive">
                         <table class="table table-sm table-hover">
-                            <thead class="table-light"><tr><th>Fecha</th><th>Artículo</th><th>Tipo</th><th class="text-end">Cant.</th><th class="text-end">Acción</th></tr></thead>
+                            <thead class="table-light"><tr><th>Fecha</th><th>Artículo</th><th>Tipo</th><th>Detalle</th><th class="text-end">Cant.</th><th class="text-end">Acción</th></tr></thead>
                             <tbody id="listaHistorial"></tbody>
                         </table>
                     </div>
@@ -183,10 +231,12 @@
 
     async function iniciarApp() {
         const hoy = new Date(); document.getElementById('filtroMes').value = hoy.getFullYear() + "-" + String(hoy.getMonth()+1).padStart(2, '0');
+        
         db.collection("articulos").orderBy("nombre").onSnapshot(s => {
             articulos = s.docs.map(d => ({id:d.id, ...d.data()}));
             const h = articulos.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
-            document.getElementById('acArt').innerHTML = h; document.getElementById('vtaArticulo').innerHTML = h; document.getElementById('consumoArticulo').innerHTML = h;
+            document.getElementById('acArt').innerHTML = h; document.getElementById('vtaArticulo').innerHTML = h; 
+            document.getElementById('consumoArticulo').innerHTML = h; document.getElementById('prodArticulo').innerHTML = h;
             renderMaestro();
         });
         db.collection("proveedores").orderBy("nombre").onSnapshot(s => {
@@ -212,7 +262,59 @@
         });
     }
 
-    // VENTAS
+    // --- LOGICA DE PRODUCCION (NUEVA) ---
+    function calcProdTotal() {
+        const p = parseInt(document.getElementById('prodPallets').value) || 0;
+        const c = parseInt(document.getElementById('prodCxP').value) || 0;
+        const u = parseInt(document.getElementById('prodUxC').value) || 0;
+        document.getElementById('prodTotalCalc').innerText = (p * c * u).toLocaleString();
+    }
+
+    async function finalizarProduccion() {
+        const art = document.getElementById('prodArticulo').value;
+        const lote = document.getElementById('prodLote').value;
+        const turno = document.getElementById('prodTurno').value;
+        const pal = parseInt(document.getElementById('prodPallets').value) || 0;
+        const cxp = parseInt(document.getElementById('prodCxP').value) || 0;
+        const uxc = parseInt(document.getElementById('prodUxC').value) || 0;
+
+        if(!art || !lote) return alert("Falta el Artículo o el Lote");
+        
+        const totUnidades = pal * cxp * uxc;
+        const totCajas = pal * cxp;
+
+        const batch = db.batch();
+        const prodId = "PROD-" + Date.now();
+        const f = firebase.firestore.FieldValue.serverTimestamp();
+
+        // 1. SUMAR PRODUCTO TERMINADO
+        batch.set(db.collection("stock").doc(), { 
+            articulo: art, cantidad: totUnidades, tipo: "Producción", 
+            lote: lote, turno: turno, prodId: prodId, fecha: f 
+        });
+
+        // 2. RESTAR INSUMOS AUTOMATICAMENTE
+        let cja = "", eti = "", bot = "";
+        const n = art.toLowerCase();
+        
+        if (n.includes("850") || n.includes("900")) { 
+            cja = "caja de 900cc"; eti = "etiqueta de 900cc"; bot = "botella 900cc";
+        } else if (n.includes("1.5")) { 
+            cja = "caja de 1.5lts"; eti = "etiqueta de 1.5lts"; bot = "botella 1.5lts";
+        } else if (n.includes("5")) { 
+            cja = "caja de 5lts"; eti = "etiqueta de 5lts"; bot = "botella 5lts";
+        }
+
+        if(cja) batch.set(db.collection("stock").doc(), { articulo: cja, cantidad: -totCajas, tipo: "Insumo Prod", prodId: prodId, fecha: f });
+        if(eti) batch.set(db.collection("stock").doc(), { articulo: eti, cantidad: -totUnidades, tipo: "Insumo Prod", prodId: prodId, fecha: f });
+        if(bot) batch.set(db.collection("stock").doc(), { articulo: bot, cantidad: -totUnidades, tipo: "Insumo Prod", prodId: prodId, fecha: f });
+
+        await batch.commit();
+        alert("Producción registrada. Stock actualizado.");
+        document.getElementById('prodLote').value = "";
+    }
+
+    // --- VENTAS ---
     function agregarItemALista() {
         const prod = document.getElementById('vtaArticulo').value, pal = parseInt(document.getElementById('vtaPallets').value) || 0, cxp = parseInt(document.getElementById('vtaCxP').value) || 0, uxc = parseInt(document.getElementById('vtaUxC').value) || 0;
         if (!prod || pal <= 0) return alert("Complete datos");
@@ -229,17 +331,15 @@
         
         itemsVentaActual.forEach(it => {
             const itemId = "ITEM-" + Math.random().toString(36).substr(2, 9);
-            // 1. Descuento Producto Principal
             batch.set(db.collection("stock").doc(), { articulo: it.producto, cantidad: -it.unidades, tipo: "Venta", despachoId: despachoId, itemId: itemId, fecha: firebase.firestore.FieldValue.serverTimestamp() });
             
-            // 2. Descuento Insumos vinculados a este ITEM específico
             let pN = it.producto.toLowerCase(), cja = "", eti = "";
             if (pN.includes("850cc") || pN.includes("900cc")) { cja = "caja de 900cc"; eti = "etiqueta de 900cc"; }
             else if (pN.includes("1.5lts")) { cja = "caja de 1.5lts"; eti = "etiqueta de 1.5lts"; }
             else if (pN.includes("5lts")) { cja = "caja de 5lts"; eti = "etiqueta de 5lts"; }
             
-            if(cja) batch.set(db.collection("stock").doc(), { articulo: cja, cantidad: -it.cajas, tipo: "Insumo", despachoId: despachoId, itemId: itemId, fecha: firebase.firestore.FieldValue.serverTimestamp() });
-            if(eti) batch.set(db.collection("stock").doc(), { articulo: eti, cantidad: -it.unidades, tipo: "Insumo", despachoId: despachoId, itemId: itemId, fecha: firebase.firestore.FieldValue.serverTimestamp() });
+            if(cja) batch.set(db.collection("stock").doc(), { articulo: cja, cantidad: -it.cajas, tipo: "Insumo Venta", despachoId: despachoId, itemId: itemId, fecha: firebase.firestore.FieldValue.serverTimestamp() });
+            if(eti) batch.set(db.collection("stock").doc(), { articulo: eti, cantidad: -it.unidades, tipo: "Insumo Venta", despachoId: despachoId, itemId: itemId, fecha: firebase.firestore.FieldValue.serverTimestamp() });
         });
         
         await batch.commit();
@@ -266,57 +366,71 @@
         doc.save(`Remito_${v.cliente}.pdf`);
     }
 
-    // HISTORIAL
+    // HISTORIAL Y ANULACIONES
     async function cargarHistorial() {
         const cont = document.getElementById('listaHistorial'), mes = document.getElementById('filtroMes').value; if (!mes) return;
-        cont.innerHTML = '<tr><td colspan="5" class="text-center">Cargando...</td></tr>';
+        cont.innerHTML = '<tr><td colspan="6" class="text-center">Cargando...</td></tr>';
         const s = new Date(mes + "-01T00:00:00"), e = new Date(s.getFullYear(), s.getMonth()+1, 0, 23, 59, 59);
         const snp = await db.collection("stock").where("fecha", ">=", s).where("fecha", "<=", e).get();
         const movs = snp.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => (b.fecha?.seconds||0) - (a.fecha?.seconds||0));
+        
         cont.innerHTML = movs.map(m => {
-            // Solo mostramos botón anular en las ventas principales (no en los insumos para no confundir)
-            const btnAnular = m.tipo === 'Venta' ? `<button class="btn btn-xs btn-outline-danger py-0" style="font-size: 0.7rem" onclick="anularMovimiento('${m.id}')">Anular Todo</button>` : '';
-            return `<tr><td>${m.fecha?m.fecha.toDate().toLocaleDateString():'S/F'}</td><td class="fw-bold">${m.articulo}</td><td><span class="badge ${m.tipo==='Venta'?'bg-primary':m.tipo==='ANULACIÓN'?'bg-danger':'bg-success'}">${m.tipo}</span></td><td class="text-end fw-bold ${m.cantidad<0?'text-danger':'text-success'}">${m.cantidad}</td><td class="text-end">${btnAnular}</td></tr>`;
+            const btnAnular = (m.tipo === 'Venta' || m.tipo === 'Producción') 
+                ? `<button class="btn btn-xs btn-outline-danger py-0" style="font-size: 0.7rem" onclick="anularMovimiento('${m.id}', '${m.tipo}')">Anular</button>` 
+                : '';
+            
+            let detalle = "";
+            if(m.lote) detalle += `Lote: ${m.lote} `;
+            if(m.turno) detalle += `(${m.turno})`;
+            
+            return `<tr>
+                <td>${m.fecha?m.fecha.toDate().toLocaleDateString():'S/F'}</td>
+                <td class="fw-bold">${m.articulo}</td>
+                <td><span class="badge ${m.tipo==='Venta'?'bg-primary':m.tipo==='Producción'?'bg-info':m.tipo==='ANULACIÓN'?'bg-danger':'bg-success'}">${m.tipo}</span></td>
+                <td class="small text-muted">${detalle}</td>
+                <td class="text-end fw-bold ${m.cantidad<0?'text-danger':'text-success'}">${m.cantidad}</td>
+                <td class="text-end">${btnAnular}</td>
+            </tr>`;
         }).join('');
     }
 
-    async function anularMovimiento(id) {
-        if(!confirm("¿Desea anular esta venta? Se devolverá el stock de productos, cajas y etiquetas asociados.")) return;
+    async function anularMovimiento(id, tipo) {
+        if(!confirm(`¿Desea anular esta ${tipo}? Se revertirán todos los stocks asociados.`)) return;
         const docRef = db.collection("stock").doc(id);
-        const docVenta = await docRef.get();
-        if(!docVenta.exists) return;
-        const data = docVenta.data();
+        const docMain = await docRef.get();
+        if(!docMain.exists) return;
+        const data = docMain.data();
         const batch = db.batch();
 
-        // Si la venta tiene un itemId (vínculo con insumos)
-        if(data.itemId) {
-            const snp = await db.collection("stock").where("itemId", "==", data.itemId).get();
+        // Identificar el ID de grupo (prodId para producción, despachoId para ventas)
+        let groupField = (tipo === "Producción") ? "prodId" : "despachoId";
+        let groupId = data[groupField];
+
+        if(groupId) {
+            const snp = await db.collection("stock").where(groupField, "==", groupId).get();
             snp.forEach(d => {
                 const item = d.data();
+                // Invertimos la cantidad (si era -100 pasa a +100, si era +100 pasa a -100)
                 batch.set(db.collection("stock").doc(), {
                     articulo: item.articulo,
-                    cantidad: Math.abs(item.cantidad), // Devuelve el stock
+                    cantidad: item.cantidad * -1, 
                     tipo: "ANULACIÓN",
                     fecha: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                batch.delete(d.ref); // Eliminamos los registros negativos originales
+                batch.delete(d.ref); // Borramos el original o podríamos dejarlo y solo poner la contrapartida. Aquí borro para limpiar.
             });
         } else {
-            batch.set(db.collection("stock").doc(), {
-                articulo: data.articulo,
-                cantidad: Math.abs(data.cantidad),
-                tipo: "ANULACIÓN",
-                fecha: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            // Anulación simple si no tiene grupo
+            batch.set(db.collection("stock").doc(), { articulo: data.articulo, cantidad: data.cantidad * -1, tipo: "ANULACIÓN", fecha: firebase.firestore.FieldValue.serverTimestamp() });
             batch.delete(docRef);
         }
         
         await batch.commit();
-        alert("Anulación completa: Stock de producto e insumos restablecido.");
+        alert("Anulación completa.");
         cargarHistorial();
     }
 
-    // CONFIG Y OTROS
+    // UTILIDADES
     async function resetStock(art) {
         if(!confirm(`¿Desea poner en CERO el stock de ${art}?`)) return;
         const snp = await db.collection("stock").where("articulo", "==", art).get();
@@ -333,11 +447,12 @@
     async function exportarHistorialPDF() {
         const { jsPDF } = window.jspdf; const doc = new jsPDF(); const mes = document.getElementById('filtroMes').value;
         doc.text(`Reporte de Movimientos - ${mes}`, 10, 15);
-        const rows = []; document.querySelectorAll("#listaHistorial tr").forEach(tr => { const cells = tr.querySelectorAll("td"); if(cells.length > 0) rows.push([cells[0].innerText, cells[1].innerText, cells[2].innerText, cells[3].innerText]); });
+        const rows = []; document.querySelectorAll("#listaHistorial tr").forEach(tr => { const cells = tr.querySelectorAll("td"); if(cells.length > 0) rows.push([cells[0].innerText, cells[1].innerText, cells[2].innerText, cells[4].innerText]); });
         doc.autoTable({ startY: 25, head: [['Fecha', 'Artículo', 'Tipo', 'Cantidad']], body: rows });
         doc.save(`Reporte_${mes}.pdf`);
     }
 
+    // CRUD BÁSICO
     function guardarArt() { const n = document.getElementById('confNuevoArt').value; if(n) db.collection("articulos").add({nombre: n.toLowerCase(), minimo: parseInt(document.getElementById('confMinArt').value)||0}); }
     function renderMaestro() { document.getElementById('listaArts').innerHTML = articulos.map(a => `<div class="p-1 border-bottom small d-flex justify-content-between"><span>${a.nombre}</span><i class="fas fa-trash text-danger cursor-pointer" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join(''); }
     function guardarProv() { const n = document.getElementById('confNuevoProv').value; if(n) db.collection("proveedores").add({nombre: n.toUpperCase()}); document.getElementById('confNuevoProv').value=""; }
