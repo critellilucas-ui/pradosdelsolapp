@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sistema Prados del Sol - Producción</title>
+    <title>Sistema Prados del Sol - Producción Activa</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -25,6 +25,7 @@
         .stock-peligro { background-color: #fff5f5 !important; color: #dc3545 !important; border-left: 5px solid #dc3545 !important; }
         label { font-size: 0.8rem; font-weight: bold; }
         .cursor-pointer { cursor: pointer; }
+        .bg-gradient-info { background: linear-gradient(45deg, #0dcaf0, #0aa2c0); color: white; }
     </style>
 </head>
 <body>
@@ -91,13 +92,18 @@
 
             <div id="produccion" class="content-section hidden">
                 <div class="card p-4 border-top border-info border-4 shadow-sm">
-                    <h5 class="text-info fw-bold mb-3"><i class="fas fa-industry"></i> Registrar Producción</h5>
-                    <p class="text-muted small">Este proceso sumará stock al producto terminado y descontará: Botellas, Etiquetas y Cajas.</p>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="text-info fw-bold m-0"><i class="fas fa-industry"></i> Registrar Producción</h5>
+                        <div class="bg-gradient-info px-3 py-1 rounded shadow-sm">
+                            <small class="d-block text-white-50" style="font-size: 0.7rem;">STOCK ACTUAL EN TIEMPO REAL</small>
+                            <span id="lblStockVivo" class="fw-bold fs-5">Seleccione...</span>
+                        </div>
+                    </div>
                     
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label>Producto a Fabricar</label>
-                            <select id="prodArticulo" class="form-select"></select>
+                            <select id="prodArticulo" class="form-select" onchange="actualizarLabelProduccion()"></select>
                         </div>
                         <div class="col-md-3">
                             <label>Turno</label>
@@ -132,6 +138,16 @@
                     </div>
 
                     <button class="btn btn-info text-white fw-bold w-100 py-3 mt-4" onclick="finalizarProduccion()">CONFIRMAR PRODUCCIÓN</button>
+                </div>
+
+                <div class="card p-3 shadow-sm mt-3">
+                    <h6 class="fw-bold text-muted border-bottom pb-2">Producción del Día (Últimos Movimientos)</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead><tr><th>Hora</th><th>Producto</th><th>Lote</th><th>Turno</th><th class="text-end">Cantidad</th></tr></thead>
+                            <tbody id="tablaProduccionHoy"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -222,7 +238,11 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
+    
+    // VARIABLES GLOBALES
     let articulos = [], proveedores = [], acuerdos = [], clientes = [], itemsVentaActual = [];
+    let inventarioGlobal = {}; // Para seguimiento en tiempo real
+    let produccionHoy = [];    // Para listado local
 
     // AUTH
     function login() { auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPass').value); }
@@ -238,6 +258,7 @@
             document.getElementById('acArt').innerHTML = h; document.getElementById('vtaArticulo').innerHTML = h; 
             document.getElementById('consumoArticulo').innerHTML = h; document.getElementById('prodArticulo').innerHTML = h;
             renderMaestro();
+            actualizarLabelProduccion(); // Inicializar label
         });
         db.collection("proveedores").orderBy("nombre").onSnapshot(s => {
             proveedores = s.docs.map(d => ({id:d.id, ...d.data()}));
@@ -252,22 +273,71 @@
             document.getElementById('vtaCliente').innerHTML = '<option value="">-- Cliente --</option>' + clientes.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
             renderClientes();
         });
+
+        // LISTENER DE STOCK EN TIEMPO REAL
         db.collection("stock").onSnapshot(s => {
-            const res = {}; s.docs.forEach(d => { res[d.data().articulo] = (res[d.data().articulo] || 0) + d.data().cantidad; });
-            document.getElementById('tablaStock').innerHTML = Object.keys(res).map(k => {
+            inventarioGlobal = {}; // Resetear mapa
+            produccionHoy = [];    // Resetear lista diaria
+            
+            const inicioHoy = new Date(); inicioHoy.setHours(0,0,0,0);
+
+            s.docs.forEach(d => { 
+                const data = d.data();
+                // 1. Sumar stock total
+                inventarioGlobal[data.articulo] = (inventarioGlobal[data.articulo] || 0) + data.cantidad;
+                
+                // 2. Detectar producción de hoy para la tabla
+                if (data.tipo === 'Producción' && data.fecha && data.fecha.toDate() >= inicioHoy) {
+                    produccionHoy.push({ ...data, fechaJs: data.fecha.toDate() });
+                }
+            });
+
+            // Actualizar Tabla Stock
+            document.getElementById('tablaStock').innerHTML = Object.keys(inventarioGlobal).map(k => {
                 const a = articulos.find(x => x.nombre === k);
-                const st = res[k]; const min = a ? a.minimo : 0;
+                const st = inventarioGlobal[k]; const min = a ? a.minimo : 0;
                 return `<tr class="${st <= min ? 'stock-peligro' : ''}"><td>${k}</td><td class="text-center fw-bold">${st.toLocaleString()}</td><td class="text-center">${min}</td><td class="text-end"><button class="btn btn-sm btn-outline-danger" onclick="resetStock('${k}')"><i class="fas fa-undo"></i> Reset</button></td></tr>`;
             }).join('');
+
+            // Actualizar Visuales de Producción (El "activo" que pediste)
+            actualizarLabelProduccion();
+            renderProduccionHoy();
         });
     }
 
-    // --- LOGICA DE PRODUCCION (NUEVA) ---
+    // --- LOGICA DE PRODUCCION ---
     function calcProdTotal() {
         const p = parseInt(document.getElementById('prodPallets').value) || 0;
         const c = parseInt(document.getElementById('prodCxP').value) || 0;
         const u = parseInt(document.getElementById('prodUxC').value) || 0;
         document.getElementById('prodTotalCalc').innerText = (p * c * u).toLocaleString();
+    }
+
+    function actualizarLabelProduccion() {
+        const art = document.getElementById('prodArticulo').value;
+        const lbl = document.getElementById('lblStockVivo');
+        if(!art) {
+            lbl.innerText = "Seleccione...";
+            return;
+        }
+        const cant = inventarioGlobal[art] || 0;
+        lbl.innerText = cant.toLocaleString() + " un.";
+    }
+
+    function renderProduccionHoy() {
+        // Ordenar por más reciente primero
+        produccionHoy.sort((a,b) => b.fechaJs - a.fechaJs);
+        const html = produccionHoy.map(p => {
+            const hora = p.fechaJs.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            return `<tr>
+                <td>${hora}</td>
+                <td>${p.articulo}</td>
+                <td>${p.lote || '-'}</td>
+                <td>${p.turno || '-'}</td>
+                <td class="text-end fw-bold text-success">+${p.cantidad}</td>
+            </tr>`;
+        }).join('');
+        document.getElementById('tablaProduccionHoy').innerHTML = html || '<tr><td colspan="5" class="text-center text-muted">No hay producción registrada hoy.</td></tr>';
     }
 
     async function finalizarProduccion() {
@@ -310,8 +380,8 @@
         if(bot) batch.set(db.collection("stock").doc(), { articulo: bot, cantidad: -totUnidades, tipo: "Insumo Prod", prodId: prodId, fecha: f });
 
         await batch.commit();
-        alert("Producción registrada. Stock actualizado.");
-        document.getElementById('prodLote').value = "";
+        // No necesitamos alert porque la UI se actualiza sola gracias al onSnapshot
+        document.getElementById('prodLote').value = ""; // Limpiar lote para el siguiente
     }
 
     // --- VENTAS ---
@@ -402,7 +472,6 @@
         const data = docMain.data();
         const batch = db.batch();
 
-        // Identificar el ID de grupo (prodId para producción, despachoId para ventas)
         let groupField = (tipo === "Producción") ? "prodId" : "despachoId";
         let groupId = data[groupField];
 
@@ -410,17 +479,15 @@
             const snp = await db.collection("stock").where(groupField, "==", groupId).get();
             snp.forEach(d => {
                 const item = d.data();
-                // Invertimos la cantidad (si era -100 pasa a +100, si era +100 pasa a -100)
                 batch.set(db.collection("stock").doc(), {
                     articulo: item.articulo,
                     cantidad: item.cantidad * -1, 
                     tipo: "ANULACIÓN",
                     fecha: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                batch.delete(d.ref); // Borramos el original o podríamos dejarlo y solo poner la contrapartida. Aquí borro para limpiar.
+                batch.delete(d.ref); 
             });
         } else {
-            // Anulación simple si no tiene grupo
             batch.set(db.collection("stock").doc(), { articulo: data.articulo, cantidad: data.cantidad * -1, tipo: "ANULACIÓN", fecha: firebase.firestore.FieldValue.serverTimestamp() });
             batch.delete(docRef);
         }
