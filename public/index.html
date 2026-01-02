@@ -24,6 +24,8 @@
         label { font-size: 0.8rem; font-weight: bold; }
         .border-salida { border-top: 4px solid #dc3545 !important; }
         .border-entrada { border-top: 4px solid #198754 !important; }
+        .btn-reporte { background-color: #6f42c1; color: white; }
+        .btn-reporte:hover { background-color: #59359a; color: white; }
     </style>
 </head>
 <body>
@@ -71,7 +73,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="col-md-6">
                         <div class="card p-3 border-salida shadow-sm">
                             <h6 class="text-danger fw-bold"><i class="fas fa-minus-circle me-2"></i>SALIDA (USO INTERNO / ROTURA)</h6>
@@ -85,7 +86,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="card p-2 shadow-sm">
                     <h6 class="p-2 fw-bold"><i class="fas fa-warehouse me-2"></i>ESTADO ACTUAL DEL DEPÓSITO</h6>
                     <table class="table table-sm align-middle">
@@ -153,13 +153,22 @@
             </div>
 
             <div id="historial" class="content-section hidden">
+                <div class="card p-3 border-top border-dark border-4 shadow-sm mb-3">
+                    <h6 class="fw-bold"><i class="fas fa-file-pdf me-2"></i>GENERAR REPORTE DETALLADO POR TURNO</h6>
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-3"><label>Fecha</label><input type="date" id="repFecha" class="form-control"></div>
+                        <div class="col-md-3"><label>Turno</label><select id="repTurno" class="form-select"><option value="mañana">Mañana (06:00 - 14:00)</option><option value="tarde">Tarde (14:00 - 22:00)</option></select></div>
+                        <div class="col-md-3"><button class="btn btn-reporte w-100 fw-bold" onclick="generarReporteTurno()"><i class="fas fa-download me-2"></i>DESCARGAR PDF</button></div>
+                    </div>
+                </div>
+
                 <div class="card p-3">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold m-0">MOVIMIENTOS DE STOCK</h5>
-                        <button class="btn btn-danger btn-sm" onclick="resetTodoElStock()">RESETEAR TODO EL HISTORIAL</button>
+                        <h5 class="fw-bold m-0">MOVIMIENTOS RECIENTES</h5>
+                        <button class="btn btn-danger btn-sm" onclick="resetTodoElStock()">RESETEAR TODO</button>
                     </div>
                     <table class="table table-sm table-striped">
-                        <thead><tr><th>Fecha</th><th>Artículo</th><th>Tipo</th><th class="text-end">Cant.</th><th>X</th></tr></thead>
+                        <thead><tr><th>Fecha / Hora</th><th>Artículo</th><th>Tipo</th><th class="text-end">Cant.</th><th>X</th></tr></thead>
                         <tbody id="listaHistorial"></tbody>
                     </table>
                 </div>
@@ -197,13 +206,16 @@
     auth.onAuthStateChanged(u => { if(u){ document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('appSystem').classList.remove('hidden'); iniciar(); } });
 
     function iniciar() {
+        // Cargar fecha actual por defecto en el reporte
+        document.getElementById('repFecha').valueAsDate = new Date();
+        
         db.collection("articulos").orderBy("nombre").onSnapshot(s => {
             articulos = s.docs.map(d => ({id:d.id, ...d.data()}));
             const h = articulos.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
             document.getElementById('prodArticulo').innerHTML = h; 
             document.getElementById('vtaArt').innerHTML = h; 
             document.getElementById('acArt').innerHTML = h;
-            document.getElementById('selArticuloSalida').innerHTML = h; // <-- Llenado del select de salida
+            document.getElementById('selArticuloSalida').innerHTML = h;
             renderConfigArts();
         });
         db.collection("proveedores").onSnapshot(s => {
@@ -238,29 +250,23 @@
         });
     }
 
-    // SALIDA PARA USO INTERNO (RESTABLECIDO)
     async function guardarSalidaInterna() {
         const art = document.getElementById('selArticuloSalida').value;
         const cant = parseInt(document.getElementById('inpCantidadSalida').value) || 0;
         if(art && cant > 0) {
-            await db.collection("stock").add({
-                articulo: art,
-                cantidad: -cant,
-                tipo: "USO INTERNO (-)",
-                fecha: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            await db.collection("stock").add({ articulo: art, cantidad: -cant, tipo: "USO INTERNO (-)", fecha: firebase.firestore.FieldValue.serverTimestamp() });
             alert("Descuento registrado.");
             document.getElementById('inpCantidadSalida').value = "";
         }
     }
 
-    // ENTRADA STOCK
     function filtrarArticulosAcuerdo() {
         const p = document.getElementById('selProveedor').value;
         const f = acuerdos.filter(a => a.proveedor === p);
         document.getElementById('selArticulo').innerHTML = f.map(a => `<option value="${a.articulo}">${a.articulo}</option>`).join('');
         calcularCarga();
     }
+
     function calcularCarga() {
         const p = document.getElementById('selProveedor').value, a = document.getElementById('selArticulo').value;
         const c = parseInt(document.getElementById('inpCantidad').value)||0, t = document.getElementById('selTipoCarga').value;
@@ -268,13 +274,13 @@
         let tot = c; if(ac && t==='p') tot=c*ac.cxp*ac.uxc; else if(ac && t==='c') tot=c*ac.uxc;
         document.getElementById('txtTotalFinal').innerText = tot.toLocaleString();
     }
+
     async function guardarIngreso() {
         const a = document.getElementById('selArticulo').value, t = parseInt(document.getElementById('txtTotalFinal').innerText.replace(/\./g,''));
         if(a && t>0) await db.collection("stock").add({articulo: a, cantidad: t, tipo: "INGRESO (+)", fecha: firebase.firestore.FieldValue.serverTimestamp()});
         document.getElementById('inpCantidad').value = "";
     }
 
-    // PRODUCCION
     async function ejecutarProduccion() {
         const art = document.getElementById('prodArticulo').value;
         const total = parseInt(document.getElementById('labelTotalProd').innerText.replace(/\./g,''));
@@ -294,7 +300,6 @@
         await batch.commit(); alert("Producción terminada.");
     }
 
-    // VENTAS / REMITO
     function agregarItemVenta() {
         itemsVenta.push({ art: document.getElementById('vtaArt').value, cant: parseInt(document.getElementById('vtaCant').value), lote: document.getElementById('vtaLote').value });
         renderTempVenta();
@@ -321,6 +326,83 @@
         doc.save("remito.pdf");
     }
 
+    // --- REPORTE DETALLADO POR TURNO ---
+    async function generarReporteTurno() {
+        const fechaInp = document.getElementById('repFecha').value;
+        const turno = document.getElementById('repTurno').value;
+        if(!fechaInp) return alert("Selecciona una fecha");
+
+        // Configurar rango horario según turno
+        const hInicio = turno === 'mañana' ? 6 : 14;
+        const hFin = turno === 'mañana' ? 14 : 22;
+
+        const start = new Date(fechaInp + "T" + String(hInicio).padStart(2,'0') + ":00:00");
+        const end = new Date(fechaInp + "T" + String(hFin).padStart(2,'0') + ":00:00");
+
+        const snap = await db.collection("stock")
+            .where("fecha", ">=", start)
+            .where("fecha", "<=", end)
+            .orderBy("fecha", "asc")
+            .get();
+
+        if(snap.empty) return alert("No hay movimientos registrados en este turno.");
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Cabecera Reporte
+        doc.setFillColor(33, 37, 41);
+        doc.rect(0, 0, 210, 40, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(20); doc.text("REPORTE DIARIO DE PLANTA", 105, 18, {align:'center'});
+        doc.setFontSize(12); doc.text(`PRADOS DEL SOL - TURNO ${turno.toUpperCase()}`, 105, 28, {align:'center'});
+        doc.text(`Fecha: ${fechaInp} | Responsable: Maximiliano Meza`, 105, 35, {align:'center'});
+
+        const movs = snap.docs.map(d => ({...d.data(), hora: d.data().fecha.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}));
+        
+        // SECCIÓN 1: PRODUCCIÓN DEL DÍA
+        const prod = movs.filter(m => m.tipo.includes("PRODUCCION"));
+        doc.setTextColor(0); doc.setFontSize(14); doc.text("1. PRODUCCIÓN FINALIZADA", 10, 50);
+        doc.autoTable({
+            startY: 55,
+            head: [['Hora', 'Producto Elaborado', 'Cantidad (Unidades)']],
+            body: prod.map(m => [m.hora, m.articulo, m.cantidad]),
+            theme: 'striped', headStyles: {fillColor: [13, 110, 253]}
+        });
+
+        // SECCIÓN 2: CONSUMO DE INSUMOS
+        const cons = movs.filter(m => m.tipo.includes("CONSUMO"));
+        doc.text("2. INSUMOS CONSUMIDOS (ENVASE/ETIQUETA/CAJA)", 10, doc.lastAutoTable.finalY + 15);
+        doc.autoTable({
+            startY: doc.lastAutoTable.finalY + 20,
+            head: [['Hora', 'Insumo', 'Cantidad Usada']],
+            body: cons.map(m => [m.hora, m.articulo, Math.abs(m.cantidad)]),
+            theme: 'grid', headStyles: {fillColor: [108, 117, 125]}
+        });
+
+        // SECCIÓN 3: BAJAS Y USO INTERNO
+        const uso = movs.filter(m => m.tipo.includes("USO INTERNO"));
+        doc.text("3. BAJAS / ROTURAS / USO INTERNO", 10, doc.lastAutoTable.finalY + 15);
+        doc.autoTable({
+            startY: doc.lastAutoTable.finalY + 20,
+            head: [['Hora', 'Artículo', 'Motivo / Cantidad']],
+            body: uso.map(m => [m.hora, m.articulo, m.cantidad]),
+            theme: 'striped', headStyles: {fillColor: [220, 53, 69]}
+        });
+
+        // SECCIÓN 4: VENTAS / DESPACHOS
+        const vta = movs.filter(m => m.tipo.includes("VENTA"));
+        doc.text("4. DESPACHOS / VENTAS", 10, doc.lastAutoTable.finalY + 15);
+        doc.autoTable({
+            startY: doc.lastAutoTable.finalY + 20,
+            head: [['Hora', 'Producto Despachado', 'Unidades']],
+            body: vta.map(m => [m.hora, m.articulo, Math.abs(m.cantidad)]),
+            theme: 'grid', headStyles: {fillColor: [25, 135, 84]}
+        });
+
+        doc.save(`Reporte_Planta_${fechaInp}_Turno_${turno}.pdf`);
+    }
+
     // CLIENTES
     async function guardarCliente() {
         await db.collection("clientes").add({ nombre: document.getElementById('cliNombre').value, cuit: document.getElementById('cliCuit').value, direccion: document.getElementById('cliDir').value, localidad: document.getElementById('cliLoc').value, telefono: document.getElementById('cliTel').value });
@@ -330,12 +412,12 @@
         document.getElementById('listadoClientes').innerHTML = clientes.map(c => `<div class="col-md-4 mb-2"><div class="card p-2 shadow-sm small"><b>${c.nombre}</b><br>${c.localidad}<br><button class="btn btn-sm btn-danger mt-1" onclick="db.collection('clientes').doc('${c.id}').delete()">Eliminar</button></div></div>`).join('');
     }
 
-    // BORRADOS
+    // BORRADOS Y HISTORIAL VISUAL
     async function borrarMovimientosArt(art) { if(confirm("¿Borrar stock de "+art+"?")){ const s = await db.collection("stock").where("articulo","==",art).get(); const b = db.batch(); s.docs.forEach(d=>b.delete(d.ref)); await b.commit(); } }
     async function resetTodoElStock() { if(confirm("¿RESET TOTAL?")){ const s = await db.collection("stock").get(); const b = db.batch(); s.docs.forEach(d=>b.delete(d.ref)); await b.commit(); } }
     async function cargarHistorial() {
-        const s = await db.collection("stock").orderBy("fecha","desc").limit(50).get();
-        document.getElementById('listaHistorial').innerHTML = s.docs.map(d => `<tr><td>${d.data().fecha?.toDate().toLocaleDateString()||''}</td><td>${d.data().articulo}</td><td>${d.data().tipo}</td><td class="text-end">${d.data().cantidad}</td><td><button onclick="db.collection('stock').doc('${d.id}').delete()" class="btn btn-sm text-danger">X</button></td></tr>`).join('');
+        const s = await db.collection("stock").orderBy("fecha","desc").limit(40).get();
+        document.getElementById('listaHistorial').innerHTML = s.docs.map(d => `<tr><td>${d.data().fecha?.toDate().toLocaleString()||''}</td><td>${d.data().articulo}</td><td>${d.data().tipo}</td><td class="text-end">${d.data().cantidad}</td><td><button onclick="db.collection('stock').doc('${d.id}').delete()" class="btn btn-sm text-danger"><i class="fas fa-trash"></i></button></td></tr>`).join('');
     }
 
     // CONFIG
