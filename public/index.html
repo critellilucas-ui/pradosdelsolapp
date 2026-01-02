@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sistema Prados del Sol - Gestión Integral</title>
+    <title>Sistema Prados del Sol - Gestión Flexible</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -21,9 +21,8 @@
         .nav-link.active, .nav-link:hover { color: white; background-color: #0d6efd; }
         .hidden { display: none !important; }
         .card { border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-radius: 12px; margin-bottom: 15px; }
-        label { font-size: 0.8rem; font-weight: bold; }
-        .border-venta { border-top: 4px solid #0d6efd !important; }
-        .badge-item { font-size: 0.9rem; margin: 2px; display: inline-block; padding: 8px; }
+        label { font-size: 0.75rem; font-weight: bold; color: #555; }
+        .bg-detalle { background-color: #e9ecef; border-radius: 8px; padding: 10px; }
     </style>
 </head>
 <body>
@@ -47,124 +46,98 @@
                 <a class="nav-link" onclick="showTab('ventas')"><i class="fas fa-file-invoice me-1"></i> Ventas / Remito</a>
                 <a class="nav-link" onclick="showTab('clientes')"><i class="fas fa-users me-1"></i> Clientes</a>
                 <a class="nav-link" onclick="showTab('historial')"><i class="fas fa-history me-1"></i> Historial</a>
-                <a class="nav-link" onclick="showTab('config')"><i class="fas fa-cog me-1"></i> Config</a>
                 <a class="nav-link text-danger mt-3" onclick="logout()"><i class="fas fa-power-off"></i></a>
             </nav>
         </div>
 
         <div class="col-md-10 p-4">
             
-            <div id="ventas" class="content-section">
-                <div class="card p-4 border-venta shadow-sm">
-                    <h5 class="text-primary fw-bold mb-4"><i class="fas fa-shipping-fast me-2"></i>DESPACHO Y GENERACIÓN DE REMITO</h5>
-                    
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-4"><label>Cliente Destino</label><select id="vtaCliente" class="form-select"></select></div>
-                        <div class="col-md-2"><label>N° Remito</label><input type="text" id="vtaNumRemito" class="form-control" placeholder="0001-0000..."></div>
-                        <div class="col-md-3"><label>Transporte / Empresa</label><input type="text" id="vtaTransp" class="form-control" value="Propio"></div>
-                        <div class="col-md-3"><label>Patente Vehículo</label><input type="text" id="vtaPatente" class="form-control" placeholder="ABC-123"></div>
-                        <div class="col-md-4"><label>Nombre del Chofer</label><input type="text" id="vtaChofer" class="form-control"></div>
-                        <div class="col-md-3"><label>DNI Chofer</label><input type="text" id="vtaDniChofer" class="form-control"></div>
-                    </div>
-
-                    <hr>
-
-                    <div class="bg-light p-3 rounded mb-3">
-                        <h6 class="fw-bold small mb-3 text-secondary">AÑADIR ARTÍCULOS AL REMITO</h6>
-                        <div class="row g-2 align-items-end">
-                            <div class="col-md-4"><label>Artículo</label><select id="vtaArt" class="form-select" onchange="actualizarCalculoVenta()"></select></div>
-                            <div class="col-md-2"><label>Cantidad</label><input type="number" id="vtaCantLog" class="form-control" value="1" oninput="actualizarCalculoVenta()"></div>
-                            <div class="col-md-2"><label>Tipo</label><select id="vtaTipoCarga" class="form-select" onchange="actualizarCalculoVenta()"><option value="p">Pallets</option><option value="c">Cajas</option><option value="u">Unidades</option></select></div>
-                            <div class="col-md-2"><label>Lote</label><input type="text" id="vtaLote" class="form-control" placeholder="Lote"></div>
-                            <div class="col-md-2"><button class="btn btn-dark w-100" onclick="agregarItemVenta()"><i class="fas fa-plus me-1"></i> Añadir</button></div>
+            <div id="stock" class="content-section">
+                <div class="row">
+                    <div class="col-md-7">
+                        <div class="card p-3 border-top border-success border-4">
+                            <h6 class="text-success fw-bold"><i class="fas fa-download me-2"></i>INGRESO DE MERCADERÍA</h6>
+                            <div class="row g-2">
+                                <div class="col-md-6"><label>Proveedor</label><select id="selProveedor" class="form-select" onchange="filtrarArticulosAcuerdo()"></select></div>
+                                <div class="col-md-6"><label>Artículo</label><select id="selArticulo" class="form-select" onchange="autocompletarConfig()"></select></div>
+                                
+                                <div class="col-md-3"><label>Cant. Principal</label><input type="number" id="inpCantidad" class="form-control" value="1" oninput="calcularTotalIngreso()"></div>
+                                <div class="col-md-3"><label>Formato</label><select id="selTipoCarga" class="form-select" onchange="calcularTotalIngreso()">
+                                    <option value="p">Pallets</option>
+                                    <option value="c">Cajas</option>
+                                    <option value="u">Unidades</option>
+                                </select></div>
+                                
+                                <div class="col-md-3"><label id="lblCxP">Cajas x Pallet</label><input type="number" id="inpCxP" class="form-control" value="0" oninput="calcularTotalIngreso()"></div>
+                                <div class="col-md-3"><label id="lblUxC">Unid. x Caja</label><input type="number" id="inpUxC" class="form-control" value="0" oninput="calcularTotalIngreso()"></div>
+                            </div>
+                            <div class="mt-3 bg-dark text-white p-2 rounded d-flex justify-content-between align-items-center">
+                                <span>TOTAL A INGRESAR: <b id="txtTotalFinal">0</b> unidades</span>
+                                <button class="btn btn-success fw-bold" onclick="guardarIngreso()">CARGAR STOCK</button>
+                            </div>
                         </div>
-                        <div class="mt-2 small fw-bold text-primary">Total a descontar: <span id="vtaTotalUnidades">0</span> unidades</div>
                     </div>
-
-                    <div id="listaTempVenta" class="d-flex flex-wrap mb-4"></div>
-
-                    <button class="btn btn-primary w-100 fw-bold py-3 shadow" onclick="finalizarVenta()">
-                        <i class="fas fa-check-circle me-2"></i>CONFIRMAR SALIDA Y DESCARGAR REMITO
-                    </button>
+                    
+                    <div class="col-md-5">
+                        <div class="card p-3 border-top border-danger border-4">
+                            <h6 class="text-danger fw-bold">DESCUENTO DIRECTO (USO INTERNO)</h6>
+                            <div class="row g-2">
+                                <div class="col-8"><label>Artículo</label><select id="selArticuloSalida" class="form-select"></select></div>
+                                <div class="col-4"><label>Unidades</label><input type="number" id="inpCantidadSalida" class="form-control"></div>
+                            </div>
+                            <button class="btn btn-danger w-100 mt-3 btn-sm" onclick="guardarSalidaInterna()">REGISTRAR BAJA</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card p-2 shadow-sm mt-3">
+                    <table class="table table-sm"><thead class="table-dark"><tr><th>Artículo</th><th class="text-center">Stock</th><th class="text-end">Acción</th></tr></thead><tbody id="tablaStockGeneral"></tbody></table>
                 </div>
             </div>
 
-            <div id="stock" class="content-section hidden">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card p-3 border-entrada shadow-sm">
-                            <h6 class="text-success fw-bold"><i class="fas fa-plus-circle me-2"></i>ENTRADA (PROVEEDORES)</h6>
-                            <div class="row g-2">
-                                <div class="col-12"><label>Proveedor</label><select id="selProveedor" class="form-select" onchange="filtrarArticulosAcuerdo()"></select></div>
-                                <div class="col-6"><label>Artículo</label><select id="selArticulo" class="form-select" onchange="calcularCarga()"></select></div>
-                                <div class="col-3"><label>Cant.</label><input type="number" id="inpCantidad" class="form-control" oninput="calcularCarga()"></div>
-                                <div class="col-3"><label>Tipo</label><select id="selTipoCarga" class="form-select" onchange="calcularCarga()"><option value="p">Pallets</option><option value="c">Cajas</option><option value="u">Unidades</option></select></div>
-                            </div>
-                            <div class="mt-3 bg-light p-2 rounded d-flex justify-content-between align-items-center"><span class="small fw-bold">Total: <span id="txtTotalFinal" class="text-success">0</span> un.</span><button class="btn btn-success btn-sm fw-bold" onclick="guardarIngreso()">CARGAR ENTRADA</button></div>
-                        </div>
+            <div id="ventas" class="content-section hidden">
+                <div class="card p-4 border-top border-primary border-4">
+                    <h5 class="text-primary fw-bold mb-3">DESPACHO DE PRODUCTOS</h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4"><label>Cliente</label><select id="vtaCliente" class="form-select"></select></div>
+                        <div class="col-md-2"><label>N° Remito</label><input type="text" id="vtaNumRemito" class="form-control" placeholder="0001-0000123"></div>
+                        <div class="col-md-3"><label>Transporte</label><input type="text" id="vtaTransp" class="form-control" value="Propio"></div>
+                        <div class="col-md-3"><label>Patente</label><input type="text" id="vtaPatente" class="form-control"></div>
+                        <div class="col-md-4"><label>Chofer</label><input type="text" id="vtaChofer" class="form-control"></div>
+                        <div class="col-md-2"><label>DNI Chofer</label><input type="text" id="vtaDniChofer" class="form-control"></div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="card p-3 border-salida shadow-sm">
-                            <h6 class="text-danger fw-bold"><i class="fas fa-minus-circle me-2"></i>SALIDA (USO INTERNO)</h6>
-                            <div class="row g-2"><div class="col-8"><label>Artículo</label><select id="selArticuloSalida" class="form-select"></select></div><div class="col-4"><label>Cant. Un.</label><input type="number" id="inpCantidadSalida" class="form-control"></div></div>
-                            <div class="mt-3 text-end"><button class="btn btn-danger btn-sm fw-bold" onclick="guardarSalidaInterna()">DESCONTAR</button></div>
+
+                    <div class="bg- detalle p-3 bg-light border rounded">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-3"><label>Producto</label><select id="vtaArt" class="form-select" onchange="autocompletarConfigVenta()"></select></div>
+                            <div class="col-md-1"><label>Cant.</label><input type="number" id="vtaCant" class="form-control" value="1" oninput="calcularTotalVenta()"></div>
+                            <div class="col-md-2"><label>Tipo</label><select id="vtaTipo" class="form-select" onchange="calcularTotalVenta()">
+                                <option value="p">Pallets</option><option value="c">Cajas</option><option value="u">Unidades</option>
+                            </select></div>
+                            <div class="col-md-1"><label>CxP</label><input type="number" id="vtaCxP" class="form-control" oninput="calcularTotalVenta()"></div>
+                            <div class="col-md-1"><label>UxC</label><input type="number" id="vtaUxC" class="form-control" oninput="calcularTotalVenta()"></div>
+                            <div class="col-md-2"><label>Lote</label><input type="text" id="vtaLote" class="form-control"></div>
+                            <div class="col-md-2"><button class="btn btn-dark w-100" onclick="agregarItemVenta()">Añadir</button></div>
                         </div>
+                        <div class="mt-2 small text-primary fw-bold">Total ítem: <span id="vtaTotalItem">0</span> unidades</div>
                     </div>
+
+                    <div id="listaTempVenta" class="my-3 d-flex flex-wrap"></div>
+                    <button class="btn btn-primary w-100 py-3 fw-bold" onclick="finalizarVenta()">FINALIZAR SALIDA Y REMITO</button>
                 </div>
-                <div class="card p-2 mt-3 shadow-sm"><table class="table table-sm align-middle"><thead class="table-dark"><tr><th>Artículo</th><th class="text-center">Stock Real</th><th class="text-end">X</th></tr></thead><tbody id="tablaStockGeneral"></tbody></table></div>
             </div>
 
             <div id="produccion" class="content-section hidden">
-                <div class="row">
-                    <div class="col-md-7">
-                        <div class="card p-4 border-top border-info border-4 shadow-sm">
-                            <h5 class="text-info fw-bold mb-3">PARTE DE PRODUCCIÓN</h5>
-                            <div class="row g-3">
-                                <div class="col-12"><label>Producto Final</label><select id="prodArticulo" class="form-select"></select></div>
-                                <div class="col-4"><label>Pallets</label><input type="number" id="prodPal" class="form-control" value="1" oninput="calcP()"></div>
-                                <div class="col-4"><label>Cajas x Pal</label><input type="number" id="prodCxP" class="form-control" value="75" oninput="calcP()"></div>
-                                <div class="col-4"><label>Unid x Caja</label><input type="number" id="prodUxC" class="form-control" value="12" oninput="calcP()"></div>
-                            </div>
-                            <div class="mt-4 bg-light p-3 rounded d-flex justify-content-between align-items-center"><h3 class="m-0">Total: <span id="labelTotalProd" class="text-primary">900</span></h3><button class="btn btn-info text-white fw-bold btn-lg" onclick="ejecutarProduccion()">PRODUCIR</button></div>
-                        </div>
-                    </div>
-                    <div class="col-md-5"><div class="card p-3 shadow-sm"><h6 class="fw-bold text-info">STOCK ELABORADO</h6><table class="table table-sm"><tbody id="tablaStockProducido" class="fw-bold"></tbody></table></div></div>
-                </div>
-            </div>
-
-            <div id="clientes" class="content-section hidden">
-                <div class="card p-4">
-                    <h5 class="fw-bold mb-3">CLIENTES</h5>
-                    <div class="row g-3">
-                        <div class="col-md-4"><input type="text" id="cliNombre" class="form-control" placeholder="Razón Social"></div>
-                        <div class="col-md-4"><input type="text" id="cliCuit" class="form-control" placeholder="CUIT"></div>
-                        <div class="col-md-4"><input type="text" id="cliDir" class="form-control" placeholder="Dirección"></div>
-                        <div class="col-md-4"><input type="text" id="cliLoc" class="form-control" placeholder="Localidad"></div>
-                        <div class="col-md-4"><input type="text" id="cliTel" class="form-control" placeholder="Teléfono"></div>
-                        <div class="col-md-4"><button class="btn btn-primary w-100 fw-bold" onclick="guardarCliente()">AÑADIR</button></div>
-                    </div>
-                </div>
-                <div id="listadoClientes" class="row mt-3"></div>
+                 <div class="card p-4"><h5>PRODUCCIÓN AUTOMÁTICA</h5><div class="row g-3"><div class="col-md-6"><label>Producto</label><select id="prodArticulo" class="form-select"></select></div><div class="col-md-2"><label>Pallets</label><input type="number" id="prodPal" class="form-control" value="1" oninput="calcP()"></div><div class="col-md-2"><label>CxP</label><input type="number" id="prodCxP" class="form-control" value="75" oninput="calcP()"></div><div class="col-md-2"><label>UxC</label><input type="number" id="prodUxC" class="form-control" value="12" oninput="calcP()"></div></div><div class="mt-3">Total: <b id="labelTotalProd">900</b> <button class="btn btn-info ms-3" onclick="ejecutarProduccion()">PRODUCIR</button></div></div>
             </div>
 
             <div id="historial" class="content-section hidden">
-                <div class="card p-3 border-top border-dark border-4 shadow-sm mb-3">
-                    <h6 class="fw-bold"><i class="fas fa-file-pdf me-2"></i>REPORTE POR TURNO</h6>
-                    <div class="row g-2">
-                        <div class="col-md-4"><input type="date" id="repFecha" class="form-control"></div>
-                        <div class="col-md-4"><select id="repTurno" class="form-select"><option value="mañana">Mañana (06:00-14:00)</option><option value="tarde">Tarde (14:00-22:00)</option></select></div>
-                        <div class="col-md-4"><button class="btn btn-dark w-100" onclick="generarReporteTurno()">REPORTE PDF</button></div>
-                    </div>
-                </div>
-                <div class="card p-3"><table class="table table-sm"><thead><tr><th>Fecha</th><th>Art.</th><th>Tipo</th><th class="text-end">Cant.</th><th>X</th></tr></thead><tbody id="listaHistorial"></tbody></table></div>
+                <div class="card p-3"><button class="btn btn-sm btn-outline-danger mb-2" onclick="resetTodoElStock()">Reset Todo</button><table class="table table-sm"><thead><tr><th>Fecha</th><th>Art.</th><th>Tipo</th><th>Cant.</th></tr></thead><tbody id="listaHistorial"></tbody></table></div>
             </div>
 
-            <div id="config" class="content-section hidden">
-                <div class="row g-3">
-                    <div class="col-md-4"><div class="card p-3"><h6>Artículos</h6><input type="text" id="confArt" class="form-control mb-1"><button onclick="guardarArt()" class="btn btn-primary btn-sm">Guardar</button><div id="listaArts" class="mt-2"></div></div></div>
-                    <div class="col-md-4"><div class="card p-3"><h6>Proveedores</h6><input type="text" id="confProv" class="form-control mb-1"><button onclick="guardarProv()" class="btn btn-success btn-sm">Guardar</button><div id="listaProvs" class="mt-2"></div></div></div>
-                    <div class="col-md-4"><div class="card p-3"><h6>Acuerdos</h6><select id="acProv" class="form-select mb-1"></select><select id="acArt" class="form-select mb-1"></select><div class="input-group mb-1"><input type="number" id="acUxC" class="form-control" placeholder="UxC"><input type="number" id="acCxP" class="form-control" placeholder="CxP"></div><button onclick="guardarAcuerdo()" class="btn btn-warning btn-sm w-100">Vincular</button><div id="listaAcuerdos" class="mt-2"></div></div></div>
-                </div>
+            <div id="clientes" class="content-section hidden">
+                <div class="card p-3"><h6>Nuevo Cliente</h6><input id="cliNombre" placeholder="Nombre" class="form-control mb-1"><input id="cliCuit" placeholder="CUIT" class="form-control mb-1"><button onclick="guardarCliente()" class="btn btn-primary">Guardar</button></div>
+                <div id="listadoClientes" class="mt-3"></div>
             </div>
 
         </div>
@@ -177,13 +150,7 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    const RECETAS = {
-        "850cc": { botella: "botella 900cc", etiqueta: "etiqueta 900cc", caja: "caja 900cc", divisor: 12 },
-        "900cc": { botella: "botella 900cc", etiqueta: "etiqueta 900cc", caja: "caja 900cc", divisor: 12 },
-        "1.5lts": { botella: "botella 1.5lts", etiqueta: "etiqueta 1.5lts", caja: "caja 1.5lts", divisor: 6 },
-        "5lts": { botella: "bidon 5lts", etiqueta: "etiqueta 5lts", caja: "caja 5lts", divisor: 4 }
-    };
-
+    const RECETAS = { "850cc": { botella: "botella 900cc", etiqueta: "etiqueta 900cc", caja: "caja 900cc", divisor: 12 }, "900cc": { botella: "botella 900cc", etiqueta: "etiqueta 900cc", caja: "caja 900cc", divisor: 12 }, "1.5lts": { botella: "botella 1.5lts", etiqueta: "etiqueta 1.5lts", caja: "caja 1.5lts", divisor: 6 }, "5lts": { botella: "bidon 5lts", etiqueta: "etiqueta 5lts", caja: "caja 5lts", divisor: 4 } };
     let articulos = [], proveedores = [], acuerdos = [], clientes = [], stockGlobal = {}, itemsVenta = [];
 
     function login() { auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPass').value); }
@@ -191,20 +158,16 @@
     auth.onAuthStateChanged(u => { if(u){ document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('appSystem').classList.remove('hidden'); iniciar(); } });
 
     function iniciar() {
-        document.getElementById('repFecha').valueAsDate = new Date();
         db.collection("articulos").orderBy("nombre").onSnapshot(s => {
             articulos = s.docs.map(d => ({id:d.id, ...d.data()}));
             const h = articulos.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
-            document.getElementById('prodArticulo').innerHTML = h; document.getElementById('vtaArt').innerHTML = h; document.getElementById('acArt').innerHTML = h; document.getElementById('selArticuloSalida').innerHTML = h;
-            renderConfigArts();
+            document.getElementById('vtaArt').innerHTML = h; document.getElementById('prodArticulo').innerHTML = h; document.getElementById('selArticuloSalida').innerHTML = h;
         });
         db.collection("proveedores").onSnapshot(s => {
             proveedores = s.docs.map(d => ({id:d.id, ...d.data()}));
-            document.getElementById('selProveedor').innerHTML = '<option value="">-- Seleccionar --</option>' + proveedores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
-            document.getElementById('acProv').innerHTML = proveedores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
-            renderConfigProvs();
+            document.getElementById('selProveedor').innerHTML = '<option value="">-- Proveedor --</option>' + proveedores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
         });
-        db.collection("acuerdos").onSnapshot(s => { acuerdos = s.docs.map(d => ({id:d.id, ...d.data()})); renderConfigAcuerdos(); });
+        db.collection("acuerdos").onSnapshot(s => { acuerdos = s.docs.map(d => ({id:d.id, ...d.data()})); });
         db.collection("clientes").orderBy("nombre").onSnapshot(s => {
             clientes = s.docs.map(d => ({id:d.id, ...d.data()}));
             document.getElementById('vtaCliente').innerHTML = clientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
@@ -216,145 +179,127 @@
         });
     }
 
-    // --- LÓGICA DE VENTAS (MODO PALLET/CAJA DETALLADO) ---
-    function actualizarCalculoVenta() {
-        const art = document.getElementById('vtaArt').value;
-        const cant = parseInt(document.getElementById('vtaCantLog').value) || 0;
-        const tipo = document.getElementById('vtaTipoCarga').value;
-        
-        // Buscamos si el artículo tiene un acuerdo configurado (para saber UxC y CxP)
-        const ac = acuerdos.find(x => x.articulo === art);
-        let total = cant;
-        if (ac) {
-            if (tipo === 'p') total = cant * ac.cxp * ac.uxc;
-            else if (tipo === 'c') total = cant * ac.uxc;
+    // --- LÓGICA DE CARGA DINÁMICA (INGRESO) ---
+    function filtrarArticulosAcuerdo() {
+        const p = document.getElementById('selProveedor').value;
+        const f = acuerdos.filter(a => a.proveedor === p);
+        document.getElementById('selArticulo').innerHTML = '<option value="">-- Artículo --</option>' + f.map(a => `<option value="${a.articulo}">${a.articulo}</option>`).join('');
+    }
+
+    function autocompletarConfig() {
+        const p = document.getElementById('selProveedor').value;
+        const a = document.getElementById('selArticulo').value;
+        const ac = acuerdos.find(x => x.proveedor === p && x.articulo === a);
+        if(ac) {
+            document.getElementById('inpCxP').value = ac.cxp;
+            document.getElementById('inpUxC').value = ac.uxc;
         }
-        document.getElementById('vtaTotalUnidades').innerText = total.toLocaleString();
+        calcularTotalIngreso();
+    }
+
+    function calcularTotalIngreso() {
+        const c = parseInt(document.getElementById('inpCantidad').value) || 0;
+        const t = document.getElementById('selTipoCarga').value;
+        const cxp = parseInt(document.getElementById('inpCxP').value) || 0;
+        const uxc = parseInt(document.getElementById('inpUxC').value) || 0;
+
+        let total = 0;
+        if(t === 'p') total = c * cxp * uxc;
+        else if(t === 'c') total = c * uxc;
+        else total = c;
+
+        document.getElementById('txtTotalFinal').innerText = total.toLocaleString();
+    }
+
+    async function guardarIngreso() {
+        const a = document.getElementById('selArticulo').value;
+        const t = parseInt(document.getElementById('txtTotalFinal').innerText.replace(/\./g,''));
+        if(!a || t <= 0) return alert("Complete los datos");
+        await db.collection("stock").add({ articulo: a, cantidad: t, tipo: "INGRESO (+)", fecha: firebase.firestore.FieldValue.serverTimestamp() });
+        document.getElementById('inpCantidad').value = 1; alert("Stock ingresado");
+    }
+
+    // --- LÓGICA DE CARGA DINÁMICA (VENTA) ---
+    function autocompletarConfigVenta() {
+        const a = document.getElementById('vtaArt').value;
+        const ac = acuerdos.find(x => x.articulo === a); // Toma el primero que encuentre como sugerencia
+        if(ac) {
+            document.getElementById('vtaCxP').value = ac.cxp;
+            document.getElementById('vtaUxC').value = ac.uxc;
+        } else {
+            document.getElementById('vtaCxP').value = 0;
+            document.getElementById('vtaUxC').value = 0;
+        }
+        calcularTotalVenta();
+    }
+
+    function calcularTotalVenta() {
+        const c = parseInt(document.getElementById('vtaCant').value) || 0;
+        const t = document.getElementById('vtaTipo').value;
+        const cxp = parseInt(document.getElementById('vtaCxP').value) || 0;
+        const uxc = parseInt(document.getElementById('vtaUxC').value) || 0;
+
+        let total = 0;
+        if(t === 'p') total = c * cxp * uxc;
+        else if(t === 'c') total = c * uxc;
+        else total = c;
+
+        document.getElementById('vtaTotalItem').innerText = total.toLocaleString();
     }
 
     function agregarItemVenta() {
         const art = document.getElementById('vtaArt').value;
-        const unidades = parseInt(document.getElementById('vtaTotalUnidades').innerText.replace(/\./g,''));
+        const total = parseInt(document.getElementById('vtaTotalItem').innerText.replace(/\./g,''));
         const lote = document.getElementById('vtaLote').value || 'S/L';
-        const presentacion = document.getElementById('vtaCantLog').value + " " + document.getElementById('vtaTipoCarga').value;
-
-        if (unidades <= 0) return;
-
-        itemsVenta.push({ art, cant: unidades, pres: presentacion, lote });
+        const pres = document.getElementById('vtaCant').value + " " + document.getElementById('vtaTipo').value;
+        if(total <= 0) return;
+        itemsVenta.push({ art, cant: total, pres, lote });
         renderTempVenta();
     }
 
     function renderTempVenta() {
         document.getElementById('listaTempVenta').innerHTML = itemsVenta.map((it, i) => `
-            <div class="badge bg-primary badge-item p-2">
-                ${it.art} | ${it.pres} (${it.cant} un.) | Lote: ${it.lote}
-                <i class="fas fa-times ms-2 cursor-pointer text-warning" onclick="itemsVenta.splice(${i},1);renderTempVenta()"></i>
-            </div>`).join('');
+            <div class="badge bg-primary p-2 m-1">${it.art} | ${it.pres} (${it.cant} un) | Lote: ${it.lote} 
+            <i class="fas fa-times ms-2 cursor-pointer" onclick="itemsVenta.splice(${i},1);renderTempVenta()"></i></div>`).join('');
     }
 
     async function finalizarVenta() {
-        if(itemsVenta.length === 0) return alert("Agregue al menos un producto");
+        if(itemsVenta.length === 0) return;
         const batch = db.batch(), ts = firebase.firestore.FieldValue.serverTimestamp();
-        
-        itemsVenta.forEach(it => {
-            batch.set(db.collection("stock").doc(), { articulo: it.art, cantidad: -it.cant, tipo: "VENTA (-)", fecha: ts });
-        });
-        
-        await batch.commit();
-        generarPDFRemitoVenta();
-        itemsVenta = []; renderTempVenta();
-        alert("Venta registrada y remito generado.");
+        itemsVenta.forEach(it => { batch.set(db.collection("stock").doc(), { articulo: it.art, cantidad: -it.cant, tipo: "VENTA (-)", fecha: ts }); });
+        await batch.commit(); generarPDFRemito(); itemsVenta = []; renderTempVenta();
     }
 
-    function generarPDFRemitoVenta() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
+    function generarPDFRemito() {
+        const { jsPDF } = window.jspdf; const doc = new jsPDF();
         const cli = clientes.find(c => c.id === document.getElementById('vtaCliente').value);
-
-        // Cabecera Empresa
-        doc.setFontSize(22); doc.setTextColor(40); doc.text("PRADOS DEL SOL", 105, 20, {align: 'center'});
-        doc.setFontSize(10); doc.text("De: Maximiliano Meza", 105, 27, {align: 'center'});
-        doc.text("CUIT: 20-33445566-7 | Planta: Buenos Aires, Argentina", 105, 32, {align: 'center'});
-        doc.line(10, 35, 200, 35);
-
-        // Datos del Remito y Cliente
-        doc.setFontSize(12); doc.text("REMITO DE SALIDA", 10, 45);
-        doc.text(`NRO: ${document.getElementById('vtaNumRemito').value}`, 150, 45);
-        doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 150, 52);
-
-        doc.setFontSize(10);
-        doc.text("DESTINATARIO:", 10, 62);
-        doc.setFont(undefined, 'bold'); doc.text(`${cli?.nombre || 'Consumidor Final'}`, 10, 68); doc.setFont(undefined, 'normal');
-        doc.text(`CUIT: ${cli?.cuit || 'S/D'}`, 10, 73);
-        doc.text(`Domicilio: ${cli?.direccion || ''}, ${cli?.localidad || ''}`, 10, 78);
-
-        // Datos de Transporte y Chofer
-        doc.rect(10, 85, 190, 25);
-        doc.text("DATOS DE CARGA Y LOGÍSTICA:", 12, 90);
-        doc.text(`Transporte: ${document.getElementById('vtaTransp').value}`, 15, 96);
-        doc.text(`Chofer: ${document.getElementById('vtaChofer').value}`, 15, 101);
-        doc.text(`DNI: ${document.getElementById('vtaDniChofer').value}`, 80, 101);
-        doc.text(`Patente: ${document.getElementById('vtaPatente').value}`, 140, 101);
-
-        // Tabla de Productos
-        doc.autoTable({
-            startY: 115,
-            head: [['Producto', 'Pres. Enviada', 'Total Unid.', 'Lote']],
-            body: itemsVenta.map(i => [i.art, i.pres, i.cant, i.lote]),
-            theme: 'striped', headStyles: {fillColor: [33, 37, 41]}
-        });
-
-        const finalY = doc.lastAutoTable.finalY + 30;
-        doc.line(20, finalY, 80, finalY); doc.text("Firma Chofer", 40, finalY + 5);
-        doc.line(130, finalY, 190, finalY); doc.text("Recibió Conforme", 150, finalY + 5);
-
-        doc.save(`Remito_${document.getElementById('vtaNumRemito').value}.pdf`);
+        doc.setFontSize(20); doc.text("PRADOS DEL SOL", 105, 20, {align:'center'});
+        doc.setFontSize(10); doc.text(`REMITO: ${document.getElementById('vtaNumRemito').value}`, 10, 40);
+        doc.text(`Cliente: ${cli?.nombre || ''}`, 10, 48);
+        doc.text(`Transporte: ${document.getElementById('vtaTransp').value} | Patente: ${document.getElementById('vtaPatente').value}`, 10, 56);
+        doc.text(`Chofer: ${document.getElementById('vtaChofer').value} | DNI: ${document.getElementById('vtaDniChofer').value}`, 10, 64);
+        doc.autoTable({ startY: 75, head: [['Articulo', 'Presentacion', 'Cant. Total', 'Lote']], body: itemsVenta.map(i=>[i.art, i.pres, i.cant, i.lote]) });
+        doc.save("remito.pdf");
     }
 
-    // --- FUNCIONES RESTANTES ---
+    // --- FUNCIONES SOPORTE ---
     function renderTablasStock() {
-        const gen = document.getElementById('tablaStockGeneral'), pro = document.getElementById('tablaStockProducido');
-        gen.innerHTML = ""; pro.innerHTML = "";
+        const gen = document.getElementById('tablaStockGeneral'); gen.innerHTML = "";
         Object.keys(stockGlobal).sort().forEach(k => {
-            const cant = stockGlobal[k];
-            gen.innerHTML += `<tr><td>${k}</td><td class="text-center fw-bold">${cant.toLocaleString()}</td><td class="text-end"><button class="btn btn-sm text-danger" onclick="borrarMovimientosArt('${k}')"><i class="fas fa-trash"></i></button></td></tr>`;
-            if(!k.toLowerCase().includes("botella") && !k.toLowerCase().includes("caja") && !k.toLowerCase().includes("etiqueta")) pro.innerHTML += `<tr><td>${k}</td><td class="text-end text-info">${cant.toLocaleString()}</td></tr>`;
+            gen.innerHTML += `<tr><td>${k}</td><td class="text-center fw-bold">${stockGlobal[k].toLocaleString()}</td><td class="text-end"><button class="btn btn-sm text-danger" onclick="borrarMovArt('${k}')">X</button></td></tr>`;
         });
     }
-
-    async function ejecutarProduccion() {
-        const art = document.getElementById('prodArticulo').value, total = parseInt(document.getElementById('labelTotalProd').innerText.replace(/\./g,''));
-        if(total <= 0) return;
-        const batch = db.batch(), ts = firebase.firestore.FieldValue.serverTimestamp();
-        let rK = ""; if(art.includes("850")) rK = "850cc"; else if(art.includes("900")) rK = "900cc"; else if(art.includes("1.5")) rK = "1.5lts"; else if(art.includes("5")) rK = "5lts";
-        const rec = RECETAS[rK];
-        batch.set(db.collection("stock").doc(), { articulo: art, cantidad: total, tipo: "PRODUCCION (+)", fecha: ts });
-        if(rec) {
-            const cx = Math.ceil(total / rec.divisor);
-            batch.set(db.collection("stock").doc(), { articulo: rec.botella, cantidad: -total, tipo: "CONSUMO (-)", fecha: ts });
-            batch.set(db.collection("stock").doc(), { articulo: rec.etiqueta, cantidad: -total, tipo: "CONSUMO (-)", fecha: ts });
-            batch.set(db.collection("stock").doc(), { articulo: rec.caja, cantidad: -cx, tipo: "CONSUMO (-)", fecha: ts });
-        }
-        await batch.commit(); alert("Producción terminada.");
-    }
-
-    function renderClientes() { document.getElementById('listadoClientes').innerHTML = clientes.map(c => `<div class="col-md-4 mb-2"><div class="card p-2 shadow-sm small"><b>${c.nombre}</b><br>${c.localidad} <button class="btn btn-sm text-danger" onclick="db.collection('clientes').doc('${c.id}').delete()">X</button></div></div>`).join(''); }
-    async function guardarCliente() { await db.collection("clientes").add({ nombre: document.getElementById('cliNombre').value, cuit: document.getElementById('cliCuit').value, direccion: document.getElementById('cliDir').value, localidad: document.getElementById('cliLoc').value, telefono: document.getElementById('cliTel').value }); }
-    async function borrarMovimientosArt(art) { if(confirm("Borrar "+art+"?")){ const s = await db.collection("stock").where("articulo","==",art).get(); const b = db.batch(); s.docs.forEach(d=>b.delete(d.ref)); await b.commit(); } }
-    async function resetTodoElStock() { if(confirm("RESET?")){ const s = await db.collection("stock").get(); const b = db.batch(); s.docs.forEach(d=>b.delete(d.ref)); await b.commit(); } }
+    function renderClientes() { document.getElementById('listadoClientes').innerHTML = clientes.map(c => `<div class="p-2 border-bottom small">${c.nombre} <button class="btn btn-sm text-danger" onclick="db.collection('clientes').doc('${c.id}').delete()">X</button></div>`).join(''); }
+    async function guardarCliente() { await db.collection("clientes").add({ nombre: document.getElementById('cliNombre').value, cuit: document.getElementById('cliCuit').value }); }
+    async function borrarMovArt(a) { if(confirm("Borrar stock de "+a+"?")){ const s = await db.collection("stock").where("articulo","==",a).get(); const b = db.batch(); s.docs.forEach(d=>b.delete(d.ref)); await b.commit(); } }
+    async function resetTodoElStock() { if(confirm("RESET TOTAL?")){ const s = await db.collection("stock").get(); const b = db.batch(); s.docs.forEach(d=>b.delete(d.ref)); await b.commit(); } }
     async function cargarHistorial() {
-        const s = await db.collection("stock").orderBy("fecha","desc").limit(40).get();
-        document.getElementById('listaHistorial').innerHTML = s.docs.map(d => `<tr><td>${d.data().fecha?.toDate().toLocaleString()||''}</td><td>${d.data().articulo}</td><td>${d.data().tipo}</td><td class="text-end">${d.data().cantidad}</td><td><button onclick="db.collection('stock').doc('${d.id}').delete()" class="btn btn-sm text-danger">X</button></td></tr>`).join('');
+        const s = await db.collection("stock").orderBy("fecha","desc").limit(30).get();
+        document.getElementById('listaHistorial').innerHTML = s.docs.map(d => `<tr><td>${d.data().fecha?.toDate().toLocaleDateString()||''}</td><td>${d.data().articulo}</td><td>${d.data().tipo}</td><td>${d.data().cantidad}</td></tr>`).join('');
     }
-    function guardarArt() { db.collection("articulos").add({nombre: document.getElementById('confArt').value.toLowerCase()}); }
-    function guardarProv() { db.collection("proveedores").add({nombre: document.getElementById('confProv').value.toUpperCase()}); }
-    function guardarAcuerdo() { db.collection("acuerdos").add({proveedor: document.getElementById('acProv').value, articulo: document.getElementById('acArt').value, uxc: parseInt(document.getElementById('acUxC').value), cxp: parseInt(document.getElementById('acCxP').value)}); }
-    function renderConfigArts() { document.getElementById('listaArts').innerHTML = articulos.map(a => `<div class="small p-1 border-bottom d-flex justify-content-between">${a.nombre}<i class="fas fa-trash text-danger" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join(''); }
-    function renderConfigProvs() { document.getElementById('listaProvs').innerHTML = proveedores.map(p => `<div class="small p-1 border-bottom d-flex justify-content-between">${p.nombre}<i class="fas fa-trash text-danger" onclick="db.collection('proveedores').doc('${p.id}').delete()"></i></div>`).join(''); }
-    function renderConfigAcuerdos() { document.getElementById('listaAcuerdos').innerHTML = acuerdos.map(a => `<div class="small p-1 border-bottom d-flex justify-content-between"><span>${a.proveedor} > ${a.articulo}</span><i class="fas fa-trash text-danger" onclick="db.collection('acuerdos').doc('${a.id}').delete()"></i></div>`).join(''); }
-    function calcP() { const p = document.getElementById('prodPal').value, c = document.getElementById('prodCxP').value, u = document.getElementById('prodUxC').value; document.getElementById('labelTotalProd').innerText = (p * c * u).toLocaleString(); }
     function showTab(id) { document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active')); if(id==='historial') cargarHistorial(); }
     function guardarSalidaInterna() { db.collection("stock").add({articulo: document.getElementById('selArticuloSalida').value, cantidad: -parseInt(document.getElementById('inpCantidadSalida').value), tipo: "USO INTERNO (-)", fecha: firebase.firestore.FieldValue.serverTimestamp()}); }
+    function calcP() { const p = document.getElementById('prodPal').value, c = document.getElementById('prodCxP').value, u = document.getElementById('prodUxC').value; document.getElementById('labelTotalProd').innerText = (p * c * u).toLocaleString(); }
 </script>
 </body>
 </html>
