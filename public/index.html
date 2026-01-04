@@ -35,7 +35,8 @@
         label { font-size: 0.75rem; font-weight: 700; color: #495057; text-transform: uppercase; }
         .badge-item { background: #e7f1ff; color: #0d6efd; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; border: 1px solid #b6d4fe; }
         .scroll-list { max-height: 200px; overflow-y: auto; font-size: 0.85rem; }
-        .input-accent { background-color: #fff3cd; border: 1px solid #ffeeba; }
+        .stock-critico { color: #dc3545 !important; animation: blinker 1.5s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0.5; } }
     </style>
 </head>
 <body>
@@ -74,43 +75,35 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <div class="card p-3 border-top border-success border-4 shadow-sm mb-3">
-                            <h6 class="text-success fw-bold"><i class="fas fa-truck-loading me-2"></i>INGRESO DE MERCADERÍA</h6>
+                            <h6 class="text-success fw-bold">INGRESO MERCADERÍA</h6>
                             <div class="row g-2">
-                                <div class="col-12"><label>Proveedor</label><select id="selProveedor" class="form-select" onchange="filtrarArticulosPorProveedor()"></select></div>
-                                <div class="col-8"><label>Artículo</label><select id="selArticulo" class="form-select" onchange="sugerirConfigIngreso()"></select></div>
-                                <div class="col-4"><label>Cant.</label><input type="number" id="inpCantidad" class="form-control" oninput="calcIngreso()"></div>
-                                <div class="col-4"><label>Tipo</label><select id="selTipoCarga" class="form-select" onchange="calcIngreso()"><option value="p">Pallet</option><option value="c">Caja</option><option value="u">Unid</option></select></div>
-                                <div class="col-4"><label>CxP</label><input type="number" id="ingCxP" class="form-control" oninput="calcIngreso()"></div>
-                                <div class="col-4"><label>UxC</label><input type="number" id="ingUxC" class="form-control" oninput="calcIngreso()"></div>
-                                <div class="col-12 mt-2 d-flex justify-content-between align-items-center">
+                                <div class="col-12"><select id="selProveedor" class="form-select" onchange="renderSelects()"></select></div>
+                                <div class="col-8"><select id="selArticulo" class="form-select" onchange="calcIngreso()"></select></div>
+                                <div class="col-4"><input type="number" id="inpCantidad" class="form-control" oninput="calcIngreso()" placeholder="Cant."></div>
+                                <div class="col-4"><select id="selTipoCarga" class="form-select" onchange="calcIngreso()"><option value="p">Pallet</option><option value="c">Caja</option><option value="u">Unid</option></select></div>
+                                <div class="col-4"><input type="number" id="ingCxP" class="form-control" value="75" oninput="calcIngreso()"></div>
+                                <div class="col-4"><input type="number" id="ingUxC" class="form-control" value="12" oninput="calcIngreso()"></div>
+                                <div class="col-12 mt-2 d-flex justify-content-between">
                                     <strong>Total: <span id="txtTotalFinal">0</span> Un.</strong>
-                                    <button class="btn btn-success" onclick="guardarIngreso()">CARGAR</button>
+                                    <button class="btn btn-success btn-sm" onclick="guardarIngreso()">CARGAR</button>
                                 </div>
                             </div>
                         </div>
-
                         <div class="card p-3 border-top border-danger border-4 shadow-sm">
-                            <h6 class="text-danger fw-bold"><i class="fas fa-recycle me-2"></i>BAJA DE INSUMOS / DESCARTE</h6>
+                            <h6 class="text-danger fw-bold">BAJA DE INSUMOS / DESCARTE</h6>
                             <div class="row g-2">
-                                <div class="col-12"><label>Insumo a Descontar</label><select id="selInsumoBaja" class="form-select"></select></div>
-                                <div class="col-6"><label>Cantidad Unidades</label><input type="number" id="cantInsumoBaja" class="form-control" placeholder="0"></div>
-                                <div class="col-6"><label>Motivo</label><select id="motivoBaja" class="form-select">
-                                    <option value="DESCARTE">Descarte / Rotura</option>
-                                    <option value="USO EXTERNO">Uso Externo</option>
-                                    <option value="AJUSTE">Ajuste Manual</option>
-                                </select></div>
-                                <button class="btn btn-danger w-100 mt-2 fw-bold" onclick="guardarBajaInsumo()">DESCONTAR DEL STOCK</button>
+                                <div class="col-12"><select id="selInsumoBaja" class="form-select"></select></div>
+                                <div class="col-6"><input type="number" id="cantInsumoBaja" class="form-control" placeholder="Cant."></div>
+                                <div class="col-6"><select id="motivoBaja" class="form-select"><option value="DESCARTE">Rotura</option><option value="USO">Uso</option></select></div>
+                                <button class="btn btn-danger w-100 mt-2" onclick="guardarBajaInsumo()">DESCONTAR</button>
                             </div>
                         </div>
                     </div>
-
                     <div class="col-md-6">
                         <div class="card p-3 border-top border-primary border-4 shadow-sm">
-                            <h6 class="fw-bold">STOCK EN TIEMPO REAL</h6>
-                            <label class="text-primary mt-2">PRODUCTOS TERMINADOS</label>
-                            <table class="table table-sm"><tbody id="tablaStockProducido" class="fw-bold"></tbody></table>
-                            <label class="text-secondary mt-2">INSUMOS Y MATERIALES</label>
-                            <table class="table table-sm"><tbody id="tablaStockInsumos"></tbody></table>
+                            <h6 class="fw-bold">STOCK ACTUAL <small class="text-muted">(Rojo = Debajo del mínimo)</small></h6>
+                            <table class="table table-sm"><tbody id="tablaStockProducido"></tbody></table>
+                            <hr><table class="table table-sm"><tbody id="tablaStockInsumos"></tbody></table>
                         </div>
                     </div>
                 </div>
@@ -120,11 +113,11 @@
                 <div class="card p-3 border-top border-info border-4 shadow">
                     <h5 class="text-info">PRODUCCIÓN</h5>
                     <div class="row g-2">
-                        <div class="col-12"><label>Variedad</label><select id="prodArticulo" class="form-select" onchange="calcP()"></select></div>
+                        <div class="col-12"><select id="prodArticulo" class="form-select" onchange="calcP()"></select></div>
                         <div class="col-4"><label>Pallets</label><input type="number" id="prodPal" class="form-control" value="1" oninput="calcP()"></div>
                         <div class="col-4"><label>CxP</label><input type="number" id="prodCxP" class="form-control" value="75" oninput="calcP()"></div>
                         <div class="col-4"><label>UxC</label><input type="number" id="prodUxC" class="form-control" value="12" oninput="calcP()"></div>
-                        <div class="col-12"><div id="insumosPreview" class="alert alert-secondary py-2 small"></div></div>
+                        <div id="insumosPreview" class="alert alert-secondary py-2 small col-12"></div>
                         <button class="btn btn-info w-100 text-white fw-bold" onclick="ejecutarProduccion()">CONFIRMAR PRODUCCIÓN</button>
                     </div>
                 </div>
@@ -132,23 +125,23 @@
 
             <div id="ventas" class="content-section hidden">
                 <div class="card p-3 border-top border-primary border-4 shadow">
-                    <h5 class="text-primary fw-bold">NUEVO REMITO</h5>
-                    <div class="row g-2 mb-3 bg-light p-3 rounded border">
-                        <div class="col-md-6"><label>Cliente</label><select id="vtaCliente" class="form-select"></select></div>
-                        <div class="col-md-6"><label>Número de Remito</label><input type="text" id="vtaNumRemito" class="form-control" placeholder="0001-0000XXXX"></div>
+                    <h5 class="text-primary fw-bold">REMITO DE SALIDA</h5>
+                    <div class="row g-2 mb-3 bg-light p-3 border rounded">
+                        <div class="col-md-6"><select id="vtaCliente" class="form-select"></select></div>
+                        <div class="col-md-6"><input type="text" id="vtaNumRemito" class="form-control" placeholder="Número de Remito"></div>
                         <div class="col-md-3 col-6"><input type="text" id="vtaChofer" class="form-control" placeholder="Chofer"></div>
                         <div class="col-md-3 col-6"><input type="text" id="vtaChoferDni" class="form-control" placeholder="DNI"></div>
                         <div class="col-md-3 col-6"><input type="text" id="vtaCamion" class="form-control" placeholder="Patente Camión"></div>
                         <div class="col-md-3 col-6"><input type="text" id="vtaSemi" class="form-control" placeholder="Patente Semi"></div>
                     </div>
                     <div class="row g-2 p-3 bg-white border rounded">
-                        <div class="col-md-4"><label>Producto</label><select id="vtaArt" class="form-select" onchange="calcVentaItem()"></select></div>
-                        <div class="col-md-2 col-4"><label>Cant.</label><input type="number" id="vtaCantLog" class="form-control" value="1" oninput="calcVentaItem()"></div>
-                        <div class="col-md-2 col-8"><label>Tipo</label><select id="vtaTipo" class="form-select" onchange="calcVentaItem()"><option value="p">Pallets</option><option value="c">Cajas</option><option value="u">Unidades</option></select></div>
-                        <div id="divVtaCxP" class="col-md-2 col-6"><label>CxP</label><input type="number" id="vtaCxP" class="form-control input-accent" value="75" oninput="calcVentaItem()"></div>
-                        <div id="divVtaUxC" class="col-md-2 col-6"><label>UxC</label><input type="number" id="vtaUxC" class="form-control input-accent" value="12" oninput="calcVentaItem()"></div>
+                        <div class="col-md-4"><select id="vtaArt" class="form-select" onchange="calcVentaItem()"></select></div>
+                        <div class="col-md-2 col-4"><input type="number" id="vtaCantLog" class="form-control" value="1" oninput="calcVentaItem()"></div>
+                        <div class="col-md-2 col-8"><select id="vtaTipo" class="form-select" onchange="calcVentaItem()"><option value="p">Pallets</option><option value="c">Cajas</option><option value="u">Unid</option></select></div>
+                        <div id="divVtaCxP" class="col-md-2 col-6"><input type="number" id="vtaCxP" class="form-control" value="75" oninput="calcVentaItem()"></div>
+                        <div id="divVtaUxC" class="col-md-2 col-6"><input type="number" id="vtaUxC" class="form-control" value="12" oninput="calcVentaItem()"></div>
                         <div class="col-12 mt-2 d-flex justify-content-between align-items-center">
-                            <strong>Total Un: <span id="vtaTotalItem" class="badge bg-dark">0</span></strong>
+                            <strong>Total: <span id="vtaTotalItem" class="badge bg-dark">0</span> Un.</strong>
                             <button class="btn btn-dark" onclick="agregarItemVenta()">AÑADIR</button>
                         </div>
                     </div>
@@ -159,7 +152,7 @@
 
             <div id="clientes" class="content-section hidden">
                 <div class="card p-3 shadow-sm border-top border-primary border-4">
-                    <h6>ALTA CLIENTE</h6>
+                    <h6>CLIENTES</h6>
                     <div class="row g-2"><div class="col-12"><input type="text" id="cliNombre" class="form-control" placeholder="Nombre"></div><div class="col-6"><input type="text" id="cliCuit" class="form-control" placeholder="CUIT"></div><div class="col-6"><input type="text" id="cliLoc" class="form-control" placeholder="Dirección"></div><button class="btn btn-primary w-100" onclick="guardarCliente()">GUARDAR</button></div>
                 </div>
                 <div id="listadoClientes" class="row g-2 mt-3"></div>
@@ -172,11 +165,13 @@
 
             <div id="config" class="content-section hidden">
                 <div class="row g-3">
-                    <div class="col-md-6"><div class="card p-3"><h6>ARTÍCULOS</h6><div class="input-group mb-2"><input type="text" id="confArt" class="form-control"><button class="btn btn-primary" onclick="guardarArt()">+</button></div><div id="listaArts" class="scroll-list"></div></div></div>
+                    <div class="col-md-6"><div class="card p-3"><h6>GESTIÓN DE ARTÍCULOS Y MÍNIMOS</h6>
+                        <div class="input-group mb-2"><input type="text" id="confArt" class="form-control" placeholder="Nombre"><input type="number" id="confMin" class="form-control" placeholder="Mínimo" style="max-width: 100px;"><button class="btn btn-primary" onclick="guardarArt()">+</button></div>
+                        <div id="listaArts" class="scroll-list"></div>
+                    </div></div>
                     <div class="col-md-6"><div class="card p-3"><h6>PROVEEDORES</h6><div class="input-group mb-2"><input type="text" id="confProv" class="form-control"><button class="btn btn-success" onclick="guardarProv()">+</button></div><div id="listaProvs" class="scroll-list"></div></div></div>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -201,9 +196,9 @@
         "aceite 5lts": { botella: "bidon 5lts", etiqueta: "etiqueta 5lts", caja: "caja 5lts" }
     };
 
-    let articulos = [], proveedores = [], acuerdos = [], clientes = [], stockGlobal = {}, itemsVenta = [];
+    let articulos = [], proveedores = [], clientes = [], stockGlobal = {}, itemsVenta = [];
 
-    function login() { auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPass').value).catch(e => alert("Error")); }
+    function login() { auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPass').value); }
     function logout() { auth.signOut().then(() => location.reload()); }
     auth.onAuthStateChanged(u => { if(u){ document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('appSystem').classList.remove('hidden'); iniciarApp(); } });
 
@@ -221,37 +216,61 @@
         document.querySelectorAll('.nav-link, .nav-icon').forEach(n => n.classList.remove('active'));
     }
 
-    // --- FUNCIONES DE STOCK (NUEVA BAJA DE INSUMOS) ---
-    async function guardarBajaInsumo() {
-        const art = document.getElementById('selInsumoBaja').value;
-        const cant = parseInt(document.getElementById('cantInsumoBaja').value);
-        const mot = document.getElementById('motivoBaja').value;
+    // --- LÓGICA DE CONTROL DE STOCK ---
+    function renderStock() {
+        const p = document.getElementById('tablaStockProducido'), i = document.getElementById('tablaStockInsumos');
+        p.innerHTML = ""; i.innerHTML = "";
+        Object.keys(stockGlobal).sort().forEach(k => {
+            const artData = articulos.find(a => a.nombre === k);
+            const min = artData?.minimo || 0;
+            const actual = stockGlobal[k];
+            const esCritico = actual < min;
+            const h = `<tr class="${esCritico ? 'stock-critico' : ''}"><td>${k.toUpperCase()}</td><td class="text-end">${actual.toLocaleString()}</td></tr>`;
+            if(['botella','etiqueta','caja','bidon','insumo','envase'].some(x => k.toLowerCase().includes(x))) i.innerHTML += h; else p.innerHTML += h;
+        });
+    }
 
-        if(!art || isNaN(cant) || cant <= 0) {
-            alert("Seleccione un insumo y una cantidad válida");
+    // --- BLOQUEO DE NEGATIVOS EN PRODUCCION ---
+    async function ejecutarProduccion() {
+        const artSel = document.getElementById('prodArticulo').value;
+        const p = parseFloat(document.getElementById('prodPal').value)||0, c = parseFloat(document.getElementById('prodCxP').value)||0, u = parseFloat(document.getElementById('prodUxC').value)||0;
+        const totalU = p * c * u, totalC = p * c, r = RECETAS_MAESTRAS[artSel];
+        
+        if(totalU <= 0) return;
+
+        if(r) {
+            if((stockGlobal[r.botella]||0) < totalU || (stockGlobal[r.etiqueta]||0) < totalU || (stockGlobal[r.caja]||0) < totalC) {
+                alert("❌ ERROR: Insumos insuficientes para esta producción."); return;
+            }
+        }
+
+        const batch = db.batch();
+        batch.set(db.collection("stock").doc(), { articulo: artSel, cantidad: totalU, tipo: "PRODUCCION", fecha: firebase.firestore.FieldValue.serverTimestamp() });
+        if(r) {
+            batch.set(db.collection("stock").doc(), { articulo: r.botella, cantidad: -totalU, tipo: "CONSUMO", fecha: firebase.firestore.FieldValue.serverTimestamp() });
+            batch.set(db.collection("stock").doc(), { articulo: r.etiqueta, cantidad: -totalU, tipo: "CONSUMO", fecha: firebase.firestore.FieldValue.serverTimestamp() });
+            batch.set(db.collection("stock").doc(), { articulo: r.caja, cantidad: -totalC, tipo: "CONSUMO", fecha: firebase.firestore.FieldValue.serverTimestamp() });
+        }
+        await batch.commit(); alert("Producción terminada!");
+    }
+
+    // --- BLOQUEO DE NEGATIVOS EN VENTA ---
+    function agregarItemVenta() {
+        const art = document.getElementById('vtaArt').value;
+        const tot = parseInt(document.getElementById('vtaTotalItem').innerText.replace(/\./g,''));
+        
+        if(!art || tot<=0) return;
+        if((stockGlobal[art]||0) < tot) {
+            alert(`❌ ERROR: No hay suficiente stock de ${art.toUpperCase()}. Stock actual: ${stockGlobal[art]||0}`);
             return;
         }
 
-        if(confirm(`¿Desea descontar ${cant} unidades de ${art} por ${mot}?`)) {
-            await db.collection("stock").add({
-                articulo: art,
-                cantidad: -cant,
-                tipo: mot,
-                fecha: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            document.getElementById('cantInsumoBaja').value = "";
-            alert("Baja de insumo registrada");
-        }
+        let bulto = document.getElementById('vtaTipo').value === 'p' ? `${document.getElementById('vtaCantLog').value} Pal` : `${document.getElementById('vtaCantLog').value} ${document.getElementById('vtaTipo').value}`;
+        itemsVenta.push({ art, cant: tot, pres: bulto, lote: "S/L" });
+        renderListaVenta();
     }
 
-    function filtrarArticulosPorProveedor() {
-        // En esta versión simplificada usamos todos los artículos, pero puedes filtrar por acuerdos si los tienes
-        const h = articulos.map(a=>`<option value="${a.nombre}">${a.nombre}</option>`).join('');
-        document.getElementById('selArticulo').innerHTML = h;
-    }
-
-    function sugerirConfigIngreso() { calcIngreso(); }
-
+    // --- FUNCIONES SOPORTE ---
     function calcIngreso() {
         const c = parseFloat(document.getElementById('inpCantidad').value)||0, t = document.getElementById('selTipoCarga').value;
         const cxp = parseFloat(document.getElementById('ingCxP').value)||1, uxc = parseFloat(document.getElementById('ingUxC').value)||1;
@@ -260,93 +279,70 @@
 
     async function guardarIngreso() {
         const a = document.getElementById('selArticulo').value, t = parseInt(document.getElementById('txtTotalFinal').innerText.replace(/\./g,''));
-        if(a && t>0) { await db.collection("stock").add({articulo: a, cantidad: t, tipo: "INGRESO", fecha: firebase.firestore.FieldValue.serverTimestamp()}); alert("Cargado"); }
+        if(a && t>0) { await db.collection("stock").add({articulo: a, cantidad: t, tipo: "INGRESO", fecha: firebase.firestore.FieldValue.serverTimestamp()}); alert("Ingresado"); }
     }
 
-    function renderStock() {
-        const p = document.getElementById('tablaStockProducido'), i = document.getElementById('tablaStockInsumos');
-        p.innerHTML = ""; i.innerHTML = "";
-        Object.keys(stockGlobal).sort().forEach(k => {
-            const h = `<tr><td>${k}</td><td class="text-end">${stockGlobal[k].toLocaleString()}</td></tr>`;
-            if(['botella','etiqueta','caja','bidon','insumo','envase'].some(x => k.toLowerCase().includes(x))) i.innerHTML += h; else p.innerHTML += h;
-        });
+    async function guardarBajaInsumo() {
+        const art = document.getElementById('selInsumoBaja').value, cant = parseInt(document.getElementById('cantInsumoBaja').value);
+        if(art && cant > 0) { await db.collection("stock").add({articulo: art, cantidad: -cant, tipo: document.getElementById('motivoBaja').value, fecha: firebase.firestore.FieldValue.serverTimestamp()}); alert("Baja registrada"); }
     }
 
-    // --- VENTAS Y REMITO ---
     function calcVentaItem() {
-        const cant = parseFloat(document.getElementById('vtaCantLog').value)||0;
-        const tipo = document.getElementById('vtaTipo').value;
-        const cxp = parseFloat(document.getElementById('vtaCxP').value)||1;
-        const uxc = parseFloat(document.getElementById('vtaUxC').value)||1;
+        const cant = parseFloat(document.getElementById('vtaCantLog').value)||0, tipo = document.getElementById('vtaTipo').value;
+        const cxp = parseFloat(document.getElementById('vtaCxP').value)||75, uxc = parseFloat(document.getElementById('vtaUxC').value)||12;
         document.getElementById('divVtaCxP').style.display = (tipo === 'p') ? 'block' : 'none';
         document.getElementById('divVtaUxC').style.display = (tipo === 'p' || tipo === 'c') ? 'block' : 'none';
         let total = (tipo==='p') ? cant*cxp*uxc : (tipo==='c' ? cant*uxc : cant);
         document.getElementById('vtaTotalItem').innerText = Math.round(total).toLocaleString();
     }
 
-    function agregarItemVenta() {
-        const art = document.getElementById('vtaArt').value, tot = parseInt(document.getElementById('vtaTotalItem').innerText.replace(/\./g,''));
-        if(!art || tot<=0) return;
-        let bulto = document.getElementById('vtaTipo').value === 'p' ? `${document.getElementById('vtaCantLog').value} Pal (${document.getElementById('vtaCxP').value} Cjas)` : `${document.getElementById('vtaCantLog').value} ${document.getElementById('vtaTipo').value}`;
-        itemsVenta.push({ art, cant: tot, pres: bulto, lote: document.getElementById('vtaLote').value || 'S/L' });
-        document.getElementById('listaTempVenta').innerHTML = itemsVenta.map((it, i) => `<div class="badge-item"><span>${it.art} - ${it.cant} Un.</span><i class="fas fa-times" onclick="itemsVenta.splice(${i},1); agregarItemVenta();"></i></div>`).join('');
+    function renderListaVenta() {
+        document.getElementById('listaTempVenta').innerHTML = itemsVenta.map((it, i) => `<div class="badge-item"><span>${it.art} - ${it.cant} Un.</span><i class="fas fa-times" onclick="itemsVenta.splice(${i},1); renderListaVenta();"></i></div>`).join('');
     }
 
     async function finalizarVenta() {
         const rem = document.getElementById('vtaNumRemito').value || "S/N";
-        const cli = clientes.find(c => c.id === document.getElementById('vtaCliente').value);
         for(let it of itemsVenta) { await db.collection("stock").add({ articulo: it.art, cantidad: -it.cant, tipo: `VENTA R:${rem}`, fecha: firebase.firestore.FieldValue.serverTimestamp() }); }
         const { jsPDF } = window.jspdf; const doc = new jsPDF();
-        doc.setFontSize(16); doc.text("PRADOS DEL SOL - Maximiliano Meza", 15, 20);
-        doc.setFontSize(10); doc.text("REMITO N°: " + rem, 15, 30);
-        doc.text("Cliente: " + (cli?cli.nombre:'-'), 15, 36);
-        doc.autoTable({ startY: 45, head: [['ARTICULO', 'BULTOS', 'UNIDADES', 'LOTE']], body: itemsVenta.map(i=>[i.art, i.pres, i.cant, i.lote]) });
-        doc.save(`Remito_${rem}.pdf`); itemsVenta=[]; document.getElementById('listaTempVenta').innerHTML=""; alert("Venta Exitosa");
+        doc.text("REMITO - PRADOS DEL SOL", 15, 20);
+        doc.autoTable({ startY: 30, head: [['ARTICULO', 'BULTOS', 'UNIDADES']], body: itemsVenta.map(i=>[i.art, i.pres, i.cant]) });
+        doc.save(`Remito_${rem}.pdf`); itemsVenta=[]; renderListaVenta(); alert("Venta finalizada!");
     }
 
-    // --- OTROS ---
-    function calcP() {
-        const p = parseFloat(document.getElementById('prodPal').value)||0, c = parseFloat(document.getElementById('prodCxP').value)||0, u = parseFloat(document.getElementById('prodUxC').value)||0;
-        const totalU = p * c * u, totalC = p * c, artSel = document.getElementById('prodArticulo').value, r = RECETAS_MAESTRAS[artSel];
-        if(r) document.getElementById('insumosPreview').innerHTML = `Descuenta: ${totalU} ${r.botella}, ${totalU} ${r.etiqueta} y ${totalC} ${r.caja}.`;
-        else document.getElementById('insumosPreview').innerHTML = `Producir: ${totalU} Un. (Sin receta automática)`;
+    function guardarArt() { 
+        const n = document.getElementById('confArt').value.toLowerCase(); 
+        const m = parseInt(document.getElementById('confMin').value) || 0;
+        if(n) db.collection("articulos").add({nombre: n, minimo: m}); 
+        document.getElementById('confArt').value=""; document.getElementById('confMin').value="";
     }
-
-    async function ejecutarProduccion() {
-        const artSel = document.getElementById('prodArticulo').value, p = parseFloat(document.getElementById('prodPal').value)||0, c = parseFloat(document.getElementById('prodCxP').value)||0, u = parseFloat(document.getElementById('prodUxC').value)||0;
-        const totalU = p * c * u, totalC = p * c, batch = db.batch(), r = RECETAS_MAESTRAS[artSel];
-        if(totalU <= 0) return;
-        batch.set(db.collection("stock").doc(), { articulo: artSel, cantidad: totalU, tipo: "PRODUCCION", fecha: firebase.firestore.FieldValue.serverTimestamp() });
-        if(r) {
-            batch.set(db.collection("stock").doc(), { articulo: r.botella, cantidad: -totalU, tipo: "CONSUMO", fecha: firebase.firestore.FieldValue.serverTimestamp() });
-            batch.set(db.collection("stock").doc(), { articulo: r.etiqueta, cantidad: -totalU, tipo: "CONSUMO", fecha: firebase.firestore.FieldValue.serverTimestamp() });
-            batch.set(db.collection("stock").doc(), { articulo: r.caja, cantidad: -totalC, tipo: "CONSUMO", fecha: firebase.firestore.FieldValue.serverTimestamp() });
-        }
-        await batch.commit(); alert("Grabado");
-    }
+    
+    function guardarProv() { const n = document.getElementById('confProv').value.toUpperCase(); if(n) db.collection("proveedores").add({nombre: n}); document.getElementById('confProv').value=""; }
+    function guardarCliente() { db.collection("clientes").add({ nombre: document.getElementById('cliNombre').value, cuit: document.getElementById('cliCuit').value, localidad: document.getElementById('cliLoc').value }); }
 
     function renderSelects() {
         const h = articulos.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
         const hi = articulos.filter(a => ['botella','etiqueta','caja','bidon','insumo','envase'].some(x => a.nombre.toLowerCase().includes(x))).map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
-        ['prodArticulo','vtaArt','selArticulo','selInsumoBaja'].forEach(id => {
-            const el = document.getElementById(id);
-            if(id === 'selInsumoBaja') el.innerHTML = hi; else el.innerHTML = h;
-        });
+        ['prodArticulo','vtaArt','selArticulo','selInsumoBaja'].forEach(id => { document.getElementById(id).innerHTML = (id === 'selInsumoBaja') ? hi : h; });
         document.getElementById('selProveedor').innerHTML = proveedores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
         document.getElementById('vtaCliente').innerHTML = clientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
-        document.getElementById('listaArts').innerHTML = articulos.map(a => `<div class="d-flex justify-content-between mb-1 small">${a.nombre}<i class="fas fa-trash text-danger" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join('');
+        document.getElementById('listaArts').innerHTML = articulos.map(a => `<div class="d-flex justify-content-between mb-1 small">${a.nombre} (Mín: ${a.minimo||0})<i class="fas fa-trash text-danger" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join('');
         document.getElementById('listaProvs').innerHTML = proveedores.map(p => `<div class="d-flex justify-content-between mb-1 small">${p.nombre}<i class="fas fa-trash text-danger" onclick="db.collection('proveedores').doc('${p.id}').delete()"></i></div>`).join('');
     }
 
-    function renderClientes() { document.getElementById('listadoClientes').innerHTML = clientes.map(c => `<div class="col-6 mb-2"><div class="card p-2 shadow-sm small"><b>${c.nombre}</b><br>${c.localidad}<br><i class="fas fa-trash text-danger mt-1" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></div></div>`).join(''); }
+    function renderClientes() { document.getElementById('listadoClientes').innerHTML = clientes.map(c => `<div class="col-6 mb-2"><div class="card p-2 shadow-sm small"><b>${c.nombre}</b><br><i class="fas fa-trash text-danger" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></div></div>`).join(''); }
     async function cargarHistorial() {
         const f = document.getElementById('repFecha').value; if(!f) return;
         const snap = await db.collection("stock").where("fecha", ">=", new Date(f + "T00:00:00")).where("fecha", "<=", new Date(f + "T23:59:59")).orderBy("fecha", "desc").get();
         document.getElementById('listaHistorial').innerHTML = snap.docs.map(d => `<tr><td><small>${d.data().fecha?.toDate().toLocaleTimeString()}</small></td><td>${d.data().articulo}</td><td>${d.data().cantidad}</td><td>${d.data().tipo}</td><td><i class="fas fa-trash text-danger" onclick="db.collection('stock').doc('${d.id}').delete()"></i></td></tr>`).join('');
     }
-    function guardarArt() { const n = document.getElementById('confArt').value.toLowerCase(); if(n) db.collection("articulos").add({nombre: n}); document.getElementById('confArt').value=""; }
-    function guardarProv() { const n = document.getElementById('confProv').value.toUpperCase(); if(n) db.collection("proveedores").add({nombre: n}); document.getElementById('confProv').value=""; }
-    function guardarCliente() { db.collection("clientes").add({ nombre: document.getElementById('cliNombre').value, cuit: document.getElementById('cliCuit').value, localidad: document.getElementById('cliLoc').value }); }
+    
+    function calcP() {
+        const p = parseFloat(document.getElementById('prodPal').value)||0, c = parseFloat(document.getElementById('prodCxP').value)||0, u = parseFloat(document.getElementById('prodUxC').value)||0;
+        const totalU = p * c * u, totalC = p * c, artSel = document.getElementById('prodArticulo').value, r = RECETAS_MAESTRAS[artSel];
+        if(r) document.getElementById('insumosPreview').innerHTML = `Descuenta: ${totalU} ${r.botella}, ${totalU} ${r.etiqueta} y ${totalC} ${r.caja}.`;
+        else document.getElementById('insumosPreview').innerHTML = `Producción simple: ${totalU} Unidades.`;
+    }
+    
     calcVentaItem();
 </script>
 </body>
