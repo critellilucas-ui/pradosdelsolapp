@@ -15,19 +15,19 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; padding-bottom: 70px; } /* Padding para el menú móvil */
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; padding-bottom: 70px; }
         
-        /* ESTILOS DE ESCRITORIO */
+        /* ESCRITORIO */
         .sidebar { background-color: #212529; color: white; padding: 15px; min-height: 100vh; position: sticky; top: 0; }
         .nav-link { color: #adb5bd; cursor: pointer; padding: 12px; border-radius: 8px; text-decoration: none; display: block; margin-bottom: 5px; }
         .nav-link.active, .nav-link:hover { color: white; background-color: #0d6efd; }
         
-        /* ESTILOS MÓVILES (BARRA INFERIOR Y SUPERIOR) */
+        /* MÓVIL */
         .mobile-nav { display: none; }
         .mobile-header { display: none; }
         
         @media (max-width: 768px) {
-            .sidebar { display: none !important; } /* Ocultar barra lateral en celular */
+            .sidebar { display: none !important; }
             .mobile-header { 
                 display: flex; justify-content: space-between; align-items: center;
                 background: #212529; color: white; padding: 10px 15px;
@@ -42,7 +42,7 @@
             .nav-icon { text-align: center; color: #6c757d; font-size: 0.75rem; cursor: pointer; flex: 1; }
             .nav-icon i { font-size: 1.2rem; display: block; margin-bottom: 2px; }
             .nav-icon.active { color: #0d6efd; font-weight: bold; }
-            #appSystem { padding-top: 60px; padding-left: 10px; padding-right: 10px; } /* Espacio para el header */
+            #appSystem { padding-top: 60px; padding-left: 10px; padding-right: 10px; }
         }
 
         .hidden { display: none !important; }
@@ -87,7 +87,9 @@
             </nav>
         </div>
 
-        <div class="col-md-10 p-0 p-md-4"> <div id="historial" class="content-section hidden">
+        <div class="col-md-10 p-0 p-md-4">
+            
+            <div id="historial" class="content-section hidden">
                 <div class="card p-3 border-top border-dark border-4 shadow-sm mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6 class="fw-bold m-0">CONTROL Y REPORTES</h6>
@@ -102,7 +104,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="card shadow-sm overflow-auto">
                     <table class="table table-hover table-sm m-0" style="font-size: 0.9rem;">
                         <thead class="table-dark"><tr><th>Hora/Art</th><th class="text-end">Cant</th><th class="text-center">X</th></tr></thead>
@@ -121,7 +122,7 @@
                         <div class="col-4"><label>UxC</label><input type="number" id="prodUxC" class="form-control" value="12" oninput="calcP()"></div>
                         <div class="col-12"><small class="text-muted" id="insumosPreview">...</small></div>
                         <div class="col-12 mt-3 d-flex justify-content-between align-items-center">
-                            <h4 class="text-primary fw-bold m-0" id="labelTotalProd">0</h4>
+                            <h4 class="text-primary fw-bold m-0">Total: <span id="labelTotalProd">0</span></h4>
                             <button class="btn btn-info text-white fw-bold" onclick="ejecutarProduccion()">PRODUCIR</button>
                         </div>
                     </div>
@@ -131,24 +132,33 @@
 
             <div id="stock" class="content-section">
                 <div class="row">
-                    <div class="col-12 mb-3"><div class="card p-3 border-success border-top border-4 shadow-sm"><h6>INGRESO</h6><div class="row g-2">
-                        <div class="col-12"><select id="selProveedor" class="form-select" onchange="filtrarArticulosAcuerdo()"></select></div>
-                        <div class="col-7"><select id="selArticulo" class="form-select" onchange="sugerirConfigIngreso()"></select></div>
-                        <div class="col-5"><input type="number" id="inpCantidad" class="form-control" placeholder="Cant" oninput="calcIngreso()"></div>
-                        <div class="col-4"><select id="selTipoCarga" class="form-select" onchange="calcIngreso()"><option value="p">Pallet</option><option value="c">Caja</option><option value="u">Unid</option></select></div>
-                        <div class="col-4"><input type="number" id="ingCxP" class="form-control" placeholder="CxP" oninput="calcIngreso()"></div>
-                        <div class="col-4"><input type="number" id="ingUxC" class="form-control" placeholder="UxC" oninput="calcIngreso()"></div>
-                        <div class="col-12 mt-2 d-flex justify-content-between align-items-center">
-                            <strong>Total: <span id="txtTotalFinal">0</span></strong>
-                            <button class="btn btn-success btn-sm" onclick="guardarIngreso()">INGRESAR</button>
+                    <div class="col-12 mb-3">
+                        <div class="card p-3 border-success border-top border-4 shadow-sm">
+                            <h6>INGRESO</h6>
+                            <div class="row g-2">
+                                <div class="col-12"><select id="selProveedor" class="form-select" onchange="filtrarArticulosAcuerdo()"></select></div>
+                                <div class="col-7"><select id="selArticulo" class="form-select" onchange="sugerirConfigIngreso()"></select></div>
+                                <div class="col-5"><input type="number" id="inpCantidad" class="form-control" placeholder="Cant" oninput="calcIngreso()"></div>
+                                <div class="col-4"><select id="selTipoCarga" class="form-select" onchange="calcIngreso()"><option value="p">Pallet</option><option value="c">Caja</option><option value="u">Unid</option></select></div>
+                                <div class="col-4"><input type="number" id="ingCxP" class="form-control" placeholder="CxP" oninput="calcIngreso()"></div>
+                                <div class="col-4"><input type="number" id="ingUxC" class="form-control" placeholder="UxC" oninput="calcIngreso()"></div>
+                                <div class="col-12 mt-2 d-flex justify-content-between align-items-center">
+                                    <strong>Total: <span id="txtTotalFinal">0</span></strong>
+                                    <button class="btn btn-success btn-sm" onclick="guardarIngreso()">INGRESAR</button>
+                                </div>
+                            </div>
                         </div>
-                    </div></div></div>
-                    
-                    <div class="col-12 mb-3"><div class="card p-3 border-danger border-top border-4 shadow-sm"><h6>BAJA / USO</h6><div class="row g-2">
-                        <div class="col-8"><select id="selArticuloSalida" class="form-select"></select></div>
-                        <div class="col-4"><input type="number" id="inpCantidadSalida" class="form-control" placeholder="Cant"></div>
-                        <div class="col-12"><button class="btn btn-danger btn-sm w-100" onclick="guardarSalidaInterna()">REGISTRAR SALIDA</button></div>
-                    </div></div></div>
+                    </div>
+                    <div class="col-12 mb-3">
+                        <div class="card p-3 border-danger border-top border-4 shadow-sm">
+                            <h6>BAJA / USO</h6>
+                            <div class="row g-2">
+                                <div class="col-8"><select id="selArticuloSalida" class="form-select"></select></div>
+                                <div class="col-4"><input type="number" id="inpCantidadSalida" class="form-control" placeholder="Cant"></div>
+                                <div class="col-12"><button class="btn btn-danger btn-sm w-100" onclick="guardarSalidaInterna()">REGISTRAR SALIDA</button></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="card p-2 shadow-sm"><table class="table table-sm align-middle mb-0"><thead class="table-dark"><tr><th>Art</th><th class="text-end">Cant</th><th></th></tr></thead><tbody id="tablaStockGeneral"></tbody></table></div>
             </div>
@@ -210,69 +220,642 @@
 </div>
 
 <script>
-    const firebaseConfig = { apiKey: "AIzaSyCjYp0idCxs32QAofYLVEGcwvmd3HXy-3Y", authDomain: "prados-del-sol.firebaseapp.com", projectId: "prados-del-sol", storageBucket: "prados-del-sol.firebasestorage.app", messagingSenderId: "30316921952", appId: "1:30316921952:web:b0f88b9c35f270d548ef05" };
+    // CONFIGURACIÓN FIREBASE
+    const firebaseConfig = { 
+        apiKey: "AIzaSyCjYp0idCxs32QAofYLVEGcwvmd3HXy-3Y", 
+        authDomain: "prados-del-sol.firebaseapp.com", 
+        projectId: "prados-del-sol", 
+        storageBucket: "prados-del-sol.firebasestorage.app", 
+        messagingSenderId: "30316921952", 
+        appId: "1:30316921952:web:b0f88b9c35f270d548ef05" 
+    };
+    
+    // Inicializar Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
-    const RECETAS = { "850cc": { botella: "botella 900cc", etiqueta: "etiqueta 900cc", caja: "caja 900cc", divisor: 12 }, "900cc": { botella: "botella 900cc", etiqueta: "etiqueta 900cc", caja: "caja 900cc", divisor: 12 }, "1.5lts": { botella: "botella 1.5lts", etiqueta: "etiqueta 1.5lts", caja: "caja 1.5lts", divisor: 6 }, "5lts": { botella: "bidon 5lts", etiqueta: "etiqueta 5lts", caja: "caja 5lts", divisor: 4 } };
-    let articulos = [], proveedores = [], acuerdos = [], clientes = [], stockGlobal = {}, itemsVenta = [];
 
-    function login() { auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPass').value); }
-    function logout() { auth.signOut().then(() => { window.location.reload(); }); }
-    auth.onAuthStateChanged(u => { if(u){ document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('appSystem').classList.remove('hidden'); iniciar(); } });
+    // VARIABLES GLOBALES
+    const RECETAS = { 
+        "850cc": { botella: "botella 900cc", etiqueta: "etiqueta 900cc", caja: "caja 900cc", divisor: 12 }, 
+        "900cc": { botella: "botella 900cc", etiqueta: "etiqueta 900cc", caja: "caja 900cc", divisor: 12 }, 
+        "1.5lts": { botella: "botella 1.5lts", etiqueta: "etiqueta 1.5lts", caja: "caja 1.5lts", divisor: 6 }, 
+        "5lts": { botella: "bidon 5lts", etiqueta: "etiqueta 5lts", caja: "caja 5lts", divisor: 4 } 
+    };
+    
+    let articulos = [];
+    let proveedores = [];
+    let acuerdos = [];
+    let clientes = [];
+    let stockGlobal = {};
+    let itemsVenta = [];
 
-    function iniciar() {
-        document.getElementById('repFecha').valueAsDate = new Date();
-        db.collection("articulos").orderBy("nombre").onSnapshot(s => { articulos = s.docs.map(d => ({id:d.id, ...d.data()})); const h = articulos.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join(''); document.getElementById('vtaArt').innerHTML = h; document.getElementById('prodArticulo').innerHTML = '<option value="">-- Seleccionar --</option>' + h; document.getElementById('selArticuloSalida').innerHTML = h; document.getElementById('acArt').innerHTML = h; renderConfigArts(); });
-        db.collection("proveedores").onSnapshot(s => { proveedores = s.docs.map(d => ({id:d.id, ...d.data()})); document.getElementById('selProveedor').innerHTML = '<option value="">-- Proveedor --</option>' + proveedores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join(''); document.getElementById('acProv').innerHTML = proveedores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join(''); renderConfigProvs(); });
-        db.collection("acuerdos").onSnapshot(s => { acuerdos = s.docs.map(d => ({id:d.id, ...d.data()})); renderConfigAcuerdos(); });
-        db.collection("clientes").orderBy("nombre").onSnapshot(s => { clientes = s.docs.map(d => ({id:d.id, ...d.data()})); document.getElementById('vtaCliente').innerHTML = clientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join(''); renderClientes(); });
-        db.collection("stock").onSnapshot(s => { stockGlobal = {}; s.docs.forEach(d => { stockGlobal[d.data().articulo] = (stockGlobal[d.data().articulo] || 0) + d.data().cantidad; }); renderTablasStock(); });
+    // --- AUTENTICACIÓN ---
+    function login() {
+        const email = document.getElementById('loginEmail').value;
+        const pass = document.getElementById('loginPass').value;
+        auth.signInWithEmailAndPassword(email, pass).catch(error => {
+            alert("Error: " + error.message);
+        });
     }
 
-    // --- FUNCION SHOWTAB MEJORADA PARA MOVIL ---
+    function logout() {
+        auth.signOut().then(() => {
+            window.location.reload();
+        });
+    }
+
+    auth.onAuthStateChanged(user => {
+        if(user){
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('appSystem').classList.remove('hidden');
+            iniciarApp();
+        }
+    });
+
+    // --- INICIALIZACIÓN DE DATOS ---
+    function iniciarApp() {
+        document.getElementById('repFecha').valueAsDate = new Date();
+        
+        // Cargar Artículos
+        db.collection("articulos").orderBy("nombre").onSnapshot(snapshot => {
+            articulos = snapshot.docs.map(d => ({id:d.id, ...d.data()}));
+            const htmlOpts = articulos.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
+            
+            document.getElementById('vtaArt').innerHTML = htmlOpts;
+            document.getElementById('prodArticulo').innerHTML = '<option value="">-- Seleccionar --</option>' + htmlOpts;
+            document.getElementById('selArticuloSalida').innerHTML = htmlOpts;
+            document.getElementById('acArt').innerHTML = htmlOpts;
+            
+            renderConfigArts();
+        });
+
+        // Cargar Proveedores
+        db.collection("proveedores").onSnapshot(snapshot => {
+            proveedores = snapshot.docs.map(d => ({id:d.id, ...d.data()}));
+            const htmlProvs = proveedores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
+            
+            document.getElementById('selProveedor').innerHTML = '<option value="">-- Proveedor --</option>' + htmlProvs;
+            document.getElementById('acProv').innerHTML = htmlProvs;
+            
+            renderConfigProvs();
+        });
+
+        // Cargar Acuerdos
+        db.collection("acuerdos").onSnapshot(snapshot => {
+            acuerdos = snapshot.docs.map(d => ({id:d.id, ...d.data()}));
+            renderConfigAcuerdos();
+        });
+
+        // Cargar Clientes
+        db.collection("clientes").orderBy("nombre").onSnapshot(snapshot => {
+            clientes = snapshot.docs.map(d => ({id:d.id, ...d.data()}));
+            document.getElementById('vtaCliente').innerHTML = clientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+            renderClientes();
+        });
+
+        // Cargar Stock en Tiempo Real
+        db.collection("stock").onSnapshot(snapshot => {
+            stockGlobal = {};
+            snapshot.docs.forEach(doc => {
+                const data = doc.data();
+                stockGlobal[data.articulo] = (stockGlobal[data.articulo] || 0) + data.cantidad;
+            });
+            renderTablasStock();
+        });
+    }
+
+    // --- NAVEGACIÓN (TABS) ---
     function showTab(id) {
         document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
         document.getElementById(id).classList.remove('hidden');
-        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active')); // Desktop
-        document.querySelectorAll('.nav-icon').forEach(l => l.classList.remove('active')); // Mobile
         
-        // Activar icono correspondiente en móvil (si existe)
-        const iconMap = {'stock':0, 'produccion':1, 'ventas':2, 'clientes':3, 'historial':4};
-        if(iconMap[id] !== undefined) document.querySelectorAll('.nav-icon')[iconMap[id]].classList.add('active');
+        // Reset styles
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        document.querySelectorAll('.nav-icon').forEach(l => l.classList.remove('active'));
 
-        if(id==='historial') cargarHistorial();
+        // Highlight Desktop
+        const desktopLink = document.querySelector(`.nav-link[onclick="showTab('${id}')"]`);
+        if(desktopLink) desktopLink.classList.add('active');
+
+        // Highlight Mobile
+        const iconMap = {'stock':0, 'produccion':1, 'ventas':2, 'clientes':3, 'historial':4};
+        if(iconMap[id] !== undefined) {
+            const icons = document.querySelectorAll('.nav-icon');
+            if(icons[iconMap[id]]) icons[iconMap[id]].classList.add('active');
+        }
+
+        if(id === 'historial') cargarHistorial();
         window.scrollTo(0,0);
     }
 
-    async function anularMovimiento(id, art, cant, tipo) { if(!tipo.includes("VENTA")) return alert("Solo ventas"); if(confirm(`Anular venta de ${Math.abs(cant)} ${art}?`)) { await db.collection("stock").add({ articulo: art, cantidad: Math.abs(cant), tipo: "VENTA ANULADA (+)", fecha: firebase.firestore.FieldValue.serverTimestamp() }); alert("Anulada"); cargarHistorial(); } }
-    function resetVistasHistorial() { document.getElementById('repFecha').valueAsDate = new Date(); document.getElementById('repTurno').value = "mañana"; document.getElementById('listaHistorial').innerHTML = ""; }
-    async function cargarHistorial() { const s = await db.collection("stock").orderBy("fecha","desc").limit(35).get(); document.getElementById('listaHistorial').innerHTML = s.docs.map(d => { const m = d.data(); const esVenta = m.tipo.includes("VENTA"); return `<tr><td><small class="d-block text-muted">${m.fecha?.toDate().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) || ''}</small><strong>${m.articulo}</strong></td><td class="text-end fw-bold ${m.cantidad>0?'text-success':'text-danger'}">${m.cantidad}</td><td class="text-center">${esVenta ? `<i class="fas fa-undo-alt btn-anular" onclick="anularMovimiento('${d.id}', '${m.articulo}', ${m.cantidad}, '${m.tipo}')"></i>` : ''}</td></tr>`; }).join(''); }
-    
-    // --- LÓGICA DE NEGOCIO (IGUAL QUE ANTES) ---
-    async function generarReporteDetallado() { const fecha = document.getElementById('repFecha').value; const turno = document.getElementById('repTurno').value; if(!fecha) return alert("Fecha?"); const snap = await db.collection("stock").where("fecha", ">=", firebase.firestore.Timestamp.fromDate(new Date(fecha + "T00:00:00"))).where("fecha", "<=", firebase.firestore.Timestamp.fromDate(new Date(fecha + "T23:59:59"))).get(); let movs = snap.docs.map(d => ({...d.data(), hora: d.data().fecha?.toDate()})); if(turno !== 'completo') movs = movs.filter(m => { const h = m.hora.getHours(); return turno === 'mañana' ? (h >= 6 && h < 14) : (h >= 14 && h < 22); }); const { jsPDF } = window.jspdf; const doc = new jsPDF(); doc.setFontSize(16); doc.text("BALANCE " + fecha, 105, 15, {align:'center'}); let resumen = {}; movs.forEach(m => { if(!resumen[m.tipo]) resumen[m.tipo] = {}; resumen[m.tipo][m.articulo] = (resumen[m.tipo][m.articulo] || 0) + m.cantidad; }); let y = 30; for(const tipo in resumen) { doc.setFontSize(10); doc.setTextColor(0,0,255); doc.text(tipo, 10, y); y+=5; doc.setTextColor(0); for(const art in resumen[tipo]) { doc.text(`- ${art}: ${resumen[tipo][art]}`, 15, y); y+=5; } y+=5; } doc.save(`Balance_${fecha}.pdf`); }
-    function calcP() { const p = document.getElementById('prodPal').value, c = document.getElementById('prodCxP').value, u = document.getElementById('prodUxC').value; const total = p * c * u; document.getElementById('labelTotalProd').innerText = total; const art = document.getElementById('prodArticulo').value; let rK = art.includes("850")?"850cc":art.includes("900")?"900cc":art.includes("1.5")?"1.5lts":art.includes("5")?"5lts":""; if(rK && RECETAS[rK]) { const rec = RECETAS[rK]; document.getElementById('insumosPreview').innerHTML = `Insumos: ${rec.botella}, ${rec.etiqueta}`; } }
-    async function ejecutarProduccion() { const art = document.getElementById('prodArticulo').value, total = parseInt(document.getElementById('labelTotalProd').innerText); if(!art || total <= 0) return; const batch = db.batch(), ts = firebase.firestore.FieldValue.serverTimestamp(); let rK = art.includes("850")?"850cc":art.includes("900")?"900cc":art.includes("1.5")?"1.5lts":art.includes("5")?"5lts":""; const rec = RECETAS[rK]; batch.set(db.collection("stock").doc(), { articulo: art, cantidad: total, tipo: "PRODUCCION (+)", fecha: ts }); if(rec) { batch.set(db.collection("stock").doc(), { articulo: rec.botella, cantidad: -total, tipo: "CONSUMO (-)", fecha: ts }); batch.set(db.collection("stock").doc(), { articulo: rec.etiqueta, cantidad: -total, tipo: "CONSUMO (-)", fecha: ts }); batch.set(db.collection("stock").doc(), { articulo: rec.caja, cantidad: -Math.ceil(total/rec.divisor), tipo: "CONSUMO (-)", fecha: ts }); } await batch.commit(); alert("Ok"); }
-    function sugerirConfigVenta() { const a = document.getElementById('vtaArt').value, ac = acuerdos.find(x => x.articulo === a); if(ac) { document.getElementById('vtaCxP').value = ac.cxp; document.getElementById('vtaUxC').value = ac.uxc; } calcVentaItem(); }
-    function calcVentaItem() { const c = parseInt(document.getElementById('vtaCantLog').value) || 0, t = document.getElementById('vtaTipo').value, cxp = parseInt(document.getElementById('vtaCxP').value) || 0, uxc = parseInt(document.getElementById('vtaUxC').value) || 0; document.getElementById('vtaTotalItem').innerText = (t==='p' ? c*cxp*uxc : (t==='c' ? c*uxc : c)); }
-    function agregarItemVenta() { const total = parseInt(document.getElementById('vtaTotalItem').innerText); if(total <= 0) return; itemsVenta.push({ art: document.getElementById('vtaArt').value, cant: total, pres: document.getElementById('vtaCantLog').value + document.getElementById('vtaTipo').value, lote: document.getElementById('vtaLote').value || 'S/L' }); renderTempVenta(); }
-    function renderTempVenta() { document.getElementById('listaTempVenta').innerHTML = itemsVenta.map((it, i) => `<div class="badge-item">${it.art} (${it.cant}) <i class="fas fa-times text-danger" onclick="itemsVenta.splice(${i},1);renderTempVenta()"></i></div>`).join(''); }
-    async function finalizarVenta() { if(itemsVenta.length === 0) return; const batch = db.batch(), ts = firebase.firestore.FieldValue.serverTimestamp(); itemsVenta.forEach(it => { batch.set(db.collection("stock").doc(), { articulo: it.art, cantidad: -it.cant, tipo: "VENTA (-)", fecha: ts }); }); await batch.commit(); const { jsPDF } = window.jspdf; const doc = new jsPDF(); doc.text(`REMITO: ${document.getElementById('vtaNumRemito').value}`, 10, 20); doc.autoTable({ startY: 30, head: [['Art','Cant','Lote']], body: itemsVenta.map(i=>[i.art, i.cant, i.lote]) }); doc.save("Remito.pdf"); itemsVenta = []; renderTempVenta(); }
-    function renderTablasStock() { const gen = document.getElementById('tablaStockGeneral'), pro = document.getElementById('tablaStockProducido'); gen.innerHTML = ""; pro.innerHTML = ""; Object.keys(stockGlobal).sort().forEach(k => { gen.innerHTML += `<tr><td>${k}</td><td class="text-end fw-bold">${stockGlobal[k]}</td><td class="text-end"><i class="fas fa-trash text-danger" onclick="borrarMovArt('${k}')"></i></td></tr>`; if(!k.includes("botella") && !k.includes("caja") && !k.includes("etiqueta")) pro.innerHTML += `<tr><td>${k}</td><td class="text-end">${stockGlobal[k]}</td></tr>`; }); }
-    function sugerirConfigIngreso() { const p = document.getElementById('selProveedor').value, a = document.getElementById('selArticulo').value, ac = acuerdos.find(x => x.proveedor === p && x.articulo === a); if(ac) { document.getElementById('ingCxP').value = ac.cxp; document.getElementById('ingUxC').value = ac.uxc; } calcIngreso(); }
-    function calcIngreso() { const c = parseInt(document.getElementById('inpCantidad').value) || 0, t = document.getElementById('selTipoCarga').value, cxp = parseInt(document.getElementById('ingCxP').value) || 0, uxc = parseInt(document.getElementById('ingUxC').value) || 0; document.getElementById('txtTotalFinal').innerText = (t==='p' ? c*cxp*uxc : (t==='c' ? c*uxc : c)); }
-    async function guardarIngreso() { const a = document.getElementById('selArticulo').value, t = parseInt(document.getElementById('txtTotalFinal').innerText); if(a && t>0) await db.collection("stock").add({articulo: a, cantidad: t, tipo: "INGRESO (+)", fecha: firebase.firestore.FieldValue.serverTimestamp()}); document.getElementById('inpCantidad').value = ""; }
-    async function guardarCliente() { await db.collection("clientes").add({ nombre: document.getElementById('cliNombre').value, cuit: document.getElementById('cliCuit').value, localidad: document.getElementById('cliLoc').value }); alert("Guardado"); }
-    function renderClientes() { document.getElementById('listadoClientes').innerHTML = clientes.map(c => `<div class="col-6"><div class="card p-2 cli-card small"><strong>${c.nombre}</strong><br>${c.cuit}</div></div>`).join(''); }
-    function guardarArt() { db.collection("articulos").add({nombre: document.getElementById('confArt').value.toLowerCase()}); }
-    function guardarProv() { db.collection("proveedores").add({nombre: document.getElementById('confProv').value.toUpperCase()}); }
-    function renderConfigArts() { document.getElementById('listaArts').innerHTML = articulos.map(a => `<div class="small border-bottom d-flex justify-content-between">${a.nombre}<i class="fas fa-times text-danger" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join(''); }
-    function renderConfigProvs() { document.getElementById('listaProvs').innerHTML = proveedores.map(p => `<div class="small border-bottom d-flex justify-content-between">${p.nombre}<i class="fas fa-times text-danger" onclick="db.collection('proveedores').doc('${p.id}').delete()"></i></div>`).join(''); }
-    function guardarAcuerdo() { db.collection("acuerdos").add({proveedor: document.getElementById('acProv').value, articulo: document.getElementById('acArt').value, uxc: parseInt(document.getElementById('acUxC').value), cxp: parseInt(document.getElementById('acCxP').value)}); }
-    function renderConfigAcuerdos() { document.getElementById('listaAcuerdos').innerHTML = acuerdos.map(a => `<div class="small border-bottom d-flex justify-content-between">${a.proveedor} > ${a.articulo}<i class="fas fa-times text-danger" onclick="db.collection('acuerdos').doc('${a.id}').delete()"></i></div>`).join(''); }
-    function filtrarArticulosAcuerdo() { const p = document.getElementById('selProveedor').value; document.getElementById('selArticulo').innerHTML = '<option value="">-- Artículo --</option>' + acuerdos.filter(a => a.proveedor === p).map(a => `<option value="${a.articulo}">${a.articulo}</option>`).join(''); }
-    async function borrarMovArt(a) { if(confirm("Borrar stock de "+a+"?")){ const s = await db.collection("stock").where("articulo","==",a).get(); const b = db.batch(); s.docs.forEach(d=>b.delete(d.ref)); await b.commit(); } }
-    function guardarSalidaInterna() { db.collection("stock").add({articulo: document.getElementById('selArticuloSalida').value, cantidad: -parseInt(document.getElementById('inpCantidadSalida').value), tipo: "USO INTERNO (-)", fecha: firebase.firestore.FieldValue.serverTimestamp()}); }
+    // --- LÓGICA DE PRODUCCIÓN ---
+    function calcP() {
+        const p = parseFloat(document.getElementById('prodPal').value) || 0;
+        const c = parseFloat(document.getElementById('prodCxP').value) || 0;
+        const u = parseFloat(document.getElementById('prodUxC').value) || 0;
+        const total = p * c * u;
+        
+        document.getElementById('labelTotalProd').innerText = total.toLocaleString();
+
+        const art = document.getElementById('prodArticulo').value;
+        let rK = "";
+        if(art.includes("850")) rK = "850cc";
+        else if(art.includes("900")) rK = "900cc";
+        else if(art.includes("1.5")) rK = "1.5lts";
+        else if(art.includes("5")) rK = "5lts";
+
+        if(rK && RECETAS[rK]) {
+            const rec = RECETAS[rK];
+            document.getElementById('insumosPreview').innerHTML = 
+                `Se descontarán: ${total} ${rec.botella}, ${total} ${rec.etiqueta} y ${Math.ceil(total/rec.divisor)} ${rec.caja}`;
+        } else {
+            document.getElementById('insumosPreview').innerHTML = "...";
+        }
+    }
+
+    async function ejecutarProduccion() {
+        const art = document.getElementById('prodArticulo').value;
+        const totalRaw = document.getElementById('labelTotalProd').innerText;
+        const total = parseInt(totalRaw.replace(/\./g, '')); // Quitar puntos de miles
+
+        if(!art || total <= 0) {
+            alert("Selecciona un artículo y cantidad válida.");
+            return;
+        }
+
+        const batch = db.batch();
+        const ts = firebase.firestore.FieldValue.serverTimestamp();
+
+        // 1. Sumar Producto Final
+        batch.set(db.collection("stock").doc(), {
+            articulo: art,
+            cantidad: total,
+            tipo: "PRODUCCION (+)",
+            fecha: ts
+        });
+
+        // 2. Descontar Insumos (Receta)
+        let rK = "";
+        if(art.includes("850")) rK = "850cc";
+        else if(art.includes("900")) rK = "900cc";
+        else if(art.includes("1.5")) rK = "1.5lts";
+        else if(art.includes("5")) rK = "5lts";
+
+        if(rK && RECETAS[rK]) {
+            const rec = RECETAS[rK];
+            batch.set(db.collection("stock").doc(), { articulo: rec.botella, cantidad: -total, tipo: "CONSUMO (-)", fecha: ts });
+            batch.set(db.collection("stock").doc(), { articulo: rec.etiqueta, cantidad: -total, tipo: "CONSUMO (-)", fecha: ts });
+            batch.set(db.collection("stock").doc(), { articulo: rec.caja, cantidad: -Math.ceil(total/rec.divisor), tipo: "CONSUMO (-)", fecha: ts });
+        }
+
+        try {
+            await batch.commit();
+            alert("Producción registrada correctamente.");
+            document.getElementById('prodPal').value = 1;
+            calcP();
+        } catch (e) {
+            alert("Error al guardar: " + e.message);
+        }
+    }
+
+    // --- LÓGICA DE STOCK / INGRESOS ---
+    function sugerirConfigIngreso() {
+        const p = document.getElementById('selProveedor').value;
+        const a = document.getElementById('selArticulo').value;
+        const ac = acuerdos.find(x => x.proveedor === p && x.articulo === a);
+        
+        if(ac) {
+            document.getElementById('ingCxP').value = ac.cxp;
+            document.getElementById('ingUxC').value = ac.uxc;
+        }
+        calcIngreso();
+    }
+
+    function calcIngreso() {
+        const c = parseFloat(document.getElementById('inpCantidad').value) || 0;
+        const type = document.getElementById('selTipoCarga').value;
+        const cxp = parseFloat(document.getElementById('ingCxP').value) || 0;
+        const uxc = parseFloat(document.getElementById('ingUxC').value) || 0;
+
+        let total = 0;
+        if (type === 'p') total = c * cxp * uxc;
+        else if (type === 'c') total = c * uxc;
+        else total = c;
+
+        document.getElementById('txtTotalFinal').innerText = total.toLocaleString();
+    }
+
+    async function guardarIngreso() {
+        const art = document.getElementById('selArticulo').value;
+        const totalRaw = document.getElementById('txtTotalFinal').innerText;
+        const total = parseInt(totalRaw.replace(/\./g, ''));
+
+        if (!art || total <= 0) {
+            alert("Verifique artículo y cantidad.");
+            return;
+        }
+
+        try {
+            await db.collection("stock").add({
+                articulo: art,
+                cantidad: total,
+                tipo: "INGRESO (+)",
+                fecha: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            document.getElementById('inpCantidad').value = "";
+            calcIngreso();
+            alert("Ingreso registrado.");
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    }
+
+    function filtrarArticulosAcuerdo() {
+        const prov = document.getElementById('selProveedor').value;
+        const artsFiltrados = acuerdos.filter(a => a.proveedor === prov);
+        
+        let html = '<option value="">-- Artículo --</option>';
+        if(artsFiltrados.length > 0) {
+            html += artsFiltrados.map(a => `<option value="${a.articulo}">${a.articulo}</option>`).join('');
+        } else {
+            // Si no hay acuerdos, mostramos todos
+            html += articulos.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
+        }
+        document.getElementById('selArticulo').innerHTML = html;
+    }
+
+    async function guardarSalidaInterna() {
+        const art = document.getElementById('selArticuloSalida').value;
+        const cant = parseInt(document.getElementById('inpCantidadSalida').value) || 0;
+        
+        if(!art || cant <= 0) return alert("Datos inválidos");
+
+        try {
+            await db.collection("stock").add({
+                articulo: art,
+                cantidad: -cant,
+                tipo: "USO INTERNO (-)",
+                fecha: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            document.getElementById('inpCantidadSalida').value = "";
+            alert("Baja registrada.");
+        } catch(e) {
+            alert("Error: " + e.message);
+        }
+    }
+
+    // --- LÓGICA DE VENTAS ---
+    function sugerirConfigVenta() {
+        const a = document.getElementById('vtaArt').value;
+        // Buscar un acuerdo genérico o usar lógica estándar si tuvieras
+        // Aquí buscamos si existe configuración previa en acuerdos solo para traer CxP/UxC por defecto
+        const ac = acuerdos.find(x => x.articulo === a);
+        if(ac) {
+            document.getElementById('vtaCxP').value = ac.cxp;
+            document.getElementById('vtaUxC').value = ac.uxc;
+        }
+        calcVentaItem();
+    }
+
+    function calcVentaItem() {
+        const c = parseFloat(document.getElementById('vtaCantLog').value) || 0;
+        const t = document.getElementById('vtaTipo').value;
+        const cxp = parseFloat(document.getElementById('vtaCxP').value) || 0;
+        const uxc = parseFloat(document.getElementById('vtaUxC').value) || 0;
+
+        let total = 0;
+        if (t === 'p') total = c * cxp * uxc;
+        else if (t === 'c') total = c * uxc;
+        else total = c;
+
+        document.getElementById('vtaTotalItem').innerText = total.toLocaleString();
+    }
+
+    function agregarItemVenta() {
+        const totalRaw = document.getElementById('vtaTotalItem').innerText;
+        const total = parseInt(totalRaw.replace(/\./g, ''));
+        const art = document.getElementById('vtaArt').value;
+        
+        if (total <= 0 || !art) {
+            alert("Cantidad o Artículo inválido");
+            return;
+        }
+
+        itemsVenta.push({
+            art: art,
+            cant: total,
+            pres: document.getElementById('vtaCantLog').value + " " + document.getElementById('vtaTipo').value,
+            lote: document.getElementById('vtaLote').value || 'S/L'
+        });
+        renderTempVenta();
+    }
+
+    function renderTempVenta() {
+        document.getElementById('listaTempVenta').innerHTML = itemsVenta.map((it, i) => 
+            `<div class="badge-item">
+                ${it.art} (${it.cant.toLocaleString()}) 
+                <i class="fas fa-times text-danger ms-2" style="cursor:pointer" onclick="eliminarItemVenta(${i})"></i>
+            </div>`
+        ).join('');
+    }
+
+    function eliminarItemVenta(index) {
+        itemsVenta.splice(index, 1);
+        renderTempVenta();
+    }
+
+    async function finalizarVenta() {
+        if(itemsVenta.length === 0) return alert("Lista vacía");
+        
+        const cliId = document.getElementById('vtaCliente').value;
+        const cli = clientes.find(c => c.id === cliId);
+        
+        const batch = db.batch();
+        const ts = firebase.firestore.FieldValue.serverTimestamp();
+
+        itemsVenta.forEach(it => {
+            batch.set(db.collection("stock").doc(), {
+                articulo: it.art,
+                cantidad: -it.cant,
+                tipo: "VENTA (-)",
+                fecha: ts
+            });
+        });
+
+        try {
+            await batch.commit();
+            
+            // Generar PDF
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(18);
+            doc.text("PRADOS DEL SOL - REMITO", 105, 20, {align: 'center'});
+            
+            doc.setFontSize(10);
+            doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 10, 35);
+            doc.text(`Cliente: ${cli ? cli.nombre : 'Consumidor Final'}`, 10, 42);
+            doc.text(`Remito N°: ${document.getElementById('vtaNumRemito').value || 'S/N'}`, 10, 49);
+            doc.text(`Chofer: ${document.getElementById('vtaChofer').value || '-'}`, 10, 56);
+
+            const bodyData = itemsVenta.map(i => [i.art, i.pres, i.lote, i.cant.toLocaleString()]);
+            
+            doc.autoTable({
+                startY: 65,
+                head: [['Artículo', 'Presentación', 'Lote', 'Cantidad']],
+                body: bodyData,
+            });
+
+            doc.save(`Remito_${Date.now()}.pdf`);
+
+            // Limpiar formulario
+            itemsVenta = [];
+            renderTempVenta();
+            document.getElementById('vtaNumRemito').value = "";
+            alert("Venta registrada y PDF generado.");
+
+        } catch (e) {
+            alert("Error al procesar venta: " + e.message);
+        }
+    }
+
+    // --- HISTORIAL Y REPORTES ---
+    async function cargarHistorial() {
+        try {
+            const snap = await db.collection("stock").orderBy("fecha", "desc").limit(40).get();
+            
+            document.getElementById('listaHistorial').innerHTML = snap.docs.map(doc => {
+                const m = doc.data();
+                const esVenta = m.tipo && m.tipo.includes("VENTA") && !m.tipo.includes("ANULADA");
+                const dateObj = m.fecha ? m.fecha.toDate() : new Date();
+                
+                return `
+                <tr>
+                    <td>
+                        <small class="d-block text-muted">${dateObj.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</small>
+                        <span class="fw-bold" style="font-size:0.85rem">${m.articulo}</span>
+                        <div style="font-size:0.75rem" class="text-secondary">${m.tipo}</div>
+                    </td>
+                    <td class="text-end fw-bold align-middle ${m.cantidad > 0 ? 'text-success' : 'text-danger'}">
+                        ${m.cantidad.toLocaleString()}
+                    </td>
+                    <td class="text-center align-middle">
+                        ${esVenta ? `<i class="fas fa-undo-alt btn-anular" onclick="anularMovimiento('${doc.id}', '${m.articulo}', ${m.cantidad})"></i>` : ''}
+                    </td>
+                </tr>`;
+            }).join('');
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function anularMovimiento(docId, art, cant) {
+        if(confirm(`¿Desea ANULAR esta venta y devolver ${Math.abs(cant)} unidades al stock?`)) {
+            try {
+                await db.collection("stock").add({
+                    articulo: art,
+                    cantidad: Math.abs(cant),
+                    tipo: "VENTA ANULADA (+)",
+                    fecha: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert("Venta anulada.");
+                cargarHistorial();
+            } catch(e) {
+                alert("Error: " + e.message);
+            }
+        }
+    }
+
+    function resetVistasHistorial() {
+        document.getElementById('repFecha').valueAsDate = new Date();
+        document.getElementById('listaHistorial').innerHTML = "";
+        alert("Filtros reiniciados.");
+    }
+
+    async function generarReporteDetallado() {
+        const fecha = document.getElementById('repFecha').value;
+        const turno = document.getElementById('repTurno').value;
+
+        if(!fecha) return alert("Seleccione una fecha.");
+
+        const start = new Date(fecha + "T00:00:00");
+        const end = new Date(fecha + "T23:59:59");
+
+        try {
+            const snap = await db.collection("stock")
+                .where("fecha", ">=", firebase.firestore.Timestamp.fromDate(start))
+                .where("fecha", "<=", firebase.firestore.Timestamp.fromDate(end))
+                .get();
+
+            let movs = snap.docs.map(d => ({ ...d.data(), hora: d.data().fecha.toDate() }));
+
+            // Filtrar Turno
+            if(turno !== 'completo') {
+                movs = movs.filter(m => {
+                    const h = m.hora.getHours();
+                    if(turno === 'mañana') return h >= 6 && h < 14;
+                    if(turno === 'tarde') return h >= 14 && h < 22;
+                    return true;
+                });
+            }
+
+            // Agrupar Totales
+            let resumen = {};
+            movs.forEach(m => {
+                if(!resumen[m.tipo]) resumen[m.tipo] = {};
+                resumen[m.tipo][m.articulo] = (resumen[m.tipo][m.articulo] || 0) + m.cantidad;
+            });
+
+            // Generar PDF
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(16);
+            doc.text("BALANCE DE TURNO", 105, 15, {align: 'center'});
+            doc.setFontSize(10);
+            doc.text(`Fecha: ${fecha} | Turno: ${turno.toUpperCase()}`, 10, 25);
+
+            let y = 35;
+            
+            // Imprimir Resumen
+            for(const tipo in resumen) {
+                doc.setFontSize(11);
+                doc.setTextColor(0, 102, 204);
+                doc.text(`TOTALES ${tipo}:`, 10, y);
+                y += 7;
+                
+                doc.setFontSize(10);
+                doc.setTextColor(0);
+                for(const art in resumen[tipo]) {
+                    doc.text(`- ${art}: ${resumen[tipo][art].toLocaleString()}`, 15, y);
+                    y += 5;
+                }
+                y += 5;
+            }
+
+            // Tabla Detallada
+            doc.addPage();
+            doc.text("DETALLE CRONOLÓGICO", 10, 15);
+            
+            const bodyTable = movs.sort((a,b)=>a.hora-b.hora).map(m => [
+                m.hora.toLocaleTimeString(),
+                m.articulo,
+                m.tipo,
+                m.cantidad.toLocaleString()
+            ]);
+
+            doc.autoTable({
+                startY: 20,
+                head: [['Hora', 'Artículo', 'Operación', 'Cantidad']],
+                body: bodyTable
+            });
+
+            doc.save(`Reporte_${fecha}_${turno}.pdf`);
+
+        } catch (e) {
+            alert("Error generando reporte: " + e.message);
+        }
+    }
+
+    // --- CONFIGURACIÓN DE TABLAS MAESTRAS ---
+    function guardarArt() {
+        const nombre = document.getElementById('confArt').value.toLowerCase();
+        if(nombre) db.collection("articulos").add({nombre: nombre});
+        document.getElementById('confArt').value = "";
+    }
+    function renderConfigArts() {
+        document.getElementById('listaArts').innerHTML = articulos.map(a => 
+            `<div class="d-flex justify-content-between border-bottom p-1 small">
+                ${a.nombre} <i class="fas fa-times text-danger" onclick="db.collection('articulos').doc('${a.id}').delete()"></i>
+            </div>`
+        ).join('');
+    }
+
+    function guardarProv() {
+        const nombre = document.getElementById('confProv').value.toUpperCase();
+        if(nombre) db.collection("proveedores").add({nombre: nombre});
+        document.getElementById('confProv').value = "";
+    }
+    function renderConfigProvs() {
+        document.getElementById('listaProvs').innerHTML = proveedores.map(p => 
+            `<div class="d-flex justify-content-between border-bottom p-1 small">
+                ${p.nombre} <i class="fas fa-times text-danger" onclick="db.collection('proveedores').doc('${p.id}').delete()"></i>
+            </div>`
+        ).join('');
+    }
+
+    function guardarAcuerdo() {
+        db.collection("acuerdos").add({
+            proveedor: document.getElementById('acProv').value,
+            articulo: document.getElementById('acArt').value,
+            uxc: parseInt(document.getElementById('acUxC').value),
+            cxp: parseInt(document.getElementById('acCxP').value)
+        });
+    }
+    function renderConfigAcuerdos() {
+        document.getElementById('listaAcuerdos').innerHTML = acuerdos.map(a => 
+            `<div class="d-flex justify-content-between border-bottom p-1 small">
+                ${a.proveedor} > ${a.articulo}
+                <i class="fas fa-times text-danger" onclick="db.collection('acuerdos').doc('${a.id}').delete()"></i>
+            </div>`
+        ).join('');
+    }
+
+    async function guardarCliente() {
+        await db.collection("clientes").add({
+            nombre: document.getElementById('cliNombre').value,
+            cuit: document.getElementById('cliCuit').value,
+            localidad: document.getElementById('cliLoc').value
+        });
+        document.getElementById('cliNombre').value = "";
+        alert("Cliente guardado.");
+    }
+    function renderClientes() {
+        document.getElementById('listadoClientes').innerHTML = clientes.map(c => 
+            `<div class="col-6 mb-2">
+                <div class="card p-2 small shadow-sm border-start border-3 border-primary">
+                    <strong>${c.nombre}</strong>
+                    <span class="text-muted">${c.cuit}</span>
+                </div>
+            </div>`
+        ).join('');
+    }
+
+    function renderTablasStock() {
+        const gen = document.getElementById('tablaStockGeneral');
+        const pro = document.getElementById('tablaStockProducido');
+        gen.innerHTML = "";
+        pro.innerHTML = "";
+
+        Object.keys(stockGlobal).sort().forEach(k => {
+            // Tabla General
+            gen.innerHTML += `
+                <tr>
+                    <td>${k}</td>
+                    <td class="text-end fw-bold">${stockGlobal[k].toLocaleString()}</td>
+                    <td class="text-end"><i class="fas fa-trash text-danger small" style="cursor:pointer" onclick="borrarMovArt('${k}')"></i></td>
+                </tr>`;
+            
+            // Tabla Producido (Filtramos insumos comunes para ver solo producto final)
+            if(!k.includes("botella") && !k.includes("caja") && !k.includes("etiqueta") && !k.includes("tapa")) {
+                pro.innerHTML += `
+                <tr>
+                    <td>${k}</td>
+                    <td class="text-end text-info fw-bold">${stockGlobal[k].toLocaleString()}</td>
+                </tr>`;
+            }
+        });
+    }
+
+    async function borrarMovArt(art) {
+        if(confirm(`ATENCIÓN: Esto borrará TODOS los registros históricos de ${art}. ¿Seguro?`)){
+            const s = await db.collection("stock").where("articulo","==",art).get();
+            const batch = db.batch();
+            s.docs.forEach(d => batch.delete(d.ref));
+            await batch.commit();
+        }
+    }
 </script>
 </body>
 </html>
