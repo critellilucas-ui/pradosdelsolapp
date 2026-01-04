@@ -16,13 +16,22 @@
     
     <style>
         body { background-color: #f4f7f6; font-family: 'Segoe UI', sans-serif; padding-bottom: 70px; }
-        .sidebar { background-color: #212529; color: white; min-height: 100vh; position: sticky; top: 0; padding: 15px; }
+        .sidebar { background-color: #212529; color: white; min-height: 100vh; position: sticky; top: 0; padding: 15px; display: flex; flex-direction: column; }
         .nav-link { color: #adb5bd; cursor: pointer; padding: 12px; border-radius: 8px; margin-bottom: 5px; text-decoration: none; display: block; }
         .nav-link.active, .nav-link:hover { color: white; background-color: #0d6efd; }
+        .logout-link { color: #ff6b6b !important; margin-top: auto; border: 1px solid #ff6b6b; text-align: center; }
         
+        /* Animación de Parpadeo */
+        @keyframes blink-red {
+            0% { background-color: transparent; }
+            50% { background-color: #dc3545; color: white; }
+            100% { background-color: transparent; }
+        }
+        .stock-alerta { animation: blink-red 1.5s infinite; border-radius: 8px; }
+
         @media (max-width: 768px) {
             .sidebar { display: none !important; }
-            .mobile-header { display: flex; justify-content: space-between; align-items: center; background: #212529; color: white; padding: 10px 15px; position: fixed; top: 0; left: 0; right: 0; z-index: 1000; }
+            .mobile-header { display: flex; justify-content: space-between; align-items: center; background: #212529; color: white; padding: 10px 15px; position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: 50px; }
             .mobile-nav { display: flex; justify-content: space-around; position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #dee2e6; padding: 10px 0; z-index: 1000; }
             .nav-icon { text-align: center; color: #6c757d; font-size: 0.7rem; flex: 1; cursor: pointer; }
             .nav-icon i { font-size: 1.2rem; display: block; }
@@ -34,7 +43,7 @@
         .card { border-radius: 10px; border: none; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
         label { font-size: 0.75rem; font-weight: 700; color: #495057; text-transform: uppercase; }
         .badge-item { background: #e7f1ff; color: #0d6efd; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; border: 1px solid #b6d4fe; }
-        .stock-critico { color: #dc3545 !important; font-weight: bold; }
+        .stock-critico { color: #dc3545 !important; font-weight: bold; background-color: #fceaea; }
         .input-accent { background-color: #fff3cd !important; border: 1px solid #ffeeba !important; }
         .scroll-list { max-height: 200px; overflow-y: auto; font-size: 0.85rem; }
         .search-box { position: sticky; top: 0; z-index: 10; background: #f4f7f6; padding: 10px 0; }
@@ -54,20 +63,23 @@
 <div id="appSystem" class="container-fluid hidden">
     <div class="mobile-header d-md-none">
         <span class="fw-bold">PRADOS DEL SOL</span>
-        <i class="fas fa-sign-out-alt" onclick="logout()"></i>
+        <button onclick="logout()" class="btn btn-sm btn-outline-danger border-0">
+            <i class="fas fa-sign-out-alt fa-lg"></i>
+        </button>
     </div>
 
     <div class="row">
-        <div class="col-md-2 sidebar d-none d-md-block">
+        <div class="col-md-2 sidebar d-none d-md-flex">
             <h5 class="text-center mb-4 text-info">MENÚ</h5>
-            <nav>
-                <a class="nav-link active" onclick="showTab('stock')"><i class="fas fa-boxes me-2"></i>Stock</a>
-                <a class="nav-link" onclick="showTab('produccion')"><i class="fas fa-industry me-2"></i>Producción</a>
-                <a class="nav-link" onclick="showTab('ventas')"><i class="fas fa-file-invoice me-2"></i>Ventas</a>
-                <a class="nav-link" onclick="showTab('clientes')"><i class="fas fa-users me-2"></i>Clientes</a>
-                <a class="nav-link" onclick="showTab('historial')"><i class="fas fa-history me-2"></i>Historial</a>
-                <a class="nav-link" onclick="showTab('config')"><i class="fas fa-cog me-2"></i>Configuración</a>
+            <nav class="flex-grow-1">
+                <a class="nav-link active" id="side-stock" onclick="showTab('stock', this)"><i class="fas fa-boxes me-2"></i>Stock</a>
+                <a class="nav-link" onclick="showTab('produccion', this)"><i class="fas fa-industry me-2"></i>Producción</a>
+                <a class="nav-link" onclick="showTab('ventas', this)"><i class="fas fa-file-invoice me-2"></i>Ventas</a>
+                <a class="nav-link" onclick="showTab('clientes', this)"><i class="fas fa-users me-2"></i>Clientes</a>
+                <a class="nav-link" onclick="showTab('historial', this)"><i class="fas fa-history me-2"></i>Historial</a>
+                <a class="nav-link" onclick="showTab('config', this)"><i class="fas fa-cog me-2"></i>Configuración</a>
             </nav>
+            <a class="nav-link logout-link mt-4" onclick="logout()"><i class="fas fa-power-off me-2"></i>SALIR</a>
         </div>
 
         <div class="col-md-10 p-3">
@@ -163,14 +175,12 @@
                         <button class="btn btn-primary w-100" onclick="guardarCliente()">GUARDAR CLIENTE</button>
                     </div>
                 </div>
-
                 <div class="search-box">
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-search"></i></span>
                         <input type="text" id="buscarCli" class="form-control" placeholder="Buscar cliente por nombre..." oninput="renderClientes()">
                     </div>
                 </div>
-
                 <div id="listadoClientes" class="row g-2 mt-2"></div>
             </div>
 
@@ -211,11 +221,11 @@
     </div>
 
     <div class="mobile-nav d-md-none">
-        <div class="nav-icon active" onclick="showTab('stock')"><i class="fas fa-boxes"></i>Stock</div>
-        <div class="nav-icon" onclick="showTab('produccion')"><i class="fas fa-industry"></i>Prod</div>
-        <div class="nav-icon" onclick="showTab('ventas')"><i class="fas fa-file-invoice"></i>Ventas</div>
-        <div class="nav-icon" onclick="showTab('clientes')"><i class="fas fa-users"></i>Cli</div>
-        <div class="nav-icon" onclick="showTab('historial')"><i class="fas fa-history"></i>Hist</div>
+        <div class="nav-icon active" id="nav-stock" onclick="showTab('stock', this)"><i class="fas fa-boxes"></i>Stock</div>
+        <div class="nav-icon" id="nav-produccion" onclick="showTab('produccion', this)"><i class="fas fa-industry"></i>Prod</div>
+        <div class="nav-icon" id="nav-ventas" onclick="showTab('ventas', this)"><i class="fas fa-file-invoice"></i>Ventas</div>
+        <div class="nav-icon" id="nav-clientes" onclick="showTab('clientes', this)"><i class="fas fa-users"></i>Cli</div>
+        <div class="nav-icon" id="nav-historial" onclick="showTab('historial', this)"><i class="fas fa-history"></i>Hist</div>
     </div>
 </div>
 
@@ -246,10 +256,13 @@
         db.collection("stock").onSnapshot(s => { stockGlobal = {}; s.docs.forEach(d => { stockGlobal[d.data().articulo] = (stockGlobal[d.data().articulo] || 0) + d.data().cantidad; }); renderStock(); cargarHistorial(); });
     }
 
-    function showTab(id) {
+    function showTab(id, el) {
         document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
         document.getElementById(id).classList.remove('hidden');
         document.querySelectorAll('.nav-link, .nav-icon').forEach(n => n.classList.remove('active'));
+        if(el) el.classList.add('active');
+        const mobileIcon = document.getElementById('nav-'+id);
+        if(mobileIcon) mobileIcon.classList.add('active');
     }
 
     // --- FILTRADO RESTRICTIVO EN INGRESO ---
@@ -280,42 +293,28 @@
 
     async function guardarIngreso() {
         const a = document.getElementById('selArticulo').value, t = parseInt(document.getElementById('txtTotalFinal').innerText.replace(/\./g,''));
-        if(!a || a === "SIN ACUERDOS") return alert("Debe seleccionar un proveedor con artículos acordados.");
+        if(!a || a === "SIN ACUERDOS") return alert("Seleccione proveedor con acuerdos");
         if(t > 0) await db.collection("stock").add({articulo: a, cantidad: t, tipo: "INGRESO", fecha: firebase.firestore.FieldValue.serverTimestamp()});
     }
 
-    // --- REPORTE PDF SECCIONADO ---
     function imprimirReporteDia() {
         if(!historialActual.length) return alert("Sin datos");
         const { jsPDF } = window.jspdf; const doc = new jsPDF();
         const fechaSelect = document.getElementById('repFecha').value;
         doc.setFontSize(18); doc.text("REPORTE OPERATIVO DIARIO", 15, 20);
-        doc.setFontSize(11); doc.text(`Fecha: ${fechaSelect}`, 15, 28);
-        
-        const secciones = [
-            { titulo: "INGRESOS", filtro: h => h.tipo === "INGRESO" },
-            { titulo: "PRODUCCIÓN", filtro: h => h.tipo === "PRODUCCION" || h.tipo === "CONSUMO" },
-            { titulo: "VENTAS", filtro: h => h.tipo.includes("VENTA") },
-            { titulo: "AJUSTES", filtro: h => h.tipo === "DESCARTE" || h.tipo === "USO" }
-        ];
-
+        const secciones = [{ titulo: "INGRESOS", filtro: h => h.tipo === "INGRESO" }, { titulo: "PRODUCCIÓN", filtro: h => h.tipo === "PRODUCCION" || h.tipo === "CONSUMO" }, { titulo: "VENTAS", filtro: h => h.tipo.includes("VENTA") }, { titulo: "AJUSTES", filtro: h => h.tipo === "DESCARTE" || h.tipo === "USO" }];
         let y = 35;
         secciones.forEach(sec => {
             const data = historialActual.filter(sec.filtro);
             if(data.length > 0) {
                 doc.setFontSize(12); doc.setTextColor(0, 102, 204); doc.text(sec.titulo, 15, y);
-                doc.autoTable({
-                    startY: y + 2,
-                    head: [['HORA', 'ARTICULO', 'CANT', 'TIPO', 'LOTE']],
-                    body: data.map(h => [h.fecha?.toDate().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), h.articulo.toUpperCase(), h.cantidad, h.tipo, h.lote || '-'])
-                });
+                doc.autoTable({ startY: y + 2, head: [['HORA', 'ARTICULO', 'CANT', 'TIPO', 'LOTE']], body: data.map(h => [h.fecha?.toDate().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), h.articulo.toUpperCase(), h.cantidad, h.tipo, h.lote || '-']) });
                 y = doc.lastAutoTable.finalY + 10;
             }
         });
         doc.save(`Reporte_${fechaSelect}.pdf`);
     }
 
-    // --- VENTAS ---
     function calcVentaItem() {
         const cant = parseFloat(document.getElementById('vtaCantLog').value)||0, tipo = document.getElementById('vtaTipo').value;
         const cxp = parseFloat(document.getElementById('vtaCxP').value)||75, uxc = parseFloat(document.getElementById('vtaUxC').value)||12;
@@ -337,34 +336,22 @@
         const { jsPDF } = window.jspdf; const doc = new jsPDF();
         doc.text("REMITO - PRADOS DEL SOL", 15, 20);
         doc.text(`Cliente: ${document.getElementById('vtaCliente').options[document.getElementById('vtaCliente').selectedIndex].text}`, 15, 30);
-        doc.text(`Transporte: ${document.getElementById('vtaChofer').value} | Patente: ${document.getElementById('vtaCamion').value}`, 15, 38);
         doc.autoTable({ startY: 45, head: [['ARTICULO', 'BULTOS', 'UNIDADES', 'LOTE']], body: itemsVenta.map(i=>[i.art.toUpperCase(), i.pres, i.cant, i.lote]) });
         doc.save(`Remito_${rem}.pdf`);
         itemsVenta=[]; document.getElementById('listaTempVenta').innerHTML=""; alert("Venta Exitosa");
     }
 
-    // --- CLIENTES CON BÚSQUEDA ---
     function guardarCliente() {
         const n = document.getElementById('cliNombre').value;
         if(n) db.collection("clientes").add({ nombre: n, cuit: document.getElementById('cliCuit').value, localidad: document.getElementById('cliLoc').value });
     }
 
     function renderClientes() {
-        const termino = document.getElementById('buscarCli').value.toLowerCase();
-        const clientesFiltrados = clientes.filter(c => c.nombre.toLowerCase().includes(termino));
-        
-        document.getElementById('listadoClientes').innerHTML = clientesFiltrados.map(c => `
-            <div class="col-md-4 col-12 mb-2">
-                <div class="card p-2 small shadow-sm">
-                    <strong>${c.nombre}</strong>
-                    <div class="text-muted">CUIT: ${c.cuit || '-'} | Loc: ${c.localidad || '-'}</div>
-                    <div class="text-end"><i class="fas fa-trash text-danger" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></div>
-                </div>
-            </div>
-        `).join('');
+        const t = document.getElementById('buscarCli').value.toLowerCase();
+        const fil = clientes.filter(c => c.nombre.toLowerCase().includes(t));
+        document.getElementById('listadoClientes').innerHTML = fil.map(c => `<div class="col-md-4 col-12 mb-2"><div class="card p-2 small shadow-sm"><strong>${c.nombre}</strong><div class="text-muted">CUIT: ${c.cuit || '-'}</div><div class="text-end"><i class="fas fa-trash text-danger" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></div></div></div>`).join('');
     }
 
-    // --- OTROS ---
     async function cargarHistorial() {
         const f = document.getElementById('repFecha').value; if(!f) return;
         const snap = await db.collection("stock").where("fecha", ">=", new Date(f + "T00:00:00")).where("fecha", "<=", new Date(f + "T23:59:59")).orderBy("fecha", "desc").get();
@@ -375,11 +362,25 @@
     function renderStock() {
         const p = document.getElementById('tablaStockProducido'), i = document.getElementById('tablaStockInsumos');
         p.innerHTML = ""; i.innerHTML = "";
+        let hayCritico = false;
+
         Object.keys(stockGlobal).sort().forEach(k => {
             const min = articulos.find(a => a.nombre === k)?.minimo || 0, actual = stockGlobal[k];
-            const h = `<tr class="${actual < min ? 'stock-critico' : ''}"><td>${k.toUpperCase()}</td><td class="text-end">${actual.toLocaleString()}</td></tr>`;
+            const esCritico = actual < min;
+            if(esCritico) hayCritico = true;
+
+            const h = `<tr class="${esCritico ? 'stock-critico' : ''}"><td>${k.toUpperCase()}</td><td class="text-end">${actual.toLocaleString()}</td></tr>`;
             if(['botella','etiqueta','caja','bidon','insumo','envase'].some(x => k.toLowerCase().includes(x))) i.innerHTML += h; else p.innerHTML += h;
         });
+
+        // Activar parpadeo en menús
+        if(hayCritico) {
+            document.getElementById('side-stock').classList.add('stock-alerta');
+            document.getElementById('nav-stock').classList.add('stock-alerta');
+        } else {
+            document.getElementById('side-stock').classList.remove('stock-alerta');
+            document.getElementById('nav-stock').classList.remove('stock-alerta');
+        }
     }
 
     function renderSelects() {
@@ -393,7 +394,7 @@
     }
 
     function renderConfigAcuerdos() {
-        document.getElementById('listaAcuerdos').innerHTML = acuerdos.map(a => `<div class="border-bottom py-1 small d-flex justify-content-between"><span>${a.proveedor} -> ${a.articulo} (${a.cxp}x${a.uxc})</span><i class="fas fa-times text-danger" onclick="db.collection('acuerdos').doc('${a.id}').delete()"></i></div>`).join('');
+        document.getElementById('listaAcuerdos').innerHTML = acuerdos.map(a => `<div class="border-bottom py-1 small d-flex justify-content-between"><span>${a.proveedor} -> ${a.articulo}</span><i class="fas fa-times text-danger" onclick="db.collection('acuerdos').doc('${a.id}').delete()"></i></div>`).join('');
     }
 
     function guardarArt() { db.collection("articulos").add({nombre: document.getElementById('confArt').value.toLowerCase(), minimo: parseInt(document.getElementById('confMin').value)||0}); }
