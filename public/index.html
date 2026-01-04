@@ -35,6 +35,7 @@
         label { font-size: 0.75rem; font-weight: 700; color: #495057; text-transform: uppercase; }
         .badge-item { background: #e7f1ff; color: #0d6efd; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; border: 1px solid #b6d4fe; }
         .scroll-list { max-height: 200px; overflow-y: auto; font-size: 0.85rem; }
+        .input-accent { background-color: #fff3cd; border: 1px solid #ffeeba; }
     </style>
 </head>
 <body>
@@ -74,25 +75,34 @@
                     <h5 class="text-primary fw-bold">CONFECCIÓN DE REMITO</h5>
                     
                     <div class="row g-2 mb-3 bg-light p-3 rounded border">
-                        <div class="col-12 mb-2"><label class="text-primary">1. Datos del Cliente</label></div>
+                        <div class="col-12 mb-1"><label class="text-primary">1. Datos del Cliente y Remito</label></div>
                         <div class="col-md-6"><select id="vtaCliente" class="form-select"></select></div>
-                        <div class="col-md-6"><input type="text" id="vtaNumRemito" class="form-control" placeholder="Número de Remito (Ej: 0001-00001234)"></div>
+                        <div class="col-md-6"><input type="text" id="vtaNumRemito" class="form-control" placeholder="Número de Remito"></div>
                     </div>
 
                     <div class="row g-2 mb-3 bg-light p-3 rounded border">
-                        <div class="col-12 mb-2"><label class="text-primary">2. Datos de Logística (Chofer)</label></div>
-                        <div class="col-md-6"><input type="text" id="vtaChofer" class="form-control" placeholder="Nombre Completo del Chofer"></div>
-                        <div class="col-md-6"><input type="text" id="vtaChoferDni" class="form-control" placeholder="DNI Chofer"></div>
-                        <div class="col-6"><input type="text" id="vtaCamion" class="form-control" placeholder="Patente Camión/Chasis"></div>
-                        <div class="col-6"><input type="text" id="vtaSemi" class="form-control" placeholder="Patente Acoplado/Semi"></div>
+                        <div class="col-12 mb-1"><label class="text-primary">2. Datos de Logística (Chofer)</label></div>
+                        <div class="col-md-3 col-6"><input type="text" id="vtaChofer" class="form-control" placeholder="Chofer"></div>
+                        <div class="col-md-3 col-6"><input type="text" id="vtaChoferDni" class="form-control" placeholder="DNI"></div>
+                        <div class="col-md-3 col-6"><input type="text" id="vtaCamion" class="form-control" placeholder="Patente Camión"></div>
+                        <div class="col-md-3 col-6"><input type="text" id="vtaSemi" class="form-control" placeholder="Patente Semi"></div>
                     </div>
 
                     <div class="row g-2 p-3 rounded bg-white border">
-                        <div class="col-12 mb-2"><label class="text-primary">3. Carga de Mercadería</label></div>
-                        <div class="col-md-6"><label>Producto</label><select id="vtaArt" class="form-select" onchange="calcVentaItem()"></select></div>
+                        <div class="col-12 mb-1"><label class="text-primary">3. Carga de Mercadería (Ajuste de bultos habilitado)</label></div>
+                        <div class="col-md-4"><label>Producto</label><select id="vtaArt" class="form-select" onchange="calcVentaItem()"></select></div>
                         <div class="col-md-2 col-4"><label>Cant.</label><input type="number" id="vtaCantLog" class="form-control" value="1" oninput="calcVentaItem()"></div>
-                        <div class="col-md-2 col-4"><label>Tipo</label><select id="vtaTipo" class="form-select" onchange="calcVentaItem()"><option value="p">Pallets</option><option value="c">Cajas</option><option value="u">Unidades</option></select></div>
-                        <div class="col-md-2 col-4"><label>Lote</label><input type="text" id="vtaLote" class="form-control" placeholder="Lote"></div>
+                        <div class="col-md-2 col-8"><label>Tipo Bulto</label><select id="vtaTipo" class="form-select" onchange="calcVentaItem()">
+                            <option value="p">Pallets</option>
+                            <option value="c">Cajas</option>
+                            <option value="u">Unidades</option>
+                        </select></div>
+                        
+                        <div class="col-md-2 col-6" id="divVtaCxP"><label>Cajas x Pallet</label><input type="number" id="vtaCxP" class="form-control input-accent" value="75" oninput="calcVentaItem()"></div>
+                        <div class="col-md-2 col-6" id="divVtaUxC"><label>Unid x Caja</label><input type="number" id="vtaUxC" class="form-control input-accent" value="12" oninput="calcVentaItem()"></div>
+                        
+                        <div class="col-md-3 col-12"><label>Lote</label><input type="text" id="vtaLote" class="form-control" placeholder="Lote"></div>
+
                         <div class="col-12 mt-3 d-flex justify-content-between align-items-center">
                             <span class="fw-bold">Total Unidades: <span id="vtaTotalItem" class="badge bg-dark">0</span></span>
                             <button class="btn btn-dark" onclick="agregarItemVenta()"><i class="fas fa-plus me-1"></i> AÑADIR AL DETALLE</button>
@@ -102,7 +112,7 @@
                     <div id="listaTempVenta" class="my-3"></div>
                     
                     <button class="btn btn-primary w-100 py-3 fw-bold shadow" onclick="finalizarVenta()">
-                        <i class="fas fa-file-pdf me-2"></i> GENERAR REMITO COMPLETO
+                        <i class="fas fa-file-pdf me-2"></i> GENERAR REMITO Y DESCONTAR STOCK
                     </button>
                 </div>
             </div>
@@ -110,7 +120,7 @@
             <div id="stock" class="content-section">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <div class="card p-3 border-top border-success border-4 shadow-sm mb-3">
+                        <div class="card p-3 border-top border-success border-4 shadow-sm">
                             <h6 class="text-success fw-bold">INGRESO DE MERCADERÍA</h6>
                             <div class="row g-2">
                                 <div class="col-12"><label>Proveedor</label><select id="selProveedor" class="form-select" onchange="filtrarArticulosPorProveedor()"></select></div>
@@ -178,7 +188,8 @@
                 <div class="row g-3">
                     <div class="col-md-6"><div class="card p-3"><h6>ARTÍCULOS</h6><div class="input-group mb-2"><input type="text" id="confArt" class="form-control"><button class="btn btn-primary" onclick="guardarArt()">+</button></div><div id="listaArts" class="scroll-list p-1"></div></div></div>
                     <div class="col-md-6"><div class="card p-3"><h6>PROVEEDORES</h6><div class="input-group mb-2"><input type="text" id="confProv" class="form-control"><button class="btn btn-success" onclick="guardarProv()">+</button></div><div id="listaProvs" class="scroll-list p-1"></div></div></div>
-                    <div class="col-12"><div class="card p-3 border-warning border-top border-4"><h6>ACUERDOS (BULTOS)</h6><div class="row g-1"><div class="col-6"><select id="acProv" class="form-select"></select></div><div class="col-6"><select id="acArt" class="form-select"></select></div><div class="col-4"><input type="number" id="acUxC" class="form-control" placeholder="UxC"></div><div class="col-4"><input type="number" id="acCxP" class="form-control" placeholder="CxP"></div><div class="col-4"><button class="btn btn-warning w-100" onclick="guardarAcuerdo()">GRABAR</button></div></div><div id="listaAcuerdos" class="mt-2 small"></div></div></div>
+                    <div class="col-12"><div class="card p-3 border-warning border-top border-4"><h6>ACUERDOS LOGÍSTICOS</h6><div class="row g-1"><div class="col-6"><select id="acProv" class="form-select"></select></div><div class="col-6"><select id="acArt" class="form-select"></select></div><div class="col-4"><input type="number" id="acUxC" class="form-control" placeholder="UxC"></div><div class="col-4"><input type="number" id="acCxP" class="form-control" placeholder="CxP"></div><div class="col-4"><button class="btn btn-warning w-100" onclick="guardarAcuerdo()">GRABAR</button></div></div><div id="listaAcuerdos" class="mt-2 small"></div></div></div>
+                    <div class="col-12"><button class="btn btn-outline-danger w-100" onclick="resetTotalSistema()">RESET TOTAL</button></div>
                 </div>
             </div>
 
@@ -228,81 +239,102 @@
         document.querySelectorAll('.nav-link, .nav-icon').forEach(n => n.classList.remove('active'));
     }
 
-    // --- LÓGICA DE VENTAS Y PDF (CAMBIOS SOLICITADOS) ---
+    // --- LÓGICA DE VENTAS CON AJUSTE DINÁMICO ---
     function calcVentaItem() {
-        const c = parseFloat(document.getElementById('vtaCantLog').value)||0, t = document.getElementById('vtaTipo').value;
-        document.getElementById('vtaTotalItem').innerText = Math.round(t==='p'?c*75*12:(t==='c'?c*12:c)).toLocaleString();
+        const cant = parseFloat(document.getElementById('vtaCantLog').value)||0;
+        const tipo = document.getElementById('vtaTipo').value;
+        const cxp = parseFloat(document.getElementById('vtaCxP').value)||1;
+        const uxc = parseFloat(document.getElementById('vtaUxC').value)||1;
+        
+        // Control visual de campos
+        document.getElementById('divVtaCxP').style.display = (tipo === 'p') ? 'block' : 'none';
+        document.getElementById('divVtaUxC').style.display = (tipo === 'p' || tipo === 'c') ? 'block' : 'none';
+
+        let total = 0;
+        if(tipo === 'p') total = cant * cxp * uxc;
+        else if(tipo === 'c') total = cant * uxc;
+        else total = cant;
+
+        document.getElementById('vtaTotalItem').innerText = Math.round(total).toLocaleString();
     }
 
     function agregarItemVenta() {
-        const art = document.getElementById('vtaArt').value, tot = parseInt(document.getElementById('vtaTotalItem').innerText.replace(/\./g,''));
+        const art = document.getElementById('vtaArt').value;
+        const tot = parseInt(document.getElementById('vtaTotalItem').innerText.replace(/\./g,''));
+        const tipo = document.getElementById('vtaTipo').value;
+        const cant = document.getElementById('vtaCantLog').value;
+        
         if(!art || tot<=0) return;
-        itemsVenta.push({ art, cant: tot, pres: document.getElementById('vtaCantLog').value + " " + document.getElementById('vtaTipo').value, lote: document.getElementById('vtaLote').value || 'S/L' });
+
+        let descBulto = "";
+        if(tipo === 'p') descBulto = `${cant} Pallet (${document.getElementById('vtaCxP').value} Cjas)`;
+        else if(tipo === 'c') descBulto = `${cant} Cajas`;
+        else descBulto = `${cant} Unid.`;
+
+        itemsVenta.push({ 
+            art, 
+            cant: tot, 
+            pres: descBulto, 
+            lote: document.getElementById('vtaLote').value || 'S/L' 
+        });
         renderListaTemp();
     }
 
     function renderListaTemp() {
-        document.getElementById('listaTempVenta').innerHTML = itemsVenta.map((it, i) => `<div class="badge-item"><span>${it.art} - ${it.cant} Un.</span><i class="fas fa-times text-danger" onclick="itemsVenta.splice(${i},1); renderListaTemp();"></i></div>`).join('');
+        document.getElementById('listaTempVenta').innerHTML = itemsVenta.map((it, i) => `
+            <div class="badge-item">
+                <span><b>${it.art}</b>: ${it.pres} (${it.cant} Un.)</span>
+                <i class="fas fa-times text-danger" onclick="itemsVenta.splice(${i},1); renderListaTemp();"></i>
+            </div>`).join('');
     }
 
     async function finalizarVenta() {
-        if(!itemsVenta.length) { alert("Agregue productos al remito"); return; }
+        if(!itemsVenta.length) { alert("Agregue productos"); return; }
         const cli = clientes.find(c => c.id === document.getElementById('vtaCliente').value);
         const remNum = document.getElementById('vtaNumRemito').value || "S/N";
         
-        // Descontar Stock
-        for(let it of itemsVenta) { await db.collection("stock").add({ articulo: it.art, cantidad: -it.cant, tipo: `VENTA R:${remNum}`, fecha: firebase.firestore.FieldValue.serverTimestamp() }); }
+        for(let it of itemsVenta) { 
+            await db.collection("stock").add({ 
+                articulo: it.art, 
+                cantidad: -it.cant, 
+                tipo: `VENTA R:${remNum}`, 
+                fecha: firebase.firestore.FieldValue.serverTimestamp() 
+            }); 
+        }
         
         const { jsPDF } = window.jspdf; const doc = new jsPDF();
-        
-        // DISEÑO DEL REMITO RESTAURADO
-        // Encabezado Emisor
         doc.setFontSize(16); doc.text("PRADOS DEL SOL", 15, 20);
         doc.setFontSize(10); doc.text("De: Maximiliano Meza", 15, 26);
-        doc.text("Rubro: Distribución de Aceites Comestibles", 15, 31);
-        doc.text("Muñiz, Buenos Aires, Argentina", 15, 36);
-        
-        // Cuadro de Remito
+        doc.text("Distribución de Aceites Comestibles", 15, 31);
         doc.setLineWidth(0.5); doc.rect(130, 12, 65, 28);
         doc.setFontSize(14); doc.text("REMITO", 162.5, 22, {align:'center'});
         doc.setFontSize(11); doc.text("N° " + remNum, 162.5, 30, {align:'center'});
         doc.setFontSize(9); doc.text("Fecha: " + new Date().toLocaleDateString(), 162.5, 36, {align:'center'});
-
-        // Bloque Cliente
         doc.setDrawColor(200); doc.line(15, 45, 195, 45);
         doc.setFontSize(10); doc.setFont(undefined, 'bold'); doc.text("DATOS DEL CLIENTE", 15, 52);
         doc.setFont(undefined, 'normal');
         doc.text(`Razón Social: ${cli ? cli.nombre : '____________________'}`, 15, 58);
         doc.text(`CUIT: ${cli ? cli.cuit : '____________________'}`, 15, 63);
         doc.text(`Domicilio: ${cli ? cli.localidad : '____________________'}`, 15, 68);
-
-        // Bloque Transporte / Chofer
         doc.setFont(undefined, 'bold'); doc.text("DATOS DE LOGÍSTICA / TRANSPORTE", 15, 78);
         doc.setFont(undefined, 'normal');
         doc.text(`Chofer: ${document.getElementById('vtaChofer').value || '____________________'}`, 15, 84);
         doc.text(`DNI: ${document.getElementById('vtaChoferDni').value || '____________________'}`, 100, 84);
-        doc.text(`Patente Camión: ${document.getElementById('vtaCamion').value || '__________'}`, 15, 89);
-        doc.text(`Patente Acoplado: ${document.getElementById('vtaSemi').value || '__________'}`, 100, 89);
-
-        // Tabla de Contenido
+        doc.text(`Patentes: ${document.getElementById('vtaCamion').value || '___'} / ${document.getElementById('vtaSemi').value || '___'}`, 15, 89);
         doc.autoTable({
             startY: 95,
-            head: [['PRODUCTO / VARIEDAD', 'BULTOS', 'UNIDADES TOTALES', 'LOTE']],
+            head: [['PRODUCTO', 'BULTOS/DETALLE', 'TOTAL UNIDADES', 'LOTE']],
             body: itemsVenta.map(i=>[i.art.toUpperCase(), i.pres, i.cant, i.lote]),
-            theme: 'striped',
             headStyles: { fillColor: [33, 37, 41] }
         });
-
-        // Firmas
         const finalY = doc.lastAutoTable.finalY + 30;
         doc.line(20, finalY, 80, finalY); doc.text("Firma Entregado", 35, finalY + 5);
-        doc.line(120, finalY, 180, finalY); doc.text("Firma Recibido Conforme", 130, finalY + 5);
-
+        doc.line(120, finalY, 180, finalY); doc.text("Firma Recibido", 130, finalY + 5);
         doc.save(`Remito_${remNum}.pdf`);
-        itemsVenta = []; renderListaTemp(); alert("Remito generado exitosamente.");
+        itemsVenta = []; renderListaTemp(); alert("Remito Generado y Stock descontado.");
     }
 
-    // --- FUNCIONES DE SOPORTE (STOCK, PROD, ETC) ---
+    // --- FUNCIONES SOPORTE (STOCK, PROD, ETC) ---
     function renderStock() {
         const p = document.getElementById('tablaStockProducido'), i = document.getElementById('tablaStockInsumos');
         p.innerHTML = ""; i.innerHTML = "";
@@ -320,8 +352,7 @@
     }
 
     async function ejecutarProduccion() {
-        const artSel = document.getElementById('prodArticulo').value;
-        const p = parseFloat(document.getElementById('prodPal').value)||0, c = parseFloat(document.getElementById('prodCxP').value)||0, u = parseFloat(document.getElementById('prodUxC').value)||0;
+        const artSel = document.getElementById('prodArticulo').value, p = parseFloat(document.getElementById('prodPal').value)||0, c = parseFloat(document.getElementById('prodCxP').value)||0, u = parseFloat(document.getElementById('prodUxC').value)||0;
         const totalU = p * c * u, totalC = p * c, batch = db.batch(), r = RECETAS_MAESTRAS[artSel];
         if(totalU <= 0) return;
         batch.set(db.collection("stock").doc(), { articulo: artSel, cantidad: totalU, tipo: "PRODUCCION", fecha: firebase.firestore.FieldValue.serverTimestamp() });
@@ -387,7 +418,11 @@
 
     function renderClientes() { document.getElementById('listadoClientes').innerHTML = clientes.map(c => `<div class="col-6 mb-2"><div class="card p-2 shadow-sm small"><b>${c.nombre}</b><br>${c.localidad}<br><i class="fas fa-trash text-danger mt-1" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></div></div>`).join(''); }
     function renderConfigAcuerdos() { document.getElementById('listaAcuerdos').innerHTML = acuerdos.map(a => `<div class="border-bottom py-1">${a.proveedor} ➔ ${a.articulo} (${a.cxp}x${a.uxc}) <i class="fas fa-times text-danger" onclick="db.collection('acuerdos').doc('${a.id}').delete()"></i></div>`).join(''); }
+    async function resetTotalSistema() { if(confirm("¿Borrar todo?")){ const cols=["stock","clientes","articulos","proveedores","acuerdos"]; for(let c of cols){ const s=await db.collection(c).get(); const b=db.batch(); s.docs.forEach(d=>b.delete(d.ref)); await b.commit(); } location.reload(); } }
     document.getElementById('repFecha').addEventListener('change', cargarHistorial);
+    
+    // Iniciar cálculo por defecto
+    calcVentaItem();
 </script>
 </body>
 </html>
