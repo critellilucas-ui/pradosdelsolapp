@@ -8,8 +8,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -20,14 +18,11 @@
         .nav-link { color: #adb5bd; cursor: pointer; padding: 12px; border-radius: 8px; margin-bottom: 5px; text-decoration: none; display: block; }
         .nav-link.active, .nav-link:hover { color: white; background-color: #0d6efd; }
         .logout-link { color: #ff6b6b !important; margin-top: auto; border: 1px solid #ff6b6b; text-align: center; }
+        .hidden { display: none !important; }
+        .card { border-radius: 10px; border: none; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        label { font-size: 0.75rem; font-weight: 700; color: #495057; text-transform: uppercase; }
+        .input-accent { background-color: #fff3cd !important; border: 1px solid #ffeeba !important; }
         
-        @keyframes blink-red {
-            0% { background-color: transparent; }
-            50% { background-color: #dc3545; color: white; }
-            100% { background-color: transparent; }
-        }
-        .stock-alerta { animation: blink-red 1.5s infinite; border-radius: 8px; }
-
         @media (max-width: 768px) {
             .sidebar { display: none !important; }
             .mobile-header { display: flex; justify-content: space-between; align-items: center; background: #212529; color: white; padding: 10px 15px; position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: 50px; }
@@ -37,14 +32,6 @@
             .nav-icon.active { color: #0d6efd; font-weight: bold; }
             #appSystem { padding-top: 60px; }
         }
-
-        .hidden { display: none !important; }
-        .card { border-radius: 10px; border: none; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        label { font-size: 0.75rem; font-weight: 700; color: #495057; text-transform: uppercase; }
-        .badge-item { background: #e7f1ff; color: #0d6efd; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; border: 1px solid #b6d4fe; }
-        .stock-critico { color: #dc3545 !important; font-weight: bold; background-color: #fceaea; }
-        .input-accent { background-color: #fff3cd !important; border: 1px solid #ffeeba !important; }
-        .scroll-list { max-height: 200px; overflow-y: auto; font-size: 0.85rem; }
     </style>
 </head>
 <body>
@@ -61,9 +48,7 @@
 <div id="appSystem" class="container-fluid hidden">
     <div class="mobile-header d-md-none">
         <span class="fw-bold">PRADOS DEL SOL</span>
-        <button onclick="logout()" class="btn btn-sm btn-outline-danger border-0">
-            <i class="fas fa-sign-out-alt fa-lg"></i>
-        </button>
+        <button onclick="logout()" class="btn btn-sm btn-outline-danger border-0"><i class="fas fa-sign-out-alt"></i></button>
     </div>
 
     <div class="row">
@@ -73,41 +58,20 @@
                 <a class="nav-link active" id="side-stock" onclick="showTab('stock', this)"><i class="fas fa-boxes me-2"></i>Stock</a>
                 <a class="nav-link" id="side-aceite" onclick="showTab('aceite', this)"><i class="fas fa-oil-can me-2"></i>Carga Aceite</a>
                 <a class="nav-link" onclick="showTab('produccion', this)"><i class="fas fa-industry me-2"></i>Producción</a>
-                <a class="nav-link" onclick="showTab('ventas', this)"><i class="fas fa-file-invoice me-2"></i>Ventas</a>
-                <a class="nav-link" onclick="showTab('clientes', this)"><i class="fas fa-users me-2"></i>Clientes</a>
                 <a class="nav-link" onclick="showTab('historial', this)"><i class="fas fa-history me-2"></i>Historial</a>
-                <a class="nav-link" onclick="showTab('config', this)"><i class="fas fa-cog me-2"></i>Configuración</a>
             </nav>
-            <a class="nav-link logout-link mt-4" onclick="logout()"><i class="fas fa-power-off me-2"></i>SALIR</a>
+            <a class="nav-link logout-link mt-4" onclick="logout()">SALIR</a>
         </div>
 
         <div class="col-md-10 p-3">
-            
             <div id="stock" class="content-section">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="card p-3 border-top border-success border-4 shadow-sm mb-3">
-                            <h6 class="text-success fw-bold">INGRESO MERCADERÍA</h6>
-                            <div class="row g-2">
-                                <div class="col-12"><label>Proveedor</label><select id="selProveedor" class="form-select" onchange="filtrarArticulosPorProveedor()"></select></div>
-                                <div class="col-8"><label>Artículo</label><select id="selArticulo" class="form-select" onchange="sugerirConfigIngreso()"></select></div>
-                                <div class="col-4"><label>Cant.</label><input type="number" id="inpCantidad" class="form-control" oninput="calcIngreso()"></div>
-                                <div class="col-4"><label>Tipo</label><select id="selTipoCarga" class="form-select" onchange="calcIngreso()"><option value="p">Pallet</option><option value="c">Caja</option><option value="u">Unid</option></select></div>
-                                <div class="col-4"><label>CxP</label><input type="number" id="ingCxP" class="form-control" value="75" oninput="calcIngreso()"></div>
-                                <div class="col-4"><label>UxC</label><input type="number" id="ingUxC" class="form-control" value="12" oninput="calcIngreso()"></div>
-                                <div class="col-12 mt-2 d-flex justify-content-between align-items-center">
-                                    <strong>Total: <span id="txtTotalFinal">0</span> Un.</strong>
-                                    <button class="btn btn-success" onclick="guardarIngreso()">CARGAR</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card p-3 border-top border-primary border-4 shadow-sm">
-                            <h6 class="fw-bold">STOCK ACTUAL</h6>
-                            <table class="table table-sm"><tbody id="tablaStockProducido"></tbody></table>
-                            <hr><table class="table table-sm"><tbody id="tablaStockInsumos"></tbody></table>
-                        </div>
+                <div class="card p-3 border-top border-primary border-4 shadow-sm">
+                    <h6 class="fw-bold">STOCK ACTUAL (PRODUCTOS Y GRANEL)</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead class="table-light"><tr><th>Artículo</th><th class="text-end">Cantidad</th></tr></thead>
+                            <tbody id="tablaStockCompleta"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -125,71 +89,89 @@
 
             <div id="produccion" class="content-section hidden">
                 <div class="card p-3 border-top border-info border-4 shadow">
-                    <h5 class="text-info fw-bold">REGISTRAR PRODUCCIÓN</h5>
+                    <h5 class="text-info fw-bold">NUEVA PRODUCCIÓN</h5>
+                    <p class="small text-muted">Seleccione el producto final. Se descontará automáticamente del stock de Aceite a Granel.</p>
                     <div class="row g-2">
                         <div class="col-md-8">
-                            <label>Producto a Fabricar (Envase)</label>
-                            <select id="prodArticulo" class="form-select" onchange="calcP()">
-                                <option value="botella 850cc">Botella 850cc</option>
-                                <option value="botella 900cc">Botella 900cc</option>
-                                <option value="botella 1.5lts">Botella 1.5lts</option>
-                                <option value="bidon de 4lts">Bidón de 4lts</option>
-                                <option value="bidon de 4.5lts">Bidón de 4.5lts</option>
-                                <option value="bidon de 5lts">Bidón de 5lts</option>
+                            <label>Variedad de Aceite</label>
+                            <select id="prodArticulo" class="form-select form-select-lg" onchange="calcP()">
+                                <option value="aceite 850cc">Aceite 850cc</option>
+                                <option value="aceite 900cc">Aceite 900cc</option>
+                                <option value="aceite 1.5lts">Aceite 1.5lts</option>
+                                <option value="aceite 4lts">Aceite 4lts</option>
+                                <option value="aceite 4.5lts">Aceite 4.5lts</option>
+                                <option value="aceite 5lts">Aceite 5lts</option>
                             </select>
                         </div>
-                        <div class="col-md-4"><label>Lote</label><input type="text" id="prodLote" class="form-control input-accent" placeholder="N° Lote"></div>
+                        <div class="col-md-4"><label>Lote</label><input type="text" id="prodLote" class="form-control form-control-lg input-accent" placeholder="Lote"></div>
                         <div class="col-4"><label>Pallets</label><input type="number" id="prodPal" class="form-control" value="1" oninput="calcP()"></div>
                         <div class="col-4"><label>CxP</label><input type="number" id="prodCxP" class="form-control" value="75" oninput="calcP()"></div>
                         <div class="col-4"><label>UxC</label><input type="number" id="prodUxC" class="form-control" value="12" oninput="calcP()"></div>
                         
-                        <div id="insumosPreview" class="alert alert-warning py-2 small col-12 mt-2">
-                            </div>
+                        <div id="insumosPreview" class="alert alert-warning py-3 col-12 mt-3">
+                            <strong>Resumen:</strong> Ingrese cantidades para calcular.
+                        </div>
                         
-                        <button class="btn btn-info w-100 text-white fw-bold py-3" onclick="ejecutarProduccion()">CONFIRMAR Y DESCONTAR STOCK</button>
+                        <button class="btn btn-info btn-lg w-100 text-white fw-bold shadow" onclick="ejecutarProduccion()">FINALIZAR PRODUCCIÓN</button>
                     </div>
                 </div>
             </div>
 
+            <div id="historial" class="content-section hidden">
+                <div class="card p-3 border-dark border-start border-4 mb-2">
+                    <input type="date" id="repFecha" class="form-control" onchange="cargarHistorial()">
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm bg-white shadow-sm"><tbody id="listaHistorial"></tbody></table>
+                </div>
             </div>
+
+        </div>
+    </div>
+
+    <div class="mobile-nav d-md-none">
+        <div class="nav-icon active" id="nav-stock" onclick="showTab('stock', this)"><i class="fas fa-boxes"></i>Stock</div>
+        <div class="nav-icon" id="nav-aceite" onclick="showTab('aceite', this)"><i class="fas fa-oil-can"></i>Aceite</div>
+        <div class="nav-icon" id="nav-produccion" onclick="showTab('produccion', this)"><i class="fas fa-industry"></i>Prod</div>
+        <div class="nav-icon" id="nav-historial" onclick="showTab('historial', this)"><i class="fas fa-history"></i>Hist</div>
     </div>
 </div>
 
 <script>
-    // CONFIGURACIÓN DE MEDIDAS (En litros por unidad)
-    const MEDIDAS_LITROS = {
-        "botella 850cc": 0.850,
-        "botella 900cc": 0.900,
-        "botella 1.5lts": 1.5,
-        "bidon de 4lts": 4,
-        "bidon de 4.5lts": 4.5,
-        "bidon de 5lts": 5
+    // Configuración de Medidas: Nombre del producto -> Litros que consume cada unidad
+    const MAPA_CONSUMO = {
+        "aceite 850cc": 0.850,
+        "aceite 900cc": 0.900,
+        "aceite 1.5lts": 1.5,
+        "aceite 4lts": 4,
+        "aceite 4.5lts": 4.5,
+        "aceite 5lts": 5
     };
 
-    // Firebase Config
     const firebaseConfig = { apiKey: "AIzaSyCjYp0idCxs32QAofYLVEGcwvmd3HXy-3Y", authDomain: "prados-del-sol.firebaseapp.com", projectId: "prados-del-sol", storageBucket: "prados-del-sol.firebasestorage.app", messagingSenderId: "30316921952", appId: "1:30316921952:web:b0f88b9c35f270d548ef05" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore(), auth = firebase.auth();
 
-    let articulos = [], proveedores = [], clientes = [], acuerdos = [], stockGlobal = {}, itemsVenta = [], historialActual = [];
+    let stockGlobal = {};
 
-    // Funciones Auth omitidas por brevedad pero deben estar...
     function login() { auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPass').value); }
     function logout() { auth.signOut().then(() => location.reload()); }
     auth.onAuthStateChanged(u => { if(u){ document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('appSystem').classList.remove('hidden'); iniciarApp(); } });
 
     function iniciarApp() {
         document.getElementById('repFecha').valueAsDate = new Date();
-        db.collection("articulos").orderBy("nombre").onSnapshot(s => { articulos = s.docs.map(d => ({id:d.id, ...d.data()})); renderSelects(); });
-        db.collection("proveedores").orderBy("nombre").onSnapshot(s => { proveedores = s.docs.map(d => ({id:d.id, ...d.data()})); });
         db.collection("stock").onSnapshot(s => { 
             stockGlobal = {}; 
-            s.docs.forEach(d => { stockGlobal[d.data().articulo] = (stockGlobal[d.data().articulo] || 0) + d.data().cantidad; }); 
+            s.docs.forEach(d => { 
+                const art = d.data().articulo;
+                stockGlobal[art] = (stockGlobal[art] || 0) + d.data().cantidad; 
+            }); 
             renderStock(); 
+            cargarHistorial();
         });
     }
 
-    // --- CARGA ACEITE ---
+    // CARGA DE ACEITE
     function calcAceiteTon() {
         const t = parseFloat(document.getElementById('aceiteTon').value) || 0;
         document.getElementById('aceiteLitros').innerText = Math.round(t * 920).toLocaleString();
@@ -198,7 +180,7 @@
     async function guardarAceiteTon() {
         const t = parseFloat(document.getElementById('aceiteTon').value) || 0;
         const l = Math.round(t * 920);
-        if(t <= 0) return alert("Ingrese toneladas");
+        if(t <= 0) return alert("Ingrese toneladas válidas");
         await db.collection("stock").add({
             articulo: "aceite a granel",
             cantidad: l,
@@ -206,10 +188,10 @@
             fecha: firebase.firestore.FieldValue.serverTimestamp()
         });
         document.getElementById('aceiteTon').value = "";
-        alert("Carga de aceite exitosa");
+        alert("Aceite a granel cargado.");
     }
 
-    // --- NUEVA LÓGICA DE PRODUCCIÓN ---
+    // LÓGICA DE PRODUCCIÓN
     function calcP() {
         const art = document.getElementById('prodArticulo').value;
         const p = parseFloat(document.getElementById('prodPal').value)||0;
@@ -217,31 +199,30 @@
         const u = parseFloat(document.getElementById('prodUxC').value)||0;
         
         const totalUnidades = p * c * u;
-        const factorLitros = MEDIDAS_LITROS[art] || 0;
-        const totalLitrosADescontar = totalUnidades * factorLitros;
+        const litrosPorUnidad = MAPA_CONSUMO[art] || 0;
+        const totalLitrosGasto = totalUnidades * litrosPorUnidad;
 
         document.getElementById('insumosPreview').innerHTML = `
-            <strong>RESUMEN DE DESCUENTOS:</strong><br>
-            - Se crearán: <b>${totalUnidades.toLocaleString()} botellas</b> de ${art}.<br>
-            - Se descontarán: <b>${totalLitrosADescontar.toLocaleString()} litros</b> de Aceite a Granel.
+            <strong>CÁLCULO DE PRODUCCIÓN:</strong><br>
+            + Se sumarán: <b>${totalUnidades.toLocaleString()} unidades</b> de ${art.toUpperCase()}<br>
+            - Se restarán: <b>${totalLitrosGasto.toLocaleString()} litros</b> de ACEITE A GRANEL
         `;
-        return { totalUnidades, totalLitrosADescontar };
+        return { totalUnidades, totalLitrosGasto, art };
     }
 
     async function ejecutarProduccion() {
-        const art = document.getElementById('prodArticulo').value;
+        const { totalUnidades, totalLitrosGasto, art } = calcP();
         const lote = document.getElementById('prodLote').value || "S/L";
-        const { totalUnidades, totalLitrosADescontar } = calcP();
 
-        if(totalUnidades <= 0) return alert("Revise las cantidades");
-        
-        const stockAceite = stockGlobal["aceite a granel"] || 0;
-        if(stockAceite < totalLitrosADescontar) {
-            if(!confirm("Atención: No hay suficiente Aceite a Granel. ¿Desea continuar igual?")) return;
+        if(totalUnidades <= 0) return alert("Verifique las cantidades");
+
+        const granelActual = stockGlobal["aceite a granel"] || 0;
+        if(granelActual < totalLitrosGasto) {
+            if(!confirm("AVISO: No hay suficiente Aceite a Granel. ¿Registrar de todos modos?")) return;
         }
 
         try {
-            // 1. Sumar el producto terminado
+            // 1. Sumar stock al producto final seleccionado
             await db.collection("stock").add({
                 articulo: art,
                 cantidad: totalUnidades,
@@ -250,32 +231,39 @@
                 fecha: firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            // 2. Restar el aceite a granel (en litros)
+            // 2. Restar stock al Aceite a Granel
             await db.collection("stock").add({
                 articulo: "aceite a granel",
-                cantidad: -totalLitrosADescontar,
+                cantidad: -totalLitrosGasto,
                 tipo: "CONSUMO PROD",
                 lote: lote,
                 fecha: firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            alert("Producción y Descuento de Aceite realizados con éxito.");
-            showTab('stock');
-        } catch (e) {
-            alert("Error al procesar: " + e.message);
-        }
+            alert("Producción completada con éxito.");
+            showTab('stock', document.getElementById('side-stock'));
+        } catch (e) { alert("Error: " + e.message); }
     }
 
-    // --- STOCK RENDER ---
     function renderStock() {
-        const p = document.getElementById('tablaStockProducido'), i = document.getElementById('tablaStockInsumos');
-        p.innerHTML = ""; i.innerHTML = "";
+        const t = document.getElementById('tablaStockCompleta');
+        t.innerHTML = "";
         Object.keys(stockGlobal).sort().forEach(k => {
-            const h = `<tr><td>${k.toUpperCase()}</td><td class="text-end">${stockGlobal[k].toLocaleString()}</td></tr>`;
-            // Si es granel o contiene palabras de insumos va abajo
-            if(['granel','botella','etiqueta','caja','bidon'].some(x => k.toLowerCase().includes(x))) i.innerHTML += h; 
-            else p.innerHTML += h;
+            const cant = stockGlobal[k];
+            const unidad = k.includes("granel") ? "Lts" : "Un";
+            t.innerHTML += `<tr><td class="text-uppercase">${k}</td><td class="text-end fw-bold">${cant.toLocaleString()} ${unidad}</td></tr>`;
         });
+    }
+
+    async function cargarHistorial() {
+        const f = document.getElementById('repFecha').value; if(!f) return;
+        const snap = await db.collection("stock").where("fecha", ">=", new Date(f + "T00:00:00")).get();
+        document.getElementById('listaHistorial').innerHTML = snap.docs.map(d => `
+            <tr>
+                <td>${d.data().articulo.toUpperCase()}</td>
+                <td class="${d.data().cantidad < 0 ? 'text-danger' : 'text-success'} fw-bold">${d.data().cantidad.toLocaleString()}</td>
+                <td><button class="btn btn-sm text-danger" onclick="db.collection('stock').doc('${d.id}').delete()"><i class="fas fa-trash"></i></button></td>
+            </tr>`).join('');
     }
 
     function showTab(id, el) {
@@ -283,12 +271,8 @@
         document.getElementById(id).classList.remove('hidden');
         document.querySelectorAll('.nav-link, .nav-icon').forEach(n => n.classList.remove('active'));
         if(el) el.classList.add('active');
+        const m = document.getElementById('nav-'+id); if(m) m.classList.add('active');
     }
-
-    function renderSelects() {
-        // Los productos a fabricar ya están fijos en el HTML según tu pedido
-    }
-
 </script>
 </body>
 </html>
