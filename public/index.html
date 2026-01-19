@@ -122,16 +122,19 @@
             </div>
 
             <div id="aceite" class="content-section hidden">
-                <div class="card p-3 border-top border-warning border-4 shadow" style="max-width: 500px; margin: auto;">
-                    <h5 class="text-warning fw-bold">CARGA DE ACEITE POR TONELADAS</h5>
+                <div class="card p-4 border-top border-warning border-4 shadow" style="max-width: 500px; margin: auto;">
+                    <h5 class="text-warning fw-bold text-center">CARGA: ACEITE A GRANEL</h5>
+                    <hr>
                     <div class="row g-3">
-                        <div class="col-12"><label>Tipo de Aceite</label><select id="aceiteArt" class="form-select"></select></div>
-                        <div class="col-12"><label>Cantidad en Toneladas (t)</label><input type="number" id="aceiteTon" class="form-control form-control-lg input-accent" placeholder="0.00" step="0.001" oninput="calcAceiteTon()"></div>
-                        <div class="col-12 text-center py-3 bg-light rounded">
-                            <span class="text-muted d-block small">EQUIVALENTE A:</span>
-                            <h2 class="fw-bold text-dark mb-0"><span id="aceiteLitros">0</span> LITROS</h2>
+                        <div class="col-12">
+                            <label>Toneladas a ingresar (t)</label>
+                            <input type="number" id="aceiteTon" class="form-control form-control-lg input-accent text-center" placeholder="0.00" step="0.001" oninput="calcAceiteTon()">
                         </div>
-                        <button class="btn btn-warning w-100 py-3 fw-bold" onclick="guardarAceiteTon()">CONFIRMAR INGRESO</button>
+                        <div class="col-12 text-center py-4 bg-light rounded border">
+                            <span class="text-muted d-block small mb-1">EQUIVALENTE A:</span>
+                            <h1 class="fw-bold text-dark mb-0"><span id="aceiteLitros">0</span> LITROS</h1>
+                        </div>
+                        <button class="btn btn-warning btn-lg w-100 fw-bold shadow-sm" onclick="guardarAceiteTon()">CONFIRMAR INGRESO</button>
                     </div>
                 </div>
             </div>
@@ -158,18 +161,6 @@
                         <div class="col-md-6"><label>Cliente</label><select id="vtaCliente" class="form-select"></select></div>
                         <div class="col-md-6"><label>Número Remito</label><input type="text" id="vtaNumRemito" class="form-control" placeholder="000X-XXXXXXXX"></div>
                     </div>
-                    <div class="row g-2 p-3 bg-white border rounded">
-                        <div class="col-md-4"><label>Producto</label><select id="vtaArt" class="form-select" onchange="calcVentaItem()"></select></div>
-                        <div class="col-md-2 col-4"><label>Cant.</label><input type="number" id="vtaCantLog" class="form-control" value="1" oninput="calcVentaItem()"></div>
-                        <div class="col-md-2 col-8"><label>Tipo</label><select id="vtaTipo" class="form-select" onchange="calcVentaItem()"><option value="p">Pallets</option><option value="c">Cajas</option><option value="u">Unid</option></select></div>
-                        <div id="divVtaCxP" class="col-md-2 col-6"><label>CxP</label><input type="number" id="vtaCxP" class="form-control input-accent" value="75" oninput="calcVentaItem()"></div>
-                        <div id="divVtaUxC" class="col-md-2 col-6"><label>UxC</label><input type="number" id="vtaUxC" class="form-control input-accent" value="12" oninput="calcVentaItem()"></div>
-                        <div class="col-md-4 col-12"><label>Lote</label><input type="text" id="vtaLote" class="form-control input-accent" placeholder="Lote"></div>
-                        <div class="col-12 mt-2 d-flex justify-content-between align-items-center">
-                            <strong>Total: <span id="vtaTotalItem" class="badge bg-dark">0</span> Un.</strong>
-                            <button class="btn btn-dark" onclick="agregarItemVenta()">AÑADIR</button>
-                        </div>
-                    </div>
                     <div id="listaTempVenta" class="my-3"></div>
                     <button class="btn btn-primary w-100 py-3 fw-bold" onclick="finalizarVenta()">GENERAR REMITO PDF</button>
                 </div>
@@ -179,9 +170,7 @@
                 <div class="card p-3 shadow-sm border-top border-primary border-4">
                     <h6>REGISTRO DE CLIENTES</h6>
                     <div class="row g-2">
-                        <div class="col-12"><input type="text" id="cliNombre" class="form-control" placeholder="Nombre / Razón Social"></div>
-                        <div class="col-6"><input type="text" id="cliCuit" class="form-control" placeholder="CUIT"></div>
-                        <div class="col-6"><input type="text" id="cliLoc" class="form-control" placeholder="Dirección / Localidad"></div>
+                        <div class="col-12"><input type="text" id="cliNombre" class="form-control" placeholder="Nombre"></div>
                         <button class="btn btn-primary w-100" onclick="guardarCliente()">GUARDAR CLIENTE</button>
                     </div>
                 </div>
@@ -190,37 +179,23 @@
 
             <div id="historial" class="content-section hidden">
                 <div class="card p-3 border-dark border-start border-4 mb-2">
-                    <div class="row g-2 align-items-end">
-                        <div class="col-8 col-md-4"><label>Fecha</label><input type="date" id="repFecha" class="form-control" onchange="cargarHistorial()"></div>
-                        <div class="col-4 col-md-2"><button class="btn btn-primary w-100" onclick="imprimirReporteDia()"><i class="fas fa-file-pdf"></i></button></div>
-                    </div>
+                    <input type="date" id="repFecha" class="form-control" onchange="cargarHistorial()">
                 </div>
-                <div class="card"><div class="table-responsive"><table class="table table-sm"><thead class="table-dark"><tr><th>Hora</th><th>Art</th><th>Cant</th><th>Tipo</th><th>X</th></tr></thead><tbody id="listaHistorial"></tbody></table></div></div>
+                <div class="card"><div class="table-responsive"><table class="table table-sm"><tbody id="listaHistorial"></tbody></table></div></div>
             </div>
 
             <div id="config" class="content-section hidden">
                 <div class="row g-3">
                     <div class="col-md-6"><div class="card p-3"><h6>ARTÍCULOS Y MÍNIMOS</h6>
-                        <div class="input-group mb-2"><input type="text" id="confArt" class="form-control" placeholder="Nombre"><input type="number" id="confMin" class="form-control" placeholder="Min" style="max-width:80px;"><button class="btn btn-primary" onclick="guardarArt()">+</button></div>
+                        <div class="input-group mb-2"><input type="text" id="confArt" class="form-control" placeholder="Nombre"><input type="number" id="confMin" class="form-control" style="max-width:80px;"><button class="btn btn-primary" onclick="guardarArt()">+</button></div>
                         <div id="listaArts" class="scroll-list"></div>
                     </div></div>
                     <div class="col-md-6"><div class="card p-3"><h6>PROVEEDORES</h6>
                         <div class="input-group mb-2"><input type="text" id="confProv" class="form-control"><button class="btn btn-success" onclick="guardarProv()">+</button></div>
                         <div id="listaProvs" class="scroll-list"></div>
                     </div></div>
-                    <div class="col-12"><div class="card p-3 border-top border-warning border-4"><h6>ACUERDOS LOGÍSTICOS</h6>
-                        <div class="row g-1">
-                            <div class="col-md-3"><select id="acProv" class="form-select"></select></div>
-                            <div class="col-md-3"><select id="acArt" class="form-select"></select></div>
-                            <div class="col-md-2"><input type="number" id="acCxP" class="form-control" placeholder="CxP"></div>
-                            <div class="col-md-2"><input type="number" id="acUxC" class="form-control" placeholder="UxC"></div>
-                            <div class="col-md-2"><button class="btn btn-warning w-100" onclick="guardarAcuerdo()">GRABAR</button></div>
-                        </div>
-                        <div id="listaAcuerdos" class="mt-2 small scroll-list"></div>
-                    </div></div>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -234,7 +209,6 @@
 </div>
 
 <script>
-    // FIREBASE CONFIG
     const firebaseConfig = { apiKey: "AIzaSyCjYp0idCxs32QAofYLVEGcwvmd3HXy-3Y", authDomain: "prados-del-sol.firebaseapp.com", projectId: "prados-del-sol", storageBucket: "prados-del-sol.firebasestorage.app", messagingSenderId: "30316921952", appId: "1:30316921952:web:b0f88b9c35f270d548ef05" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore(), auth = firebase.auth();
@@ -248,7 +222,6 @@
 
     let articulos = [], proveedores = [], clientes = [], acuerdos = [], stockGlobal = {}, itemsVenta = [], historialActual = [];
 
-    // AUTH
     function login() { auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPass').value); }
     function logout() { auth.signOut().then(() => location.reload()); }
     auth.onAuthStateChanged(u => { if(u){ document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('appSystem').classList.remove('hidden'); iniciarApp(); } });
@@ -257,8 +230,8 @@
         document.getElementById('repFecha').valueAsDate = new Date();
         db.collection("articulos").orderBy("nombre").onSnapshot(s => { articulos = s.docs.map(d => ({id:d.id, ...d.data()})); renderSelects(); });
         db.collection("proveedores").orderBy("nombre").onSnapshot(s => { proveedores = s.docs.map(d => ({id:d.id, ...d.data()})); renderSelects(); });
-        db.collection("acuerdos").onSnapshot(s => { acuerdos = s.docs.map(d => ({id:d.id, ...d.data()})); renderConfigAcuerdos(); filtrarArticulosPorProveedor(); });
-        db.collection("clientes").orderBy("nombre").onSnapshot(s => { clientes = s.docs.map(d => ({id:d.id, ...d.data()})); renderSelects(); renderClientes(); });
+        db.collection("acuerdos").onSnapshot(s => { acuerdos = s.docs.map(d => ({id:d.id, ...d.data()})); filtrarArticulosPorProveedor(); });
+        db.collection("clientes").orderBy("nombre").onSnapshot(s => { clientes = s.docs.map(d => ({id:d.id, ...d.data()})); renderClientes(); renderSelects(); });
         db.collection("stock").onSnapshot(s => { stockGlobal = {}; s.docs.forEach(d => { stockGlobal[d.data().articulo] = (stockGlobal[d.data().articulo] || 0) + d.data().cantidad; }); renderStock(); cargarHistorial(); });
     }
 
@@ -267,45 +240,51 @@
         document.getElementById(id).classList.remove('hidden');
         document.querySelectorAll('.nav-link, .nav-icon').forEach(n => n.classList.remove('active'));
         if(el) el.classList.add('active');
-        const mobileIcon = document.getElementById('nav-'+id);
-        if(mobileIcon) mobileIcon.classList.add('active');
+        const m = document.getElementById('nav-'+id); if(m) m.classList.add('active');
     }
 
-    // --- NUEVAS FUNCIONES ACEITE TONELADAS ---
+    // --- LÓGICA ESPECÍFICA ACEITE A GRANEL ---
     function calcAceiteTon() {
-        const ton = parseFloat(document.getElementById('aceiteTon').value) || 0;
-        document.getElementById('aceiteLitros').innerText = Math.round(ton * 920).toLocaleString();
+        const t = parseFloat(document.getElementById('aceiteTon').value) || 0;
+        document.getElementById('aceiteLitros').innerText = Math.round(t * 920).toLocaleString();
     }
 
     async function guardarAceiteTon() {
-        const ton = parseFloat(document.getElementById('aceiteTon').value) || 0;
-        const art = document.getElementById('aceiteArt').value;
-        const litros = Math.round(ton * 920);
-        if(!art || ton <= 0) return alert("Datos inválidos");
-        
-        await db.collection("stock").add({
-            articulo: art,
-            cantidad: litros,
-            tipo: "INGRESO TON",
-            observacion: `${ton} toneladas`,
-            fecha: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        document.getElementById('aceiteTon').value = "";
-        calcAceiteTon();
-        alert("Carga Exitosa");
+        const t = parseFloat(document.getElementById('aceiteTon').value) || 0;
+        const l = Math.round(t * 920);
+        const artNombre = "aceite a granel";
+
+        // Verificar si el artículo existe
+        const existe = articulos.some(a => a.nombre.toLowerCase() === artNombre);
+        if(!existe) return alert("Error: El artículo 'aceite a granel' no existe. Créalo en Configuración.");
+        if(t <= 0) return alert("Ingrese una cantidad válida.");
+
+        if(confirm(`¿Cargar ${t}t (${l} Litros) de ${artNombre}?`)) {
+            await db.collection("stock").add({
+                articulo: artNombre,
+                cantidad: l,
+                tipo: "INGRESO TON",
+                observacion: `${t}t`,
+                fecha: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            document.getElementById('aceiteTon').value = "";
+            calcAceiteTon();
+            alert("Ingreso registrado.");
+            showTab('stock', document.getElementById('side-stock'));
+        }
     }
 
-    // --- FUNCIONES ORIGINALES RESTAURADAS ---
+    // --- FUNCIONES ORIGINALES ---
     function filtrarArticulosPorProveedor() {
-        const prov = document.getElementById('selProveedor').value;
-        const acs = acuerdos.filter(a => a.proveedor === prov);
+        const p = document.getElementById('selProveedor').value;
+        const acs = acuerdos.filter(a => a.proveedor === p);
         document.getElementById('selArticulo').innerHTML = acs.length > 0 ? acs.map(a => `<option value="${a.articulo}">${a.articulo.toUpperCase()}</option>`).join('') : `<option value="">SIN ACUERDOS</option>`;
         sugerirConfigIngreso();
     }
 
     function sugerirConfigIngreso() {
-        const prov = document.getElementById('selProveedor').value, art = document.getElementById('selArticulo').value;
-        const ac = acuerdos.find(a => a.proveedor === prov && a.articulo === art);
+        const p = document.getElementById('selProveedor').value, a = document.getElementById('selArticulo').value;
+        const ac = acuerdos.find(x => x.proveedor === p && x.articulo === a);
         if(ac) { document.getElementById('ingCxP').value = ac.cxp; document.getElementById('ingUxC').value = ac.uxc; }
         calcIngreso();
     }
@@ -318,121 +297,63 @@
 
     async function guardarIngreso() {
         const a = document.getElementById('selArticulo').value, t = parseInt(document.getElementById('txtTotalFinal').innerText.replace(/\./g,''));
-        if(!a || a === "SIN ACUERDOS" || t <= 0) return alert("Revise los datos");
+        if(!a || t <= 0) return alert("Datos inválidos");
         await db.collection("stock").add({articulo: a, cantidad: t, tipo: "INGRESO", fecha: firebase.firestore.FieldValue.serverTimestamp()});
-        document.getElementById('inpCantidad').value = "";
-        calcIngreso();
+        document.getElementById('inpCantidad').value = ""; calcIngreso();
     }
 
     async function guardarBajaInsumo() {
-        const art = document.getElementById('selInsumoBaja').value, cant = parseInt(document.getElementById('cantInsumoBaja').value), mot = document.getElementById('motivoBaja').value;
-        if(!art || !cant) return;
-        await db.collection("stock").add({ articulo: art, cantidad: -cant, tipo: mot, fecha: firebase.firestore.FieldValue.serverTimestamp() });
+        const a = document.getElementById('selInsumoBaja').value, c = parseInt(document.getElementById('cantInsumoBaja').value);
+        if(!a || !c) return;
+        await db.collection("stock").add({ articulo: a, cantidad: -c, tipo: document.getElementById('motivoBaja').value, fecha: firebase.firestore.FieldValue.serverTimestamp() });
         document.getElementById('cantInsumoBaja').value = "";
     }
 
     function calcP() {
         const p = parseFloat(document.getElementById('prodPal').value)||0, c = parseFloat(document.getElementById('prodCxP').value)||0, u = parseFloat(document.getElementById('prodUxC').value)||0;
-        const totalU = p * c * u, totalC = p * c, r = RECETAS_MAESTRAS[document.getElementById('prodArticulo').value];
-        document.getElementById('insumosPreview').innerHTML = r ? `Descontará: ${totalU} botellas/etiquetas y ${totalC} cajas.` : `Total: ${totalU} Unidades.`;
+        const tot = p * c * u, r = RECETAS_MAESTRAS[document.getElementById('prodArticulo').value];
+        document.getElementById('insumosPreview').innerHTML = r ? `Consumo: ${tot} botellas/etiquetas.` : `Total: ${tot} Un.`;
     }
 
     async function ejecutarProduccion() {
-        const artSel = document.getElementById('prodArticulo').value, lote = document.getElementById('prodLote').value || "S/L";
+        const a = document.getElementById('prodArticulo').value, l = document.getElementById('prodLote').value || "S/L";
         const p = parseFloat(document.getElementById('prodPal').value)||0, c = parseFloat(document.getElementById('prodCxP').value)||0, u = parseFloat(document.getElementById('prodUxC').value)||0;
-        const totalU = p * c * u, totalC = p * c, r = RECETAS_MAESTRAS[artSel];
-        
-        if(totalU <= 0) return alert("Cantidad inválida");
-
-        await db.collection("stock").add({ articulo: artSel, cantidad: totalU, tipo: "PRODUCCION", lote, fecha: firebase.firestore.FieldValue.serverTimestamp() });
-        
-        if(r) {
-            await db.collection("stock").add({ articulo: r.botella, cantidad: -totalU, tipo: "CONSUMO", lote, fecha: firebase.firestore.FieldValue.serverTimestamp() });
-            await db.collection("stock").add({ articulo: r.etiqueta, cantidad: -totalU, tipo: "CONSUMO", lote, fecha: firebase.firestore.FieldValue.serverTimestamp() });
-            await db.collection("stock").add({ articulo: r.caja, cantidad: -totalC, tipo: "CONSUMO", lote, fecha: firebase.firestore.FieldValue.serverTimestamp() });
-        }
-        alert("Producción finalizada");
-    }
-
-    function calcVentaItem() {
-        const cant = parseFloat(document.getElementById('vtaCantLog').value)||0, tipo = document.getElementById('vtaTipo').value;
-        const cxp = parseFloat(document.getElementById('vtaCxP').value)||75, uxc = parseFloat(document.getElementById('vtaUxC').value)||12;
-        document.getElementById('divVtaCxP').style.display = (tipo === 'p') ? 'block' : 'none';
-        document.getElementById('divVtaUxC').style.display = (tipo === 'p' || tipo === 'c') ? 'block' : 'none';
-        document.getElementById('vtaTotalItem').innerText = Math.round((tipo==='p')?cant*cxp*uxc:(tipo==='c'?cant*uxc:cant)).toLocaleString();
-    }
-
-    function agregarItemVenta() {
-        const art = document.getElementById('vtaArt').value, tot = parseInt(document.getElementById('vtaTotalItem').innerText.replace(/\./g,'')), lote = document.getElementById('vtaLote').value || "S/L";
-        if(!art || tot<=0) return;
-        itemsVenta.push({ art, cant: tot, pres: document.getElementById('vtaCantLog').value + ' ' + document.getElementById('vtaTipo').value, lote });
-        document.getElementById('listaTempVenta').innerHTML = itemsVenta.map((it, i) => `<div class="badge-item"><span>${it.art} - ${it.cant} Un (Lote: ${it.lote})</span><i class="fas fa-times" onclick="itemsVenta.splice(${i},1); agregarItemVenta();"></i></div>`).join('');
-    }
-
-    async function finalizarVenta() {
-        const rem = document.getElementById('vtaNumRemito').value || "S/N";
-        if(!itemsVenta.length) return alert("Remito vacío");
-        for(let it of itemsVenta) { await db.collection("stock").add({ articulo: it.art, cantidad: -it.cant, tipo: `VENTA R:${rem}`, lote: it.lote, fecha: firebase.firestore.FieldValue.serverTimestamp() }); }
-        
-        const { jsPDF } = window.jspdf; const doc = new jsPDF();
-        doc.text("REMITO - PRADOS DEL SOL", 15, 20);
-        doc.text(`Cliente: ${document.getElementById('vtaCliente').options[document.getElementById('vtaCliente').selectedIndex].text}`, 15, 30);
-        doc.autoTable({ startY: 45, head: [['ARTICULO', 'BULTOS', 'UNIDADES', 'LOTE']], body: itemsVenta.map(i=>[i.art.toUpperCase(), i.pres, i.cant, i.lote]) });
-        doc.save(`Remito_${rem}.pdf`);
-        itemsVenta=[]; document.getElementById('listaTempVenta').innerHTML=""; alert("Venta Exitosa");
+        const tot = p * c * u; if(tot <= 0) return;
+        await db.collection("stock").add({ articulo: a, cantidad: tot, tipo: "PRODUCCION", lote: l, fecha: firebase.firestore.FieldValue.serverTimestamp() });
+        alert("Producción registrada");
     }
 
     function renderStock() {
         const p = document.getElementById('tablaStockProducido'), i = document.getElementById('tablaStockInsumos');
         p.innerHTML = ""; i.innerHTML = "";
-        let hayCritico = false;
         Object.keys(stockGlobal).sort().forEach(k => {
-            const min = articulos.find(a => a.nombre === k)?.minimo || 0, actual = stockGlobal[k];
-            const esCritico = actual < min;
-            if(esCritico) hayCritico = true;
-            const h = `<tr class="${esCritico ? 'stock-critico' : ''}"><td>${k.toUpperCase()}</td><td class="text-end">${actual.toLocaleString()}</td></tr>`;
-            if(['botella','etiqueta','caja','bidon','insumo','envase','granel'].some(x => k.toLowerCase().includes(x))) i.innerHTML += h; else p.innerHTML += h;
+            const h = `<tr><td>${k.toUpperCase()}</td><td class="text-end">${stockGlobal[k].toLocaleString()}</td></tr>`;
+            if(['botella','etiqueta','caja','granel','insumo'].some(x => k.toLowerCase().includes(x))) i.innerHTML += h; else p.innerHTML += h;
         });
-        if(hayCritico) { document.getElementById('side-stock').classList.add('stock-alerta'); document.getElementById('nav-stock').classList.add('stock-alerta'); }
-        else { document.getElementById('side-stock').classList.remove('stock-alerta'); document.getElementById('nav-stock').classList.remove('stock-alerta'); }
     }
 
     function renderSelects() {
         const h = articulos.map(a => `<option value="${a.nombre}">${a.nombre.toUpperCase()}</option>`).join('');
-        ['prodArticulo','vtaArt','acArt','selInsumoBaja','aceiteArt'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).innerHTML = h; });
+        ['prodArticulo','selInsumoBaja'].forEach(id => document.getElementById(id).innerHTML = h);
         const hp = proveedores.map(p => `<option value="${p.nombre}">${p.nombre.toUpperCase()}</option>`).join('');
-        ['selProveedor','acProv'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).innerHTML = hp; });
+        document.getElementById('selProveedor').innerHTML = hp;
         document.getElementById('vtaCliente').innerHTML = clientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
-        document.getElementById('listaArts').innerHTML = articulos.map(a => `<div class="d-flex justify-content-between small border-bottom mb-1">${a.nombre} (Min: ${a.minimo})<i class="fas fa-trash text-danger" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join('');
-        document.getElementById('listaProvs').innerHTML = proveedores.map(p => `<div class="d-flex justify-content-between small border-bottom mb-1">${p.nombre}<i class="fas fa-trash text-danger" onclick="db.collection('proveedores').doc('${p.id}').delete()"></i></div>`).join('');
+        document.getElementById('listaArts').innerHTML = articulos.map(a => `<div class="d-flex justify-content-between mb-1">${a.nombre}<i class="fas fa-trash text-danger" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join('');
     }
 
     function renderClientes() {
-        document.getElementById('listadoClientes').innerHTML = clientes.map(c => `<div class="col-md-4 col-12 mb-2"><div class="card p-2 small shadow-sm"><strong>${c.nombre}</strong><br>CUIT: ${c.cuit || '-'}<div class="text-end"><i class="fas fa-trash text-danger" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></div></div></div>`).join('');
+        document.getElementById('listadoClientes').innerHTML = clientes.map(c => `<div class="col-12 mb-1 p-2 bg-white border rounded d-flex justify-content-between"><span>${c.nombre}</span><i class="fas fa-trash text-danger" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></div>`).join('');
     }
 
     async function cargarHistorial() {
         const f = document.getElementById('repFecha').value; if(!f) return;
-        const snap = await db.collection("stock").where("fecha", ">=", new Date(f + "T00:00:00")).where("fecha", "<=", new Date(f + "T23:59:59")).orderBy("fecha", "desc").get();
-        historialActual = snap.docs.map(d => ({id: d.id, ...d.data()}));
-        document.getElementById('listaHistorial').innerHTML = historialActual.map(d => `<tr><td><small>${d.fecha?.toDate().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</small></td><td>${d.articulo}</td><td>${d.cantidad}</td><td>${d.tipo}</td><td><i class="fas fa-trash text-danger" onclick="db.collection('stock').doc('${d.id}').delete()"></i></td></tr>`).join('');
-    }
-
-    function imprimirReporteDia() {
-        const { jsPDF } = window.jspdf; const doc = new jsPDF();
-        doc.text("REPORTE DIARIO - PRADOS DEL SOL", 15, 20);
-        doc.autoTable({ startY: 30, head: [['HORA', 'ARTICULO', 'CANT', 'TIPO']], body: historialActual.map(h => [h.fecha?.toDate().toLocaleTimeString(), h.articulo.toUpperCase(), h.cantidad, h.tipo]) });
-        doc.save(`Reporte_${document.getElementById('repFecha').value}.pdf`);
-    }
-
-    function renderConfigAcuerdos() {
-        document.getElementById('listaAcuerdos').innerHTML = acuerdos.map(a => `<div class="border-bottom py-1 small d-flex justify-content-between"><span>${a.proveedor} -> ${a.articulo}</span><i class="fas fa-times text-danger" onclick="db.collection('acuerdos').doc('${a.id}').delete()"></i></div>`).join('');
+        const snap = await db.collection("stock").where("fecha", ">=", new Date(f + "T00:00:00")).get();
+        document.getElementById('listaHistorial').innerHTML = snap.docs.map(d => `<tr><td>${d.data().articulo}</td><td>${d.data().cantidad}</td><td><i class="fas fa-trash text-danger" onclick="db.collection('stock').doc('${d.id}').delete()"></i></td></tr>`).join('');
     }
 
     function guardarArt() { db.collection("articulos").add({nombre: document.getElementById('confArt').value.toLowerCase(), minimo: parseInt(document.getElementById('confMin').value)||0}); }
     function guardarProv() { db.collection("proveedores").add({nombre: document.getElementById('confProv').value.toUpperCase()}); }
-    function guardarAcuerdo() { db.collection("acuerdos").add({ proveedor: document.getElementById('acProv').value, articulo: document.getElementById('acArt').value, cxp: parseInt(document.getElementById('acCxP').value), uxc: parseInt(document.getElementById('acUxC').value) }); }
-    function guardarCliente() { db.collection("clientes").add({ nombre: document.getElementById('cliNombre').value, cuit: document.getElementById('cliCuit').value, localidad: document.getElementById('cliLoc').value }); }
+    function guardarCliente() { db.collection("clientes").add({ nombre: document.getElementById('cliNombre').value }); }
 
 </script>
 </body>
