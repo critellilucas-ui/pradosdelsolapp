@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Prados del Sol - Sistema Integral v4.7</title>
+    <title>Prados del Sol - Sistema Integral v4.8</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -118,6 +118,15 @@
                             <div class="alert alert-info py-2 text-center fw-bold">TOTAL A INGRESAR: <span id="txtTotalIngreso">0</span> Unidades</div>
                             <button class="btn btn-success w-100" onclick="guardarIngreso()">CARGAR AL STOCK</button>
                         </div>
+                        
+                        <div class="card p-3 border-top border-4 border-danger shadow-sm">
+                            <h6>AJUSTE MANUAL / DESCARTE</h6>
+                            <label class="form-label">Artículo a descontar</label>
+                            <select id="selAjusteArt" class="form-select mb-2"></select>
+                            <label class="form-label">Cantidad (Unidades)</label>
+                            <input type="number" id="cantAjuste" class="form-control mb-2" placeholder="Ej: 50">
+                            <button class="btn btn-danger w-100" onclick="guardarAjusteManual()">RESTAR DEL STOCK</button>
+                        </div>
                     </div>
                     <div class="col-md-6">
                         <div class="card p-3 h-100 shadow-sm">
@@ -152,14 +161,13 @@
                     </div>
                     <div class="row g-2 mb-3">
                         <div class="col-md-3"><label class="form-label">Lote</label><input type="text" id="vtaLote" class="form-control" placeholder="Lote"></div>
-                        <div class="col-md-9 text-end pt-4"><small class="text-muted">El sistema calculará las unidades totales para descontar de stock automáticamente.</small></div>
                     </div>
                     
                     <div id="listaTempVenta" class="my-3 d-flex flex-wrap gap-2"></div>
                     
                     <div class="row g-2">
-                        <div class="col-md-6"><button class="btn btn-primary w-100 fw-bold py-2" onclick="finalizarVenta()">REGISTRAR VENTA Y DESCONTAR STOCK</button></div>
-                        <div class="col-md-6"><button class="btn btn-danger w-100 fw-bold py-2" onclick="imprimirRemito()"><i class="fas fa-file-invoice me-2"></i>DESCARGAR REMITO (MAXI MEZA)</button></div>
+                        <div class="col-md-6"><button class="btn btn-primary w-100 fw-bold py-2" onclick="finalizarVenta()">REGISTRAR VENTA</button></div>
+                        <div class="col-md-6"><button class="btn btn-danger w-100 fw-bold py-2" onclick="imprimirRemito()"><i class="fas fa-file-invoice me-2"></i>DESCARGAR REMITO</button></div>
                     </div>
                 </div>
             </div>
@@ -196,7 +204,7 @@
                 <h4 class="header-section">MOVIMIENTOS</h4>
                 <div class="d-flex gap-3 mb-4">
                     <div class="w-25"><input type="date" id="repFecha" class="form-control" onchange="cargarHistorial()"></div>
-                    <button class="btn btn-danger fw-bold" onclick="generarPDF()"><i class="fas fa-file-pdf me-2"></i>REPORTE DIARIO</button>
+                    <button class="btn btn-danger fw-bold" onclick="generarPDF()">REPORTE DIARIO</button>
                 </div>
                 <div class="card shadow-sm"><table class="table table-sm table-striped mb-0" id="tablaHistorialPDF"><thead class="table-dark"><tr><th>Hora</th><th>Tipo</th><th>Artículo</th><th>Cant.</th><th>Detalles</th></tr></thead><tbody id="listaHistorial"></tbody></table></div>
             </div>
@@ -242,105 +250,40 @@
         });
     }
 
-    // --- FUNCIÓN REMITO MAXIMILIANO MEZA ---
-    function imprimirRemito() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        const cliId = document.getElementById('vtaCliente').value;
-        const cli = clientes.find(c => c.id === cliId);
-        if(!cli || itemsVenta.length === 0) return alert("Cargue cliente y productos primero");
-
-        // Cabecera Remito
-        doc.setFontSize(10); doc.text("REMITO", 170, 15);
-        doc.setFontSize(22); doc.text("PRADOS DEL SOL", 14, 25);
-        doc.setFontSize(10);
-        doc.text("De: MAXIMILIANO MEZA", 14, 32);
-        doc.text("Ruta Nacional 7, km 259 - Junín, Bs. As.", 14, 37);
-        doc.text("CUIT: 20-32456789-4", 14, 42);
-        doc.line(14, 45, 196, 45);
-
-        // Datos Cliente y Transporte
-        doc.setFontSize(11); doc.setFont(undefined, 'bold');
-        doc.text("DESTINATARIO:", 14, 55);
-        doc.setFont(undefined, 'normal');
-        doc.text(`Cliente: ${cli.nombre}`, 14, 62);
-        doc.text(`CUIT: ${cli.cuit || '--'}`, 14, 67);
-        doc.text(`Domicilio: ${cli.direccion || ''} - ${cli.localidad || ''}`, 14, 72);
+    // --- FUNCION AJUSTE MANUAL (RESTAURADA) ---
+    async function guardarAjusteManual() {
+        const art = document.getElementById('selAjusteArt').value;
+        const cant = parseInt(document.getElementById('cantAjuste').value);
+        if(!art || !cant || cant <= 0) return alert("Seleccione artículo y cantidad válida");
         
-        doc.setFont(undefined, 'bold'); doc.text("TRANSPORTE:", 120, 55);
-        doc.setFont(undefined, 'normal');
-        doc.text(`Chofer: ${document.getElementById('vtaChofer').value}`, 120, 62);
-        doc.text(`Patentes: ${document.getElementById('vtaPatCamion').value} / ${document.getElementById('vtaPatSemi').value}`, 120, 67);
-
-        // Tabla de productos
-        const body = itemsVenta.map(it => [
-            it.pal,
-            it.cxp,
-            it.uxc,
-            it.art.toUpperCase(),
-            it.lote,
-            (it.pal * it.cxp * it.uxc).toLocaleString()
-        ]);
-
-        doc.autoTable({
-            startY: 85,
-            head: [['Pallets', 'Cajas/Pal', 'Unid/Caja', 'Descripción', 'Lote', 'Total Unid.']],
-            body: body,
-            theme: 'grid',
-            headStyles: { fillColor: [0, 0, 0] }
+        await db.collection("stock").add({ 
+            articulo: art, 
+            cantidad: -cant, 
+            tipo: "DESCARTE / AJUSTE", 
+            fecha: firebase.firestore.FieldValue.serverTimestamp() 
         });
-
-        // Firmas
-        const finalY = doc.lastAutoTable.finalY + 40;
-        doc.line(20, finalY, 80, finalY); doc.text("Firma Entregado", 35, finalY + 5);
-        doc.line(120, finalY, 180, finalY); doc.text("Firma Recibido", 135, finalY + 5);
-
-        doc.save(`Remito_${cli.nombre}_${new Date().toLocaleDateString()}.pdf`);
+        
+        alert("Ajuste realizado correctamente.");
+        document.getElementById('cantAjuste').value = "";
     }
 
-    // --- VENTAS ---
-    function agregarItemVenta() {
-        const art = document.getElementById('vtaArt').value;
-        const pal = parseInt(document.getElementById('vtaPal').value) || 0;
-        const cxp = parseInt(document.getElementById('vtaCxP').value) || 0;
-        const uxc = parseInt(document.getElementById('vtaUxC').value) || 0;
-        const lote = document.getElementById('vtaLote').value || "S/L";
-
-        if(art && (pal*cxp*uxc) > 0) {
-            itemsVenta.push({ art, pal, cxp, uxc, lote });
-            renderTempVenta();
-            // Limpiar campos de item
-            ['vtaPal','vtaCxP','vtaUxC','vtaLote'].forEach(id => document.getElementById(id).value = id.includes('vtaLote') ? "" : "0");
-        }
+    // --- REMITO MAXI MEZA ---
+    function imprimirRemito() {
+        const { jsPDF } = window.jspdf; const doc = new jsPDF();
+        const cli = clientes.find(c => c.id === document.getElementById('vtaCliente').value);
+        if(!cli || itemsVenta.length === 0) return alert("Cargue cliente y productos");
+        doc.setFontSize(22); doc.text("PRADOS DEL SOL", 14, 25);
+        doc.setFontSize(10); doc.text("De: MAXIMILIANO MEZA", 14, 32);
+        doc.text("Ruta Nacional 7, km 259 - Junín, Bs. As.", 14, 37);
+        doc.line(14, 45, 196, 45);
+        doc.text(`Cliente: ${cli.nombre}`, 14, 62);
+        doc.text(`Transporte: ${document.getElementById('vtaChofer').value}`, 120, 62);
+        const body = itemsVenta.map(it => [it.pal, it.cxp, it.uxc, it.art.toUpperCase(), it.lote, (it.pal*it.cxp*it.uxc).toLocaleString()]);
+        doc.autoTable({ startY: 85, head: [['Pallets', 'Cajas/Pal', 'Unid/Caja', 'Descripción', 'Lote', 'Total']], body: body, theme: 'grid' });
+        doc.save(`Remito_${cli.nombre}.pdf`);
     }
 
-    function renderTempVenta() {
-        document.getElementById('listaTempVenta').innerHTML = itemsVenta.map((it, i) => `
-            <div class="badge bg-secondary p-2">
-                ${it.pal} Pallets de ${it.art.toUpperCase()} (${it.pal*it.cxp*it.uxc} unid.) 
-                <i class="fas fa-times ms-2 pointer" onclick="itemsVenta.splice(${i},1); renderTempVenta()"></i>
-            </div>
-        `).join('');
-    }
-
-    async function finalizarVenta() {
-        const cliId = document.getElementById('vtaCliente').value;
-        const cli = clientes.find(c => c.id === cliId);
-        if(!cli || itemsVenta.length === 0) return alert("Faltan datos");
-
-        for(let it of itemsVenta) {
-            const totalUnidades = it.pal * it.cxp * it.uxc;
-            await db.collection("stock").add({
-                articulo: it.art, cantidad: -totalUnidades, tipo: "VENTA", cliente: cli.nombre, lote: it.lote,
-                chofer: document.getElementById('vtaChofer').value,
-                fecha: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        }
-        alert("Venta registrada en sistema.");
-        itemsVenta = []; renderTempVenta();
-    }
-
-    // --- RESTO DE FUNCIONES (STOCK, CLIENTES, CONFIG) ---
+    // --- PRODUCCION ---
     function calcularProduccion() {
         const p = parseFloat(document.getElementById('prodPal').value)||0, c = parseFloat(document.getElementById('prodCxP').value)||0, u = parseFloat(document.getElementById('prodUxC').value)||0;
         const totalU = p*c*u, totalC = p*c;
@@ -362,6 +305,8 @@
         }
         alert("Producción guardada");
     }
+
+    // --- STOCK & VENTAS ---
     function filtrarArticulosPorProveedor() {
         const prov = document.getElementById('selProveedor').value;
         const filtrados = convenios.filter(c => c.proveedor === prov);
@@ -382,32 +327,35 @@
         if(art && total > 0) await db.collection("stock").add({ articulo: art, cantidad: total, tipo: "INGRESO CONVENIO", fecha: firebase.firestore.FieldValue.serverTimestamp() });
         alert("Ingreso exitoso");
     }
-    async function guardarCliente() {
-        const d = { nombre: document.getElementById('cliNom').value.toUpperCase(), cuit: document.getElementById('cliCuit').value, email: document.getElementById('cliMail').value, telefono: document.getElementById('cliTel').value, direccion: document.getElementById('cliDir').value, localidad: document.getElementById('cliLoc').value };
-        if(!d.nombre) return alert("Nombre obligatorio");
-        await db.collection("clientes").add(d);
-        ['cliNom','cliCuit','cliMail','cliTel','cliDir','cliLoc'].forEach(id => document.getElementById(id).value = "");
+    function agregarItemVenta() {
+        const art = document.getElementById('vtaArt').value, pal = parseInt(document.getElementById('vtaPal').value) || 0, cxp = parseInt(document.getElementById('vtaCxP').value) || 0, uxc = parseInt(document.getElementById('vtaUxC').value) || 0, lote = document.getElementById('vtaLote').value || "S/L";
+        if(art && (pal*cxp*uxc) > 0) { itemsVenta.push({ art, pal, cxp, uxc, lote }); renderTempVenta(); }
     }
-    function renderClientes() {
-        document.getElementById('listadoClientes').innerHTML = clientes.map(c => `<div class="col-md-4"><div class="card p-3 shadow-sm client-card"><div class="d-flex justify-content-between"><strong>${c.nombre}</strong><i class="fas fa-trash text-muted pointer" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></div><hr class="my-2"><div style="font-size: 0.75rem;"><div><i class="fas fa-id-card me-1"></i> ${c.cuit || '--'}</div><div><i class="fas fa-envelope me-1"></i> ${c.email || '--'}</div><div><i class="fas fa-phone me-1"></i> ${c.telefono || '--'}</div><div><i class="fas fa-map-marker-alt me-1"></i> ${c.direccion || ''} (${c.localidad || ''})</div></div></div></div>`).join('');
+    function renderTempVenta() { document.getElementById('listaTempVenta').innerHTML = itemsVenta.map((it, i) => `<div class="badge bg-secondary p-2">${it.pal} Pallets - ${it.art.toUpperCase()} <i class="fas fa-times ms-2 pointer" onclick="itemsVenta.splice(${i},1); renderTempVenta()"></i></div>`).join(''); }
+    async function finalizarVenta() {
+        const cliId = document.getElementById('vtaCliente').value, cli = clientes.find(c => c.id === cliId);
+        if(!cli || itemsVenta.length === 0) return alert("Faltan datos");
+        for(let it of itemsVenta) { await db.collection("stock").add({ articulo: it.art, cantidad: -(it.pal*it.cxp*it.uxc), tipo: "VENTA", cliente: cli.nombre, lote: it.lote, chofer: document.getElementById('vtaChofer').value, fecha: firebase.firestore.FieldValue.serverTimestamp() }); }
+        alert("Venta registrada"); itemsVenta = []; renderTempVenta();
     }
+
+    // --- RENDERS & SOPORTE ---
+    function renderClientes() { document.getElementById('listadoClientes').innerHTML = clientes.map(c => `<div class="col-md-4"><div class="card p-3 shadow-sm client-card"><div class="d-flex justify-content-between"><strong>${c.nombre}</strong><i class="fas fa-trash text-muted pointer" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></div><hr class="my-2"><div style="font-size: 0.75rem;"><div>${c.cuit || '--'}</div><div>${c.email || '--'}</div></div></div></div>`).join(''); }
     function renderGlobal() {
         const artsH = articulos.map(a => `<option value="${a.nombre}">${a.nombre.toUpperCase()}</option>`).join('');
         const provsH = proveedores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
-        ['vtaArt', 'convArt', 'prodArticulo'].forEach(id => { if(document.getElementById(id)) { const old = document.getElementById(id).innerHTML; if(!old.includes('option')) document.getElementById(id).innerHTML = artsH; } });
-        document.getElementById('vtaArt').innerHTML = artsH;
+        ['vtaArt', 'convArt', 'prodArticulo', 'selAjusteArt'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).innerHTML = artsH; });
         document.getElementById('selProveedor').innerHTML = `<option value="">Prov...</option>` + provsH;
         document.getElementById('convProv').innerHTML = provsH;
-        document.getElementById('convArt').innerHTML = artsH;
         document.getElementById('vtaCliente').innerHTML = clientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
         const filt = (f) => articulos.filter(a => a.nombre.toLowerCase().includes(f)).map(a => `<option value="${a.nombre}">${a.nombre.toUpperCase()}</option>`).join('');
-        document.getElementById('selInsumoBotella').innerHTML = filt('botella') || filt('bidon') || artsH;
+        document.getElementById('selInsumoBotella').innerHTML = filt('botella') || artsH;
         document.getElementById('selInsumoTapa').innerHTML = filt('tapa') || artsH;
         document.getElementById('selInsumoEtiqueta').innerHTML = filt('etiqueta') || artsH;
         document.getElementById('selInsumoCaja').innerHTML = filt('caja') || artsH;
         document.getElementById('listaArts').innerHTML = articulos.map(a => `<div class="d-flex justify-content-between mb-1"><span>${a.nombre}</span><i class="fas fa-trash text-danger pointer" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join('');
         document.getElementById('listaProvs').innerHTML = proveedores.map(p => `<div class="d-flex justify-content-between mb-1"><span>${p.nombre}</span><i class="fas fa-trash text-danger pointer" onclick="db.collection('proveedores').doc('${p.id}').delete()"></i></div>`).join('');
-        document.getElementById('listaConvenios').innerHTML = convenios.map(c => `<div class="border-bottom mb-1" style="font-size:0.7rem"><b>${c.proveedor}</b> > ${c.articulo} (${c.uxc}/${c.cxp}) <i class="fas fa-times text-danger float-end pointer" onclick="db.collection('convenios').doc('${c.id}').delete()"></i></div>`).join('');
+        document.getElementById('listaConvenios').innerHTML = convenios.map(c => `<div class="border-bottom mb-1" style="font-size:0.7rem"><b>${c.proveedor}</b> > ${c.articulo} <i class="fas fa-times text-danger float-end pointer" onclick="db.collection('convenios').doc('${c.id}').delete()"></i></div>`).join('');
     }
     function renderStock() { document.getElementById('tablaStockCompleta').innerHTML = Object.keys(stockGlobal).sort().map(k => `<tr><td class="text-uppercase small">${k}</td><td class="text-end fw-bold ${stockGlobal[k]<0?'text-danger':''}">${stockGlobal[k].toLocaleString()}</td></tr>`).join(''); }
     async function cargarHistorial() {
@@ -422,14 +370,8 @@
     async function guardarConvenio() { const p = document.getElementById('convProv').value, a = document.getElementById('convArt').value, u = parseInt(document.getElementById('convUxC').value), c = parseInt(document.getElementById('convCxP').value); if(p && a && u && c) await db.collection("convenios").add({ proveedor: p, articulo: a, uxc: u, cxp: c }); }
     async function guardarAceiteTon() { const lts = Math.round(parseFloat(document.getElementById('aceiteTon').value)*920); await db.collection("stock").add({ articulo: "aceite a granel", cantidad: lts, tipo: "CARGA GRANEL", fecha: firebase.firestore.FieldValue.serverTimestamp() }); alert("Tanque cargado"); document.getElementById('aceiteTon').value = ""; }
     function showTab(id, el) { document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active')); el.classList.add('active'); if(id === 'historial') cargarHistorial(); }
-    
-    // PDF Reporte Diario
-    function generarPDF() {
-        const { jsPDF } = window.jspdf; const doc = new jsPDF();
-        doc.setFontSize(18); doc.text("REPORTE DIARIO - PRADOS DEL SOL", 14, 20);
-        doc.autoTable({ html: '#tablaHistorialPDF', startY: 30, theme: 'grid' });
-        doc.save("Reporte_Diario.pdf");
-    }
+    function generarPDF() { const { jsPDF } = window.jspdf; const doc = new jsPDF(); doc.setFontSize(18); doc.text("REPORTE DIARIO", 14, 20); doc.autoTable({ html: '#tablaHistorialPDF', startY: 30 }); doc.save("Reporte.pdf"); }
+    async function guardarCliente() { const d = { nombre: document.getElementById('cliNom').value.toUpperCase(), cuit: document.getElementById('cliCuit').value, email: document.getElementById('cliMail').value, telefono: document.getElementById('cliTel').value, direccion: document.getElementById('cliDir').value, localidad: document.getElementById('cliLoc').value }; if(!d.nombre) return alert("Nombre obligatorio"); await db.collection("clientes").add(d); ['cliNom','cliCuit','cliMail','cliTel','cliDir','cliLoc'].forEach(id => document.getElementById(id).value = ""); }
 </script>
 </body>
 </html>
