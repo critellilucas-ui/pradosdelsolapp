@@ -3,11 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Prados del Sol - Sistema Integral v4.0</title>
+    <title>Prados del Sol - Sistema Integral v4.1</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -80,26 +83,18 @@
                     </div>
                     <div class="col-md-7">
                         <div class="card p-3 border-top border-4 border-warning">
-                            <h6>INSUMOS A DESCONTAR AUTOMÁTICAMENTE</h6>
+                            <h6>INSUMOS A DESCONTAR</h6>
                             <div class="insumo-row d-flex justify-content-between">
-                                <small class="fw-bold">BOTELLA:</small>
-                                <select id="selInsumoBotella" class="form-select form-select-sm w-50"></select>
-                                <span class="badge bg-dark valInsumo">0</span>
+                                <small class="fw-bold">BOTELLA:</small><select id="selInsumoBotella" class="form-select form-select-sm w-50"></select><span class="badge bg-dark valInsumo">0</span>
                             </div>
                             <div class="insumo-row d-flex justify-content-between">
-                                <small class="fw-bold">TAPA:</small>
-                                <select id="selInsumoTapa" class="form-select form-select-sm w-50"></select>
-                                <span class="badge bg-dark valInsumo">0</span>
+                                <small class="fw-bold">TAPA:</small><select id="selInsumoTapa" class="form-select form-select-sm w-50"></select><span class="badge bg-dark valInsumo">0</span>
                             </div>
                             <div class="insumo-row d-flex justify-content-between">
-                                <small class="fw-bold">ETIQUETA:</small>
-                                <select id="selInsumoEtiqueta" class="form-select form-select-sm w-50"></select>
-                                <span class="badge bg-dark valInsumo">0</span>
+                                <small class="fw-bold">ETIQUETA:</small><select id="selInsumoEtiqueta" class="form-select form-select-sm w-50"></select><span class="badge bg-dark valInsumo">0</span>
                             </div>
                             <div class="insumo-row d-flex justify-content-between">
-                                <small class="fw-bold">CAJA:</small>
-                                <select id="selInsumoCaja" class="form-select form-select-sm w-50"></select>
-                                <span class="badge bg-dark" id="valCajas">0</span>
+                                <small class="fw-bold">CAJA:</small><select id="selInsumoCaja" class="form-select form-select-sm w-50"></select><span class="badge bg-dark" id="valCajas">0</span>
                             </div>
                             <button class="btn btn-primary btn-lg w-100 mt-3 fw-bold" onclick="confirmarProduccionCompleta()">GRABAR TODO</button>
                         </div>
@@ -113,10 +108,8 @@
                     <div class="col-md-6">
                         <div class="card p-3 border-top border-4 border-success mb-3">
                             <h6>CARGA SEGÚN CONVENIO</h6>
-                            <label class="form-label">Proveedor</label>
-                            <select id="selProveedor" class="form-select mb-2" onchange="filtrarArticulosPorProveedor()"></select>
-                            <label class="form-label">Artículo</label>
-                            <select id="selArticulo" class="form-select mb-2" onchange="cargarDatosConvenio()"></select>
+                            <label class="form-label">Proveedor</label><select id="selProveedor" class="form-select mb-2" onchange="filtrarArticulosPorProveedor()"></select>
+                            <label class="form-label">Artículo</label><select id="selArticulo" class="form-select mb-2" onchange="cargarDatosConvenio()"></select>
                             <div class="row g-2 mb-2 bg-light p-2 rounded">
                                 <div class="col-4"><label class="form-label">Pallets</label><input type="number" id="inpPal" class="form-control" value="0" oninput="calcularIngresoTotal()"></div>
                                 <div class="col-4"><label class="form-label">Cajas</label><input type="number" id="inpCaj" class="form-control" value="0" oninput="calcularIngresoTotal()"></div>
@@ -126,7 +119,7 @@
                             <button class="btn btn-success w-100" onclick="guardarIngreso()">CARGAR STOCK</button>
                         </div>
                         <div class="card p-3 border-top border-4 border-danger">
-                            <h6>DESCARTE / AJUSTE MANUAL</h6>
+                            <h6>AJUSTE MANUAL</h6>
                             <select id="selAjusteArt" class="form-select mb-2"></select>
                             <input type="number" id="cantAjuste" class="form-control mb-2" placeholder="Cantidad a RESTAR">
                             <button class="btn btn-danger w-100" onclick="guardarAjusteManual()">RESTAR STOCK</button>
@@ -174,22 +167,30 @@
             </div>
 
             <div id="clientes" class="content-section hidden">
-                <h4 class="header-section">GESTIÓN DE CLIENTES</h4>
-                <div class="card p-3 mb-3">
-                    <div class="row g-2">
-                        <div class="col-md-3"><input type="text" id="cliNom" class="form-control" placeholder="Nombre"></div>
-                        <div class="col-md-3"><input type="text" id="cliCuit" class="form-control" placeholder="CUIT"></div>
-                        <div class="col-md-4"><input type="text" id="cliDir" class="form-control" placeholder="Dirección"></div>
-                        <div class="col-md-2"><button class="btn btn-primary w-100" onclick="guardarCliente()">GUARDAR</button></div>
-                    </div>
-                </div>
+                <h4 class="header-section">CLIENTES</h4>
                 <div id="listadoClientes" class="row g-2"></div>
             </div>
 
             <div id="historial" class="content-section hidden">
                 <h4 class="header-section">HISTORIAL DE MOVIMIENTOS</h4>
-                <input type="date" id="repFecha" class="form-control w-25 mb-3" onchange="cargarHistorial()">
-                <div class="table-responsive"><table class="table table-sm"><tbody id="listaHistorial"></tbody></table></div>
+                <div class="d-flex gap-2 mb-3">
+                    <input type="date" id="repFecha" class="form-control w-25" onchange="cargarHistorial()">
+                    <button class="btn btn-danger" onclick="generarPDF()"><i class="fas fa-file-pdf me-2"></i>DESCARGAR PDF</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped" id="tablaHistorialPDF">
+                        <thead>
+                            <tr>
+                                <th>Hora</th>
+                                <th>Tipo</th>
+                                <th>Artículo</th>
+                                <th>Cant</th>
+                                <th>Detalle/Cliente</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaHistorial"></tbody>
+                    </table>
+                </div>
             </div>
 
             <div id="config" class="content-section hidden">
@@ -198,13 +199,10 @@
                     <div class="col-md-4"><div class="card p-2"><h6>ARTÍCULOS</h6><input type="text" id="confArt" class="form-control mb-1"><button class="btn btn-primary btn-sm mb-2" onclick="guardarArt()">OK</button><div id="listaArts" class="scroll-list"></div></div></div>
                     <div class="col-md-4"><div class="card p-2"><h6>PROVEEDORES</h6><input type="text" id="confProv" class="form-control mb-1"><button class="btn btn-success btn-sm mb-2" onclick="guardarProv()">OK</button><div id="listaProvs" class="scroll-list"></div></div></div>
                     <div class="col-md-4">
-                        <div class="card p-2"><h6>CONVENIOS (Ficha Técnica)</h6>
+                        <div class="card p-2"><h6>CONVENIOS</h6>
                             <select id="convProv" class="form-select form-select-sm mb-1"></select>
                             <select id="convArt" class="form-select form-select-sm mb-1"></select>
-                            <div class="row g-1 mb-1">
-                                <div class="col-6"><input type="number" id="convUxC" class="form-control form-control-sm" placeholder="UxC"></div>
-                                <div class="col-6"><input type="number" id="convCxP" class="form-control form-control-sm" placeholder="CxP"></div>
-                            </div>
+                            <div class="row g-1 mb-1"><div class="col-6"><input type="number" id="convUxC" class="form-control form-control-sm" placeholder="UxC"></div><div class="col-6"><input type="number" id="convCxP" class="form-control form-control-sm" placeholder="CxP"></div></div>
                             <button class="btn btn-dark btn-sm w-100 mb-2" onclick="guardarConvenio()">VINCULAR</button>
                             <div id="listaConvenios" class="scroll-list"></div>
                         </div>
@@ -238,7 +236,27 @@
             stockGlobal = {}; s.docs.forEach(d => { stockGlobal[d.data().articulo] = (stockGlobal[d.data().articulo] || 0) + d.data().cantidad; }); 
             renderStock(); cargarHistorial();
         });
-        calcularProduccion();
+    }
+
+    // --- FUNCIÓN PDF ---
+    function generarPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const fecha = document.getElementById('repFecha').value;
+        
+        doc.setFontSize(18);
+        doc.text("PRADOS DEL SOL - Reporte de Movimientos", 14, 20);
+        doc.setFontSize(12);
+        doc.text(`Fecha: ${fecha}`, 14, 30);
+
+        doc.autoTable({
+            html: '#tablaHistorialPDF',
+            startY: 40,
+            theme: 'grid',
+            headStyles: { fillColor: [13, 110, 253] }
+        });
+
+        doc.save(`movimientos_${fecha}.pdf`);
     }
 
     // --- PRODUCCION ---
@@ -249,7 +267,6 @@
         document.getElementById('valCajas').innerText = totalC;
         document.getElementById('prodLitrosReales').value = (totalU * (MAPA_CONSUMO[document.getElementById('prodArticulo').value] || 0)).toFixed(1);
     }
-
     async function confirmarProduccionCompleta() {
         const artFinal = document.getElementById('prodArticulo').value, lote = document.getElementById('prodLote').value || "S/L";
         const p = parseFloat(document.getElementById('prodPal').value), c = parseFloat(document.getElementById('prodCxP').value), u = parseFloat(document.getElementById('prodUxC').value);
@@ -261,7 +278,7 @@
             let cant = id === 'selInsumoCaja' ? totalC : totalU;
             if(art) await db.collection("stock").add({ articulo: art, cantidad: -cant, tipo: "CONSUMO INSUMO", lote: lote, fecha: firebase.firestore.FieldValue.serverTimestamp() });
         });
-        alert("Producción registrada y descontada.");
+        alert("Producción registrada.");
     }
 
     // --- STOCK & CONVENIOS ---
@@ -296,8 +313,7 @@
         }
     }
     async function finalizarVenta() {
-        const cliId = document.getElementById('vtaCliente').value;
-        const cli = clientes.find(c => c.id === cliId);
+        const cliId = document.getElementById('vtaCliente').value, cli = clientes.find(c => c.id === cliId);
         if(!cli || itemsVenta.length === 0) return alert("Faltan datos");
         for(let it of itemsVenta) {
             await db.collection("stock").add({
@@ -327,17 +343,19 @@
     }
     function renderStock() { document.getElementById('tablaStockCompleta').innerHTML = Object.keys(stockGlobal).sort().map(k => `<tr><td class="text-uppercase">${k}</td><td class="text-end fw-bold">${stockGlobal[k].toLocaleString()}</td></tr>`).join(''); }
     function renderClientes() { document.getElementById('listadoClientes').innerHTML = clientes.map(c => `<div class="col-md-4"><div class="card p-2"><b>${c.nombre}</b><br><small>${c.cuit || ''}</small></div></div>`).join(''); }
+    
     async function cargarHistorial() {
         const f = document.getElementById('repFecha').value; if(!f) return;
         const inicio = new Date(f + "T00:00:00"), fin = new Date(f + "T23:59:59");
         const snap = await db.collection("stock").where("fecha", ">=", inicio).where("fecha", "<=", fin).get();
-        document.getElementById('listaHistorial').innerHTML = snap.docs.map(d => {
+        const docs = snap.docs.sort((a,b) => a.data().fecha - b.data().fecha);
+        document.getElementById('listaHistorial').innerHTML = docs.map(d => {
             const r = d.data();
-            return `<tr><td>${r.fecha ? r.fecha.toDate().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '--'}</td><td><span class="badge ${r.cantidad<0?'bg-danger':'bg-success'}">${r.tipo}</span></td><td>${r.articulo.toUpperCase()}</td><td>${r.cantidad}</td><td>${r.cliente || r.motivo || ''}</td></tr>`;
+            return `<tr><td>${r.fecha ? r.fecha.toDate().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '--'}</td><td>${r.tipo}</td><td>${r.articulo.toUpperCase()}</td><td>${r.cantidad}</td><td>${r.cliente || r.lote || ''}</td></tr>`;
         }).join('');
     }
 
-    // --- ACCIONES AUXILIARES ---
+    // --- OTROS ---
     async function guardarArt() { const n = document.getElementById('confArt').value; if(n) await db.collection("articulos").add({nombre: n.toLowerCase()}); }
     async function guardarProv() { const n = document.getElementById('confProv').value; if(n) await db.collection("proveedores").add({nombre: n}); }
     async function guardarConvenio() { 
