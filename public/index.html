@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Prados del Sol - Sistema Integral v5.3</title>
+    <title>Prados del Sol - Sistema Integral v5.4</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -122,6 +122,35 @@
                 </div>
             </div>
 
+            <div id="ventas" class="content-section hidden">
+                <h4 class="header-section">VENTAS Y REMITOS</h4>
+                <div class="card p-3 mb-3 border-top border-4 border-primary">
+                    <div class="row g-2">
+                        <div class="col-md-3"><label class="form-label">Cliente</label><select id="vtaCliente" class="form-select"></select></div>
+                        <div class="col-md-3"><label class="form-label">Chofer</label><input type="text" id="vtaChofer" class="form-control" placeholder="Nombre"></div>
+                        <div class="col-md-3"><label class="form-label">DNI Chofer</label><input type="text" id="vtaChoferDni" class="form-control" placeholder="DNI"></div>
+                        <div class="col-md-3"><label class="form-label">Patente Camión</label><input type="text" id="vtaPatente" class="form-control" placeholder="Patente"></div>
+                    </div>
+                </div>
+                <div class="card p-3 shadow-sm">
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-3"><label class="form-label">Artículo</label><select id="vtaArt" class="form-select"></select></div>
+                        <div class="col-4 col-md-2"><label class="form-label">Pal</label><input type="number" id="vtaPal" class="form-control" value="0"></div>
+                        <div class="col-4 col-md-2"><label class="form-label">CxP</label><input type="number" id="vtaCxP" class="form-control" value="0"></div>
+                        <div class="col-4 col-md-2"><label class="form-label">UxC</label><input type="number" id="vtaUxC" class="form-control" value="0"></div>
+                        <div class="col-12 col-md-3"><label class="form-label">Lote</label><input type="text" id="vtaLoteItem" class="form-control" placeholder="Lote"></div>
+                    </div>
+                    <button class="btn btn-dark w-100 mt-2" onclick="agregarItemVenta()"><i class="fas fa-plus me-2"></i>AÑADIR A CARGA</button>
+                    
+                    <div id="listaTempVenta" class="my-3 d-flex flex-wrap gap-2"></div>
+                    
+                    <div class="row g-2">
+                        <div class="col-md-6"><button class="btn btn-primary btn-lg w-100 fw-bold" onclick="finalizarVenta()"><i class="fas fa-save me-2"></i>REGISTRAR VENTA</button></div>
+                        <div class="col-md-6"><button class="btn btn-danger btn-lg w-100 fw-bold" onclick="imprimirRemito()"><i class="fas fa-file-pdf me-2"></i>GENERAR REMITO PDF</button></div>
+                    </div>
+                </div>
+            </div>
+
             <div id="stock" class="content-section hidden">
                 <h4 class="header-section">GESTIÓN DE STOCK</h4>
                 <div class="row">
@@ -151,27 +180,6 @@
                 </div>
             </div>
 
-            <div id="ventas" class="content-section hidden">
-                <h4 class="header-section">DESPACHO</h4>
-                <div class="card p-3 mb-3 border-top border-4 border-primary">
-                    <div class="row g-2">
-                        <div class="col-md-6"><label class="form-label">Cliente</label><select id="vtaCliente" class="form-select"></select></div>
-                        <div class="col-md-6"><label class="form-label">Chofer / Transporte</label><input type="text" id="vtaChofer" class="form-control"></div>
-                    </div>
-                </div>
-                <div class="card p-3 shadow-sm">
-                    <div class="row g-2 mb-2">
-                        <div class="col-md-4"><select id="vtaArt" class="form-select"></select></div>
-                        <div class="col-4 col-md-2"><input type="number" id="vtaPal" class="form-control" placeholder="Pal"></div>
-                        <div class="col-4 col-md-2"><input type="number" id="vtaCxP" class="form-control" placeholder="CxP"></div>
-                        <div class="col-4 col-md-2"><input type="number" id="vtaUxC" class="form-control" placeholder="UxC"></div>
-                        <div class="col-12 col-md-2"><button class="btn btn-dark w-100" onclick="agregarItemVenta()"><i class="fas fa-plus"></i></button></div>
-                    </div>
-                    <div id="listaTempVenta" class="my-3 d-flex flex-wrap gap-2"></div>
-                    <button class="btn btn-primary w-100 fw-bold" onclick="finalizarVenta()">REGISTRAR VENTA</button>
-                </div>
-            </div>
-
             <div id="aceite" class="content-section hidden">
                 <h4 class="header-section">ACEITE A GRANEL</h4>
                 <div class="card p-4 mx-auto shadow-sm" style="max-width: 450px;">
@@ -179,7 +187,6 @@
                     <input type="number" id="aceiteTon" class="form-control form-control-lg mb-3" oninput="document.getElementById('aceiteLitros').innerText = Math.round(this.value*920).toLocaleString()">
                     <div class="text-center bg-light p-3 rounded mb-3">
                         <h1 class="fw-bold text-primary mb-0"><span id="aceiteLitros">0</span> Lts</h1>
-                        <small class="text-muted">Conversión: 1 Ton = 920 Lts</small>
                     </div>
                     <button class="btn btn-warning btn-lg w-100 fw-bold" onclick="guardarAceiteTon()">REGISTRAR EN TANQUE</button>
                 </div>
@@ -205,7 +212,7 @@
                 <h4 class="header-section">HISTORIAL DE MOVIMIENTOS</h4>
                 <div class="d-flex gap-3 mb-4">
                     <input type="date" id="repFecha" class="form-control w-25" onchange="cargarHistorial()">
-                    <button class="btn btn-danger fw-bold" onclick="generarPDF()"><i class="fas fa-file-pdf me-2"></i>REPORTE DIARIO</button>
+                    <button class="btn btn-danger fw-bold" onclick="generarReporteDiario()"><i class="fas fa-file-pdf me-2"></i>REPORTE DIARIO</button>
                 </div>
                 <div class="card shadow-sm overflow-auto">
                     <table class="table table-sm table-striped mb-0" id="tablaHistorialPDF">
@@ -304,6 +311,93 @@
         document.getElementById('selInsumoCaja').innerHTML = insumos('caja');
     }
 
+    // VENTAS Y REMITOS (LÓGICA RESTAURADA)
+    function agregarItemVenta() {
+        const art = document.getElementById('vtaArt').value, 
+              pal = parseInt(document.getElementById('vtaPal').value), 
+              cxp = parseInt(document.getElementById('vtaCxP').value), 
+              uxc = parseInt(document.getElementById('vtaUxC').value),
+              lote = document.getElementById('vtaLoteItem').value || "S/L";
+        
+        if(art && (pal*cxp*uxc) > 0) {
+            itemsVenta.push({ art, pal, cxp, uxc, lote, total: (pal*cxp*uxc) });
+            renderTempVenta();
+            // Reset campos item
+            document.getElementById('vtaPal').value = 0;
+            document.getElementById('vtaLoteItem').value = "";
+        }
+    }
+
+    function renderTempVenta() {
+        document.getElementById('listaTempVenta').innerHTML = itemsVenta.map((it, i) => `
+            <span class="badge bg-secondary p-2">
+                ${it.art.toUpperCase()} | ${it.pal}P | L:${it.lote} 
+                <i class="fas fa-times ms-2 pointer" onclick="itemsVenta.splice(${i},1);renderTempVenta()"></i>
+            </span>`).join('');
+    }
+
+    async function finalizarVenta() {
+        const cliId = document.getElementById('vtaCliente').value;
+        const cli = clientes.find(c => c.id === cliId);
+        if(!cli || itemsVenta.length === 0) return alert("Faltan datos del cliente o productos");
+
+        for(let it of itemsVenta) {
+            await db.collection("stock").add({
+                articulo: it.art,
+                cantidad: -it.total,
+                tipo: "VENTA",
+                cliente: cli.nombre,
+                chofer: document.getElementById('vtaChofer').value,
+                patente: document.getElementById('vtaPatente').value,
+                lote: it.lote,
+                fecha: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+        alert("Venta guardada en base de datos.");
+        // No limpiamos itemsVenta automáticamente para permitir generar el remito después de guardar si se desea.
+    }
+
+    function imprimirRemito() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const cli = clientes.find(c => c.id === document.getElementById('vtaCliente').value);
+        if(!cli || itemsVenta.length === 0) return alert("Cargue cliente y productos primero");
+
+        // Cabecera
+        doc.setFontSize(22); doc.setTextColor(0, 102, 204);
+        doc.text("PRADOS DEL SOL", 14, 20);
+        doc.setFontSize(10); doc.setTextColor(100);
+        doc.text("Remito de Despacho de Mercadería", 14, 28);
+        
+        // Datos Cliente
+        doc.setTextColor(0); doc.setFontSize(12);
+        doc.text(`CLIENTE: ${cli.nombre}`, 14, 45);
+        doc.setFontSize(10);
+        doc.text(`CUIT: ${cli.cuit || '--'} | Dirección: ${cli.direccion || '--'}`, 14, 52);
+        
+        // Datos Chofer
+        doc.text(`CHOFER: ${document.getElementById('vtaChofer').value || '--'}`, 14, 62);
+        doc.text(`DNI: ${document.getElementById('vtaChoferDni').value || '--'} | PATENTE: ${document.getElementById('vtaPatente').value || '--'}`, 14, 68);
+        
+        // Tabla
+        const body = itemsVenta.map(it => [it.pal, it.art.toUpperCase(), it.lote, it.total.toLocaleString()]);
+        doc.autoTable({
+            startY: 75,
+            head: [['Pallets', 'Producto', 'Lote', 'Total Unidades']],
+            body: body,
+            theme: 'striped',
+            headStyles: { fillColor: [0, 102, 204] }
+        });
+
+        doc.text("Firma Chofer: _____________________", 14, doc.lastAutoTable.finalY + 30);
+        doc.text("Firma Recibido: ____________________", 120, doc.lastAutoTable.finalY + 30);
+        
+        doc.save(`Remito_${cli.nombre}_${new Date().toLocaleDateString()}.pdf`);
+        
+        // Limpiar después de imprimir
+        itemsVenta = []; renderTempVenta();
+    }
+
     // CLIENTES
     async function guardarCliente() {
         const d = { nombre: document.getElementById('cliNom').value.toUpperCase(), cuit: document.getElementById('cliCuit').value, email: document.getElementById('cliMail').value, telefono: document.getElementById('cliTel').value, direccion: document.getElementById('cliDir').value, localidad: document.getElementById('cliLoc').value };
@@ -325,7 +419,7 @@
             </div>`).join('');
     }
 
-    // CONVENIOS Y OTROS
+    // OTRAS FUNCIONES (RESTAURADAS)
     async function guardarConvenio() {
         const p = document.getElementById('convProv').value, a = document.getElementById('convArt').value, u = parseInt(document.getElementById('convUxC').value), c = parseInt(document.getElementById('convCxP').value);
         if(p && a && u && c) await db.collection("convenios").add({ proveedor: p, articulo: a, uxc: u, cxp: c });
@@ -340,10 +434,7 @@
     function calcularIngresoTotal() { if(!window.convAct) return; const p = parseInt(document.getElementById('inpPal').value)||0, c = parseInt(document.getElementById('inpCaj').value)||0, u = parseInt(document.getElementById('inpUni').value)||0; document.getElementById('txtTotalIngreso').innerText = (p * window.convAct.cxp * window.convAct.uxc) + (c * window.convAct.uxc) + u; }
     async function guardarIngreso() { const art = document.getElementById('selArticulo').value, total = parseInt(document.getElementById('txtTotalIngreso').innerText); if(art && total > 0) await db.collection("stock").add({ articulo: art, cantidad: total, tipo: "INGRESO CONVENIO", fecha: firebase.firestore.FieldValue.serverTimestamp() }); alert("Ingreso exitoso"); }
     async function guardarAjusteManual() { const art = document.getElementById('selAjusteArt').value, cant = parseInt(document.getElementById('cantAjuste').value); if(art && cant) await db.collection("stock").add({ articulo: art, cantidad: -cant, tipo: "AJUSTE", fecha: firebase.firestore.FieldValue.serverTimestamp() }); alert("Ajuste realizado"); }
-    function agregarItemVenta() { const art = document.getElementById('vtaArt').value, pal = parseInt(document.getElementById('vtaPal').value), cxp = parseInt(document.getElementById('vtaCxP').value), uxc = parseInt(document.getElementById('vtaUxC').value); if(art && (pal*cxp*uxc)>0) itemsVenta.push({art, pal, cxp, uxc}); renderTempVenta(); }
-    function renderTempVenta() { document.getElementById('listaTempVenta').innerHTML = itemsVenta.map((it, i) => `<span class="badge bg-secondary p-2">${it.art} x${it.pal}P <i class="fas fa-times ms-2 pointer" onclick="itemsVenta.splice(${i},1);renderTempVenta()"></i></span>`).join(''); }
-    async function finalizarVenta() { const cli = clientes.find(c => c.id === document.getElementById('vtaCliente').value); if(!cli || itemsVenta.length === 0) return alert("Faltan datos"); for(let it of itemsVenta) { await db.collection("stock").add({ articulo: it.art, cantidad: -(it.pal*it.cxp*it.uxc), tipo: "VENTA", cliente: cli.nombre, fecha: firebase.firestore.FieldValue.serverTimestamp() }); } alert("Venta registrada"); itemsVenta = []; renderTempVenta(); }
-    function generarPDF() { const { jsPDF } = window.jspdf; const doc = new jsPDF(); doc.text("REPORTE DIARIO", 14, 20); doc.autoTable({ html: '#tablaHistorialPDF', startY: 30 }); doc.save("Reporte.pdf"); }
+    function generarReporteDiario() { const { jsPDF } = window.jspdf; const doc = new jsPDF(); doc.text("REPORTE DIARIO DE MOVIMIENTOS", 14, 20); doc.autoTable({ html: '#tablaHistorialPDF', startY: 30 }); doc.save("Reporte_Diario.pdf"); }
     async function guardarArt() { const n = document.getElementById('confArt').value; if(n) await db.collection("articulos").add({nombre: n.toLowerCase()}); document.getElementById('confArt').value=""; }
     async function guardarProv() { const n = document.getElementById('confProv').value; if(n) await db.collection("proveedores").add({nombre: n}); document.getElementById('confProv').value=""; }
 </script>
