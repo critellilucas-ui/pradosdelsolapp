@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Prados del Sol - Sistema Integral v5.0</title>
+    <title>Prados del Sol - Sistema Integral v5.1</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -17,19 +17,20 @@
     
     <style>
         body { background-color: #f1f3f5; font-family: 'Inter', sans-serif; padding-bottom: 80px; }
-        .sidebar { background-color: #1a1d20; color: white; min-height: 100vh; position: sticky; top: 0; padding: 15px; z-index: 1000; }
+        .sidebar { background-color: #1a1d20; color: white; min-height: 100vh; position: sticky; top: 0; padding: 15px; z-index: 1000; display: flex; flex-direction: column; }
         .nav-link { color: #9da5ad; cursor: pointer; padding: 12px; border-radius: 8px; margin-bottom: 4px; transition: 0.3s; text-decoration: none; display: block; }
         .nav-link:hover, .nav-link.active { color: white; background-color: #0d6efd; }
+        .logout-link { color: #ff6b6b; margin-top: auto; border-top: 1px solid #343a40; padding-top: 20px; }
+        .logout-link:hover { color: white; background-color: #dc3545; }
         
-        /* MENU INFERIOR SOLO PARA CELULAR */
         @media (max-width: 768px) {
             .mobile-nav { 
                 position: fixed; bottom: 0; left: 0; right: 0; 
                 background: #1a1d20; display: flex; justify-content: space-around; 
                 padding: 10px 0; z-index: 2000; border-top: 3px solid #0d6efd;
             }
-            .mobile-nav a { color: #9da5ad; text-align: center; text-decoration: none; font-size: 0.6rem; flex: 1; }
-            .mobile-nav a i { display: block; font-size: 1.2rem; margin-bottom: 2px; }
+            .mobile-nav a { color: #9da5ad; text-align: center; text-decoration: none; font-size: 0.55rem; flex: 1; }
+            .mobile-nav a i { display: block; font-size: 1.1rem; margin-bottom: 2px; }
             .mobile-nav a.active { color: white; }
             body { padding-bottom: 100px; }
         }
@@ -42,7 +43,6 @@
         .scroll-list { max-height: 250px; overflow-y: auto; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #dee2e6; font-size: 0.85rem; }
         .insumo-row { background: #f8f9fa; border-left: 4px solid #ffc107; padding: 8px; margin-bottom: 5px; border-radius: 4px; }
         .pointer { cursor: pointer; }
-        .client-card { transition: 0.3s; border-left: 4px solid #0d6efd; }
     </style>
 </head>
 <body>
@@ -62,14 +62,14 @@
         <a onclick="showTab('stock', this)"><i class="fas fa-boxes"></i>Stock</a>
         <a onclick="showTab('ventas', this)"><i class="fas fa-truck"></i>Venta</a>
         <a onclick="showTab('aceite', this)"><i class="fas fa-oil-can"></i>Aceite</a>
-        <a onclick="showTab('clientes', this)"><i class="fas fa-users"></i>Cli</a>
         <a onclick="showTab('historial', this)"><i class="fas fa-history"></i>Hist</a>
+        <a onclick="logout()"><i class="fas fa-sign-out-alt"></i>Salir</a>
     </div>
 
     <div class="row">
         <div class="col-md-2 sidebar d-none d-md-block">
             <h4 class="text-center py-3 border-bottom border-secondary mb-4">MENÚ</h4>
-            <nav>
+            <nav class="flex-grow-1">
                 <a class="nav-link active" onclick="showTab('produccion', this)"><i class="fas fa-industry me-2"></i>Producción</a>
                 <a class="nav-link" onclick="showTab('stock', this)"><i class="fas fa-boxes me-2"></i>Stock</a>
                 <a class="nav-link" onclick="showTab('ventas', this)"><i class="fas fa-truck-loading me-2"></i>Ventas</a>
@@ -78,10 +78,10 @@
                 <a class="nav-link" onclick="showTab('historial', this)"><i class="fas fa-history me-2"></i>Historial</a>
                 <a class="nav-link" onclick="showTab('config', this)"><i class="fas fa-cogs me-2"></i>Config</a>
             </nav>
+            <a class="nav-link logout-link mt-4" onclick="logout()"><i class="fas fa-power-off me-2"></i>Cerrar Sesión</a>
         </div>
 
         <div class="col-md-10 p-3 p-md-4">
-            
             <div id="produccion" class="content-section">
                 <h4 class="header-section">REGISTRO DE PRODUCCIÓN</h4>
                 <div class="row g-3">
@@ -134,20 +134,19 @@
                                 <div class="col-4"><label class="form-label">Cajas</label><input type="number" id="inpCaj" class="form-control" value="0" oninput="calcularIngresoTotal()"></div>
                                 <div class="col-4"><label class="form-label">Sueltos</label><input type="number" id="inpUni" class="form-control" value="0" oninput="calcularIngresoTotal()"></div>
                             </div>
-                            <div class="alert alert-info py-2 text-center fw-bold">TOTAL A INGRESAR: <span id="txtTotalIngreso">0</span> Unidades</div>
+                            <div class="alert alert-info py-2 text-center fw-bold">TOTAL: <span id="txtTotalIngreso">0</span> Unidades</div>
                             <button class="btn btn-success w-100" onclick="guardarIngreso()">CARGAR AL STOCK</button>
                         </div>
                         <div class="card p-3 border-top border-4 border-danger shadow-sm">
                             <h6>AJUSTE MANUAL / DESCARTE</h6>
                             <label class="form-label">Artículo</label><select id="selAjusteArt" class="form-select mb-2"></select>
-                            <label class="form-label">Cantidad (Unidades)</label>
-                            <input type="number" id="cantAjuste" class="form-control mb-2" placeholder="Ej: 50">
+                            <input type="number" id="cantAjuste" class="form-control mb-2" placeholder="Cantidad Unidades">
                             <button class="btn btn-danger w-100" onclick="guardarAjusteManual()">RESTAR DEL STOCK</button>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="card p-3 h-100 shadow-sm">
-                            <h6>BALANCE DE STOCK ACTUAL</h6>
+                            <h6>BALANCE ACTUAL</h6>
                             <div class="table-responsive">
                                 <table class="table table-sm table-hover"><tbody id="tablaStockCompleta"></tbody></table>
                             </div>
@@ -157,17 +156,15 @@
             </div>
 
             <div id="ventas" class="content-section hidden">
-                <h4 class="header-section">DESPACHO / REMITOS</h4>
-                <div class="card p-3 mb-3 shadow-sm border-top border-4 border-primary">
+                <h4 class="header-section">VENTAS / REMITOS</h4>
+                <div class="card p-3 mb-3 border-top border-4 border-primary shadow-sm">
                     <div class="row g-2">
                         <div class="col-md-4"><label class="form-label">Cliente</label><select id="vtaCliente" class="form-select"></select></div>
-                        <div class="col-md-3 col-6"><label class="form-label">Chofer</label><input type="text" id="vtaChofer" class="form-control"></div>
-                        <div class="col-md-2 col-6"><label class="form-label">Pat. Camión</label><input type="text" id="vtaPatCamion" class="form-control"></div>
-                        <div class="col-md-3 d-none d-md-block"><label class="form-label">Pat. Semi</label><input type="text" id="vtaPatSemi" class="form-control"></div>
+                        <div class="col-md-4 col-6"><label class="form-label">Chofer</label><input type="text" id="vtaChofer" class="form-control"></div>
+                        <div class="col-md-4 col-6"><label class="form-label">Pat. Camión</label><input type="text" id="vtaPatCamion" class="form-control"></div>
                     </div>
                 </div>
                 <div class="card p-3 shadow-sm">
-                    <h6>CARGA DE PRODUCTOS</h6>
                     <div class="row g-2 mb-2 bg-light p-2 rounded">
                         <div class="col-md-4"><label class="form-label">Artículo</label><select id="vtaArt" class="form-select"></select></div>
                         <div class="col-4 col-md-2"><label class="form-label">Pallets</label><input type="number" id="vtaPal" class="form-control" value="0"></div>
@@ -178,8 +175,8 @@
                     <input type="text" id="vtaLote" class="form-control mb-3" placeholder="Lote">
                     <div id="listaTempVenta" class="my-3 d-flex flex-wrap gap-2"></div>
                     <div class="row g-2">
-                        <div class="col-6"><button class="btn btn-primary w-100 fw-bold py-2" onclick="finalizarVenta()">REGISTRAR VENTA</button></div>
-                        <div class="col-6"><button class="btn btn-danger w-100 fw-bold py-2" onclick="imprimirRemito()"><i class="fas fa-file-invoice me-1"></i> REMITO (MAXI)</button></div>
+                        <div class="col-6"><button class="btn btn-primary w-100 fw-bold py-2" onclick="finalizarVenta()">REGISTRAR</button></div>
+                        <div class="col-6"><button class="btn btn-danger w-100 fw-bold py-2" onclick="imprimirRemito()">REMITO</button></div>
                     </div>
                 </div>
             </div>
@@ -191,7 +188,6 @@
                     <input type="number" id="aceiteTon" class="form-control form-control-lg mb-3" oninput="document.getElementById('aceiteLitros').innerText = Math.round(this.value*920).toLocaleString()">
                     <div class="text-center bg-light p-3 rounded mb-3">
                         <h1 class="fw-bold text-primary mb-0"><span id="aceiteLitros">0</span> Lts</h1>
-                        <small class="text-muted">Conversión aprox: 1 Ton = 920 Lts</small>
                     </div>
                     <button class="btn btn-warning btn-lg w-100 fw-bold" onclick="guardarAceiteTon()">REGISTRAR EN TANQUE</button>
                 </div>
@@ -203,70 +199,53 @@
                     <div class="row g-3">
                         <div class="col-md-4"><label class="form-label">Nombre</label><input type="text" id="cliNom" class="form-control"></div>
                         <div class="col-md-4"><label class="form-label">CUIT</label><input type="text" id="cliCuit" class="form-control"></div>
-                        <div class="col-md-4"><label class="form-label">Email</label><input type="email" id="cliMail" class="form-control"></div>
-                        <div class="col-md-3"><label class="form-label">Teléfono</label><input type="text" id="cliTel" class="form-control"></div>
-                        <div class="col-md-4"><label class="form-label">Dirección</label><input type="text" id="cliDir" class="form-control"></div>
-                        <div class="col-md-3"><label class="form-label">Localidad</label><input type="text" id="cliLoc" class="form-control"></div>
-                        <div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary w-100 fw-bold" onclick="guardarCliente()">GUARDAR</button></div>
+                        <div class="col-md-4 d-flex align-items-end"><button class="btn btn-primary w-100 fw-bold" onclick="guardarCliente()">GUARDAR</button></div>
                     </div>
                 </div>
                 <div id="listadoClientes" class="row g-3"></div>
             </div>
 
             <div id="historial" class="content-section hidden">
-                <h4 class="header-section">MOVIMIENTOS DEL DÍA</h4>
+                <h4 class="header-section">HISTORIAL</h4>
                 <div class="d-flex gap-3 mb-4">
-                    <div class="w-25"><input type="date" id="repFecha" class="form-control" onchange="cargarHistorial()"></div>
-                    <button class="btn btn-danger fw-bold" onclick="generarPDF()"><i class="fas fa-file-pdf me-2"></i>REPORTE DIARIO</button>
+                    <input type="date" id="repFecha" class="form-control w-50" onchange="cargarHistorial()">
+                    <button class="btn btn-danger w-50" onclick="generarPDF()">PDF</button>
                 </div>
-                <div class="card shadow-sm">
+                <div class="card shadow-sm overflow-auto">
                     <table class="table table-sm table-striped mb-0" id="tablaHistorialPDF">
-                        <thead class="table-dark"><tr><th>Hora</th><th>Tipo</th><th>Artículo</th><th>Cant.</th><th>Detalles</th></tr></thead>
+                        <thead class="table-dark"><tr><th>Hora</th><th>Tipo</th><th>Art.</th><th>Cant.</th></tr></thead>
                         <tbody id="listaHistorial"></tbody>
                     </table>
                 </div>
             </div>
 
             <div id="config" class="content-section hidden">
-                <h4 class="header-section">CONFIGURACIÓN DEL SISTEMA</h4>
+                <h4 class="header-section">CONFIGURACIÓN</h4>
                 <div class="row g-3">
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <div class="card p-3 shadow-sm">
                             <h6>ARTÍCULOS</h6>
                             <input type="text" id="confArt" class="form-control mb-2" placeholder="Nuevo artículo">
-                            <button class="btn btn-primary btn-sm w-100 mb-3" onclick="guardarArt()">AGREGAR</button>
+                            <button class="btn btn-primary w-100 mb-3" onclick="guardarArt()">AGREGAR</button>
                             <div id="listaArts" class="scroll-list"></div>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <div class="card p-3 shadow-sm">
                             <h6>PROVEEDORES</h6>
                             <input type="text" id="confProv" class="form-control mb-2" placeholder="Nuevo proveedor">
-                            <button class="btn btn-success btn-sm w-100 mb-3" onclick="guardarProv()">AGREGAR</button>
+                            <button class="btn btn-success w-100 mb-3" onclick="guardarProv()">AGREGAR</button>
                             <div id="listaProvs" class="scroll-list"></div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card p-3 shadow-sm">
-                            <h6>CONVENIOS (UXC / CXP)</h6>
-                            <select id="convProv" class="form-select form-select-sm mb-1"></select>
-                            <select id="convArt" class="form-select form-select-sm mb-1"></select>
-                            <div class="row g-1 mb-2">
-                                <div class="col-6"><input type="number" id="convUxC" class="form-control form-control-sm" placeholder="UxC"></div>
-                                <div class="col-6"><input type="number" id="convCxP" class="form-control form-control-sm" placeholder="CxP"></div>
-                            </div>
-                            <button class="btn btn-dark btn-sm w-100 mb-3" onclick="guardarConvenio()">VINCULAR</button>
-                            <div id="listaConvenios" class="scroll-list"></div>
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
 
 <script>
+    // CONFIGURACIÓN FIREBASE
     const MAPA_CONSUMO = { "aceite 850cc": 0.850, "aceite 900cc": 0.900, "aceite 1.5lts": 1.5, "aceite 4lts": 4, "aceite 4.5lts": 4.5, "aceite 5lts": 5 };
     const firebaseConfig = { apiKey: "AIzaSyCjYp0idCxs32QAofYLVEGcwvmd3HXy-3Y", authDomain: "prados-del-sol.firebaseapp.com", projectId: "prados-del-sol", storageBucket: "prados-del-sol.firebasestorage.app", messagingSenderId: "30316921952", appId: "1:30316921952:web:b0f88b9c35f270d548ef05" };
     firebase.initializeApp(firebaseConfig);
@@ -275,6 +254,8 @@
     let articulos = [], proveedores = [], clientes = [], convenios = [], itemsVenta = [], stockGlobal = {};
 
     function login() { auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPass').value); }
+    function logout() { auth.signOut().then(() => { location.reload(); }); }
+    
     auth.onAuthStateChanged(u => { if(u){ document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('appSystem').classList.remove('hidden'); iniciarApp(); } });
 
     function iniciarApp() {
@@ -289,46 +270,14 @@
         });
     }
 
-    // --- LOGICA DE TABS ---
     function showTab(id, el) {
         document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
         document.getElementById(id).classList.remove('hidden');
         document.querySelectorAll('.nav-link, .mobile-nav a').forEach(n => n.classList.remove('active'));
         el.classList.add('active');
-        if(id === 'historial') cargarHistorial();
         window.scrollTo(0,0);
     }
 
-    // --- VENTAS & REMITO ---
-    function agregarItemVenta() {
-        const art = document.getElementById('vtaArt').value, pal = parseInt(document.getElementById('vtaPal').value)||0, cxp = parseInt(document.getElementById('vtaCxP').value)||0, uxc = parseInt(document.getElementById('vtaUxC').value)||0;
-        if(art && (pal*cxp*uxc) > 0) { itemsVenta.push({ art, pal, cxp, uxc, lote: document.getElementById('vtaLote').value || "S/L" }); renderTempVenta(); }
-    }
-    function renderTempVenta() { document.getElementById('listaTempVenta').innerHTML = itemsVenta.map((it, i) => `<div class="badge bg-secondary p-2">${it.pal}P - ${it.art.toUpperCase()} <i class="fas fa-times pointer ms-2" onclick="itemsVenta.splice(${i},1); renderTempVenta()"></i></div>`).join(''); }
-    
-    async function finalizarVenta() {
-        const cliId = document.getElementById('vtaCliente').value, cli = clientes.find(c => c.id === cliId);
-        if(!cli || itemsVenta.length === 0) return alert("Faltan datos");
-        for(let it of itemsVenta) { await db.collection("stock").add({ articulo: it.art, cantidad: -(it.pal*it.cxp*it.uxc), tipo: "VENTA", cliente: cli.nombre, lote: it.lote, chofer: document.getElementById('vtaChofer').value, fecha: firebase.firestore.FieldValue.serverTimestamp() }); }
-        alert("Venta registrada"); itemsVenta = []; renderTempVenta();
-    }
-
-    function imprimirRemito() {
-        const { jsPDF } = window.jspdf; const doc = new jsPDF();
-        const cli = clientes.find(c => c.id === document.getElementById('vtaCliente').value);
-        if(!cli || itemsVenta.length === 0) return alert("Cargue cliente y productos");
-        doc.setFontSize(22); doc.text("PRADOS DEL SOL", 14, 25);
-        doc.setFontSize(10); doc.text("De: MAXIMILIANO MEZA - Ruta Nac 7, km 259 - Junín", 14, 32);
-        doc.line(14, 45, 196, 45);
-        doc.text(`Cliente: ${cli.nombre}`, 14, 60);
-        doc.text(`CUIT: ${cli.cuit || '--'}`, 14, 66);
-        doc.text(`Transporte: ${document.getElementById('vtaChofer').value}`, 120, 60);
-        const body = itemsVenta.map(it => [it.pal, it.cxp, it.uxc, it.art.toUpperCase(), it.lote, (it.pal*it.cxp*it.uxc)]);
-        doc.autoTable({ startY: 80, head: [['Pal','CxP','UxC','Producto','Lote','Total']], body: body, theme:'grid' });
-        doc.save(`Remito_${cli.nombre}.pdf`);
-    }
-
-    // --- STOCK & AJUSTE ---
     async function guardarAjusteManual() {
         const art = document.getElementById('selAjusteArt').value, cant = parseInt(document.getElementById('cantAjuste').value);
         if(!art || !cant) return;
@@ -336,37 +285,42 @@
         alert("Ajuste realizado"); document.getElementById('cantAjuste').value = "";
     }
 
-    // --- OTROS RENDERS RESTAURADOS ---
-    function renderClientes() {
-        document.getElementById('listadoClientes').innerHTML = clientes.map(c => `
-            <div class="col-md-4">
-                <div class="card p-3 shadow-sm client-card">
-                    <div class="d-flex justify-content-between"><strong>${c.nombre}</strong><i class="fas fa-trash text-muted pointer" onclick="db.collection('clientes').doc('${c.id}').delete()"></i></div>
-                    <div style="font-size: 0.75rem;" class="mt-2">
-                        <div><i class="fas fa-id-card me-1"></i>${c.cuit || '--'}</div>
-                        <div><i class="fas fa-map-marker-alt me-1"></i>${c.direccion || ''} - ${c.localidad || ''}</div>
-                    </div>
-                </div>
-            </div>`).join('');
-    }
-
     function renderGlobal() {
         const artsH = articulos.map(a => `<option value="${a.nombre}">${a.nombre.toUpperCase()}</option>`).join('');
         const provsH = proveedores.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
-        ['vtaArt', 'convArt', 'prodArticulo', 'selAjusteArt'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).innerHTML = artsH; });
-        document.getElementById('selProveedor').innerHTML = `<option value="">Seleccione...</option>` + provsH;
-        document.getElementById('convProv').innerHTML = provsH;
+        ['vtaArt', 'prodArticulo', 'selAjusteArt'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).innerHTML = artsH; });
+        document.getElementById('selProveedor').innerHTML = `<option value="">Prov...</option>` + provsH;
         document.getElementById('vtaCliente').innerHTML = clientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
-        
         document.getElementById('listaArts').innerHTML = articulos.map(a => `<div class="d-flex justify-content-between mb-1"><span>${a.nombre}</span><i class="fas fa-trash text-danger pointer" onclick="db.collection('articulos').doc('${a.id}').delete()"></i></div>`).join('');
         document.getElementById('listaProvs').innerHTML = proveedores.map(p => `<div class="d-flex justify-content-between mb-1"><span>${p.nombre}</span><i class="fas fa-trash text-danger pointer" onclick="db.collection('proveedores').doc('${p.id}').delete()"></i></div>`).join('');
-        document.getElementById('listaConvenios').innerHTML = convenios.map(c => `<div class="border-bottom mb-1" style="font-size:0.75rem">${c.proveedor} > ${c.articulo} (${c.uxc}/${c.cxp}) <i class="fas fa-times text-danger float-end pointer" onclick="db.collection('convenios').doc('${c.id}').delete()"></i></div>`).join('');
-        
         const filt = (f) => articulos.filter(a => a.nombre.toLowerCase().includes(f)).map(a => `<option value="${a.nombre}">${a.nombre.toUpperCase()}</option>`).join('');
-        document.getElementById('selInsumoBotella').innerHTML = filt('botella') || artsH;
-        document.getElementById('selInsumoTapa').innerHTML = filt('tapa') || artsH;
-        document.getElementById('selInsumoEtiqueta').innerHTML = filt('etiqueta') || artsH;
-        document.getElementById('selInsumoCaja').innerHTML = filt('caja') || artsH;
+        ['selInsumoBotella','selInsumoTapa','selInsumoEtiqueta','selInsumoCaja'].forEach(id => document.getElementById(id).innerHTML = artsH);
+    }
+
+    function renderStock() { document.getElementById('tablaStockCompleta').innerHTML = Object.keys(stockGlobal).sort().map(k => `<tr><td class="text-uppercase small">${k}</td><td class="text-end fw-bold">${stockGlobal[k].toLocaleString()}</td></tr>`).join(''); }
+    
+    function agregarItemVenta() {
+        const art = document.getElementById('vtaArt').value, pal = parseInt(document.getElementById('vtaPal').value), cxp = parseInt(document.getElementById('vtaCxP').value), uxc = parseInt(document.getElementById('vtaUxC').value);
+        if(art && (pal*cxp*uxc) > 0) { itemsVenta.push({ art, pal, cxp, uxc, lote: document.getElementById('vtaLote').value || "S/L" }); renderTempVenta(); }
+    }
+    function renderTempVenta() { document.getElementById('listaTempVenta').innerHTML = itemsVenta.map((it, i) => `<div class="badge bg-secondary p-2">${it.art.toUpperCase()} x${it.pal}P <i class="fas fa-times pointer ms-2" onclick="itemsVenta.splice(${i},1); renderTempVenta()"></i></div>`).join(''); }
+
+    async function finalizarVenta() {
+        const cli = clientes.find(c => c.id === document.getElementById('vtaCliente').value);
+        if(!cli || itemsVenta.length === 0) return alert("Faltan datos");
+        for(let it of itemsVenta) { await db.collection("stock").add({ articulo: it.art, cantidad: -(it.pal*it.cxp*it.uxc), tipo: "VENTA", cliente: cli.nombre, lote: it.lote, fecha: firebase.firestore.FieldValue.serverTimestamp() }); }
+        alert("Venta registrada"); itemsVenta = []; renderTempVenta();
+    }
+
+    function imprimirRemito() {
+        const { jsPDF } = window.jspdf; const doc = new jsPDF();
+        const cli = clientes.find(c => c.id === document.getElementById('vtaCliente').value);
+        if(!cli || itemsVenta.length === 0) return;
+        doc.setFontSize(20); doc.text("REMITO - PRADOS DEL SOL", 14, 20);
+        doc.setFontSize(10); doc.text(`Cliente: ${cli.nombre}`, 14, 35);
+        const body = itemsVenta.map(it => [it.pal, it.art.toUpperCase(), it.lote, (it.pal*it.cxp*it.uxc)]);
+        doc.autoTable({ startY: 45, head: [['Pallets', 'Producto', 'Lote', 'Total']], body: body });
+        doc.save(`Remito_${cli.nombre}.pdf`);
     }
 
     async function cargarHistorial() {
@@ -374,12 +328,10 @@
         const snap = await db.collection("stock").where("fecha", ">=", new Date(f+"T00:00:00")).where("fecha", "<=", new Date(f+"T23:59:59")).get();
         document.getElementById('listaHistorial').innerHTML = snap.docs.map(d => {
             const r = d.data();
-            return `<tr><td>${r.fecha ? r.fecha.toDate().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '--'}</td><td>${r.tipo}</td><td class="text-uppercase">${r.articulo}</td><td>${r.cantidad}</td><td>${r.cliente || r.lote || ''}</td></tr>`;
+            return `<tr><td>${r.fecha ? r.fecha.toDate().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '--'}</td><td>${r.tipo}</td><td class="text-uppercase">${r.articulo}</td><td>${r.cantidad}</td></tr>`;
         }).join('');
     }
 
-    // --- SOPORTE RESTANTE ---
-    function renderStock() { document.getElementById('tablaStockCompleta').innerHTML = Object.keys(stockGlobal).sort().map(k => `<tr><td class="text-uppercase small">${k}</td><td class="text-end fw-bold ${stockGlobal[k]<0?'text-danger':''}">${stockGlobal[k].toLocaleString()}</td></tr>`).join(''); }
     function calcularProduccion() {
         const p = parseFloat(document.getElementById('prodPal').value)||0, c = parseFloat(document.getElementById('prodCxP').value)||0, u = parseFloat(document.getElementById('prodUxC').value)||0;
         document.querySelectorAll('.valInsumo').forEach(el => el.innerText = p*c*u);
@@ -393,10 +345,10 @@
     }
     async function guardarArt() { const n = document.getElementById('confArt').value; if(n) await db.collection("articulos").add({nombre: n.toLowerCase()}); document.getElementById('confArt').value=""; }
     async function guardarProv() { const n = document.getElementById('confProv').value; if(n) await db.collection("proveedores").add({nombre: n}); document.getElementById('confProv').value=""; }
-    async function guardarConvenio() { const p = document.getElementById('convProv').value, a = document.getElementById('convArt').value, u = parseInt(document.getElementById('convUxC').value), c = parseInt(document.getElementById('convCxP').value); if(p && a && u && c) await db.collection("convenios").add({ proveedor: p, articulo: a, uxc: u, cxp: c }); }
     async function guardarAceiteTon() { const lts = Math.round(parseFloat(document.getElementById('aceiteTon').value)*920); await db.collection("stock").add({ articulo: "aceite a granel", cantidad: lts, tipo: "CARGA GRANEL", fecha: firebase.firestore.FieldValue.serverTimestamp() }); alert("Cargado"); }
-    async function guardarCliente() { const d = { nombre: document.getElementById('cliNom').value.toUpperCase(), cuit: document.getElementById('cliCuit').value, email: document.getElementById('cliMail').value, telefono: document.getElementById('cliTel').value, direccion: document.getElementById('cliDir').value, localidad: document.getElementById('cliLoc').value }; if(!d.nombre) return alert("Nombre obligatorio"); await db.collection("clientes").add(d); ['cliNom','cliCuit','cliMail','cliTel','cliDir','cliLoc'].forEach(id => document.getElementById(id).value = ""); }
-    function generarPDF() { const { jsPDF } = window.jspdf; const doc = new jsPDF(); doc.text("REPORTE PRADOS DEL SOL", 14, 20); doc.autoTable({ html: '#tablaHistorialPDF', startY: 30 }); doc.save("Reporte.pdf"); }
+    async function guardarCliente() { const d = { nombre: document.getElementById('cliNom').value.toUpperCase(), cuit: document.getElementById('cliCuit').value }; if(!d.nombre) return; await db.collection("clientes").add(d); document.getElementById('cliNom').value = ""; document.getElementById('cliCuit').value = ""; }
+    function renderClientes() { document.getElementById('listadoClientes').innerHTML = clientes.map(c => `<div class="col-md-4"><div class="card p-3 shadow-sm"><strong>${c.nombre}</strong><small>${c.cuit || ''}</small></div></div>`).join(''); }
+    function generarPDF() { const { jsPDF } = window.jspdf; const doc = new jsPDF(); doc.autoTable({ html: '#tablaHistorialPDF' }); doc.save("Reporte.pdf"); }
     function filtrarArticulosPorProveedor() {
         const prov = document.getElementById('selProveedor').value;
         const filtrados = convenios.filter(c => c.proveedor === prov);
